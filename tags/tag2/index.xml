@@ -1,1 +1,20 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>tag2 on Lynn's Site</title><link>/tags/tag2/</link><description>Recent content in tag2 on Lynn's Site</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Fri, 21 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/tag2/index.xml" rel="self" type="application/rss+xml"/><item><title>An Example Post</title><link>/post/second-post/</link><pubDate>Fri, 21 Oct 2022 00:00:00 +0000</pubDate><guid>/post/second-post/</guid><description/></item><item><title>An Example Post</title><link>/post/mm/</link><pubDate>Mon, 04 Jun 2018 00:00:00 +0000</pubDate><guid>/post/mm/</guid><description/></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>tag2 on Lynn&#39;s Site</title>
+    <link>http://example.org/tags/tag2/</link>
+    <description>Recent content in tag2 on Lynn&#39;s Site</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 13 Aug 2022 11:09:57 +0800</lastBuildDate><atom:link href="http://example.org/tags/tag2/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>My First Post</title>
+      <link>http://example.org/post/my-first-post/</link>
+      <pubDate>Sat, 13 Aug 2022 11:09:57 +0800</pubDate>
+      
+      <guid>http://example.org/post/my-first-post/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
