@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "site_url": "https://lynnlee1229.github.io/stream-batch-lab/",
+  "export_policy": "Only bilingual editorial content, public assets and sanitized static verification. No runtime source, environment, credentials, APIs or datasets.",
+  "files": {
+    ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "404.html": "19e90ebdf0fca2433f6d4e034b27d26bb778d8da825542dc694cbc3cc6f9cef6",
+    "assets/favicon.svg": "09f8bd9e0335a15ed1ce47c30645d6a392cf4290842ddb455180a9cf0057deba",
+    "assets/site.css": "d28ea92e2358db6723f5f379be533520bb23ba4b9b713dd1f6d64339e1e57b2c",
+    "assets/site.js": "7185ba007b020e47b49a921b6423b85099ca2e6a821a16cd116b612cd27dca9e",
+    "en/architecture/index.html": "50ac8ac6a8246260d0f840b7d6feb48a7abc136f1068facea57bfc3657f39716",
+    "en/cases/index.html": "d6416b50a7bffc52fcad03e857b7b2dab46dfbdad6a3378ba30dfa34cabcd69e",
+    "en/evidence/index.html": "95622290c29df26f01c353fc3408de3abfb2877dd2b66e4e512f1d96d147bdaa",
+    "en/index.html": "a63539be6f0cd4c7d983d208bbac9f88658b0a50b96eec9fa3c36bca6456bcd3",
+    "en/learn/index.html": "a23024fef12aebbb9a1ce8660d9564ea6de1b7db372016359725cd54301fb5fb",
+    "en/local/index.html": "a1451da0d358636fdfae8becb32df2cae1019e9aff65f1c4e0e89bcd9852377b",
+    "en/sources/index.html": "1bd981caf1cc272caf6c3f8e02717a117b0b13e33d6e46dec2caffdb14aebb61",
+    "evidence/verification.json": "f8a9fb5d320e41d75699770c3ede8264c9eeccb66816f5b26bdc96337b8fe134",
+    "index.html": "a63539be6f0cd4c7d983d208bbac9f88658b0a50b96eec9fa3c36bca6456bcd3",
+    "sitemap.xml": "36216756625e038ee9cc131599fee9b2b096a468b793b95c834298a67b1cee09",
+    "zh/architecture/index.html": "9aabca2e569463b3aa4077ca28e89a8c77099c226a64a7270562930318273bb5",
+    "zh/cases/index.html": "3866717e9c971ecd5be340a47e1b4c974ee150a8ce8e9615b953ea29cc3b7f7d",
+    "zh/evidence/index.html": "aee417ccb366ab60ad3041ed461dccf017c5d8ff52d9fdab2f8bb021489e81eb",
+    "zh/index.html": "b0352286329c2b4eda9a9177f5cd231948a981580c23243accf46418c41da75b",
+    "zh/learn/index.html": "c968c2934164c3d6ce1d3dcc4bc0a8c9a02dfeb401782ec710d8d5e425a5eedc",
+    "zh/local/index.html": "aa7e5d9bd128cddd5a2490f422b1338960ae1521e134c79ca8dcd39cd06a9be0",
+    "zh/sources/index.html": "90adbd22194d8e9359d60d0286b4aeacf31ee29cf385b2d2b6b42e147b7f20d9"
+  }
+}

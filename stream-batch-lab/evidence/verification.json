@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "kind": "static-configuration-verification",
+  "recorded_at": "2026-11-06T16:54:10+00:00",
+  "command": "python3 scripts/verify_contract.py",
+  "runtime_tested": false,
+  "runtime_note": "Docker daemon was unavailable during this publication. No end-to-end, recovery, throughput, latency or cross-platform runtime result is claimed.",
+  "source_files": {
+    "compose.yml": "c74872fde7d9a94c58d4f39b0301612262d9bde9806cbbbf9501daa831828d0a",
+    "sql/01_cdc_to_fluss.sql": "faf1e839b83810628a19261a937e2a34d32a65c1550174c6f055e6a095ed2685",
+    "sql/02_wide_pipeline.sql": "18bb18195b67a9c44631d62f4a688bd667d1b7bea5b481465d2333f85a90b149",
+    "sql/10_batch_aggregate.sql": "4e5b98414de6826cf891b5fac97da77919089b84b0e467deb0d0d208d6e0b536",
+    "sql/11_lake_audit.sql": "0cba0ed87f5d7d98e6724fc95fad8591b2f248e1bf234777c54d0f216bd5cbc4",
+    "clickhouse/init/001_analytics.sql": "22322ca3ccbea6f6427a61f9ea5e9ced9185dd59299cd6735da6ae907bfc7aba"
+  },
+  "checks": [
+    {
+      "id": "loopback-bindings",
+      "passed": true,
+      "observation": "10 configured host mappings bind loopback."
+    },
+    {
+      "id": "row-binlog",
+      "passed": true,
+      "observation": "MySQL requests ROW binlog with FULL row images."
+    },
+    {
+      "id": "checkpoint-configuration",
+      "passed": true,
+      "observation": "Flink requests exactly-once checkpoints; this is not an end-to-end proof."
+    },
+    {
+      "id": "regular-joins",
+      "passed": true,
+      "observation": "Three regular left joins use a seven-day state TTL; no event-time window claim."
+    },
+    {
+      "id": "dimension-update-version",
+      "passed": true,
+      "observation": "Wide-table version includes dimension timestamps and millisecond precision; equal timestamps can still tie."
+    },
+    {
+      "id": "filesystem-iceberg",
+      "passed": true,
+      "observation": "Iceberg uses the shared local filesystem catalog."
+    },
+    {
+      "id": "bounded-batch",
+      "passed": true,
+      "observation": "The aggregation SQL requests bounded batch execution."
+    },
+    {
+      "id": "count-audit",
+      "passed": true,
+      "observation": "The audit compares counts; equal counts do not establish field-level equality."
+    }
+  ],
+  "passed": true
+}
