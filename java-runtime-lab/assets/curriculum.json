@@ -1,0 +1,348 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-11-14",
+  "courses": [
+    {
+      "id": "mit-6.172-f2018",
+      "school": "Massachusetts Institute of Technology",
+      "courseNumber": "6.172",
+      "name": "Performance Engineering of Software Systems",
+      "semester": "Fall 2018",
+      "language": "C",
+      "prerequisites": [
+        "6.004 Computation Structures",
+        "6.006 Introduction to Algorithms",
+        "6.031 Software Construction (formerly 6.005)"
+      ],
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/",
+      "syllabusUrl": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/pages/syllabus/",
+      "publicMaterials": [
+        "Lecture slides/PDFs",
+        "Lecture videos",
+        "Readings",
+        "Assignments and projects (not reproduced here)"
+      ],
+      "publicAccess": "Archived MIT OpenCourseWare materials are readable without registration or payment.",
+      "enrollmentAndFees": "Reading OCW does not enroll you at MIT or provide course credit/certification. This registry does not offer campus registration or assert current tuition.",
+      "verifiedOn": "2026-11-14",
+      "status": "published historical course",
+      "fit": {
+        "en": "Measurement, concurrency reasoning and work accounting. Java 25 contracts come from the primary resources below.",
+        "zh": "用于性能测量、并发推理与工作量分析。Java 25 的契约由下方原始资料补足。"
+      }
+    }
+  ],
+  "resources": [
+    {
+      "id": "mit-syllabus",
+      "title": "MIT 6.172 syllabus",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/pages/syllabus/",
+      "kind": "course",
+      "section": "Prerequisites and course language",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "courseId": "mit-6.172-f2018"
+    },
+    {
+      "id": "mit-2",
+      "title": "Lecture 2: Bentley Rules for Optimizing Work",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/resources/mit6_172f18_lec2/",
+      "kind": "lecture",
+      "section": "PDF linked from the official resource page",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "courseId": "mit-6.172-f2018"
+    },
+    {
+      "id": "mit-6",
+      "title": "Lecture 6: Multicore Programming",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/resources/mit6_172f18_lec6/",
+      "kind": "lecture",
+      "section": "PDF linked from the official resource page",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "courseId": "mit-6.172-f2018"
+    },
+    {
+      "id": "mit-7",
+      "title": "Lecture 7: Races and Parallelism",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/resources/mit6_172f18_lec7/",
+      "kind": "lecture",
+      "section": "PDF linked from the official resource page",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "courseId": "mit-6.172-f2018"
+    },
+    {
+      "id": "mit-10",
+      "title": "Lecture 10: Measurement and Timing",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/resources/mit6_172f18_lec10/",
+      "kind": "lecture",
+      "section": "PDF linked from the official resource page",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "courseId": "mit-6.172-f2018"
+    },
+    {
+      "id": "jep444",
+      "title": "JEP 444: Virtual Threads",
+      "url": "https://openjdk.org/jeps/444",
+      "kind": "JEP",
+      "section": "Do not pool virtual threads; delivered in JDK 21",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "year": 2023
+    },
+    {
+      "id": "jep491",
+      "title": "JEP 491: Synchronize Virtual Threads without Pinning",
+      "url": "https://openjdk.org/jeps/491",
+      "kind": "JEP",
+      "section": "Summary and remaining pinning cases; delivered in JDK 24",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "year": 2025
+    },
+    {
+      "id": "virtual25",
+      "title": "Java SE 25: Virtual Threads",
+      "url": "https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html",
+      "kind": "official-guide",
+      "section": "Scheduling; JDK Flight Recorder events for virtual threads",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "year": 2025
+    },
+    {
+      "id": "semaphore25",
+      "title": "Java SE 25: Semaphore",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html",
+      "kind": "API",
+      "section": "acquire(), release(), tryAcquire(), fairness",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply"
+    },
+    {
+      "id": "future25",
+      "title": "Java SE 25: Future",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html",
+      "kind": "API",
+      "section": "get(timeout), cancel(boolean), isCancelled(), isDone()",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply"
+    },
+    {
+      "id": "executor25",
+      "title": "Java SE 25: ThreadPoolExecutor",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html",
+      "kind": "API",
+      "section": "Queuing; rejected tasks; CallerRunsPolicy",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply"
+    },
+    {
+      "id": "jfr25",
+      "title": "Java SE 25: RecordingFile",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingFile.html",
+      "kind": "API",
+      "section": "readEvent() and hasMoreEvents()",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply"
+    },
+    {
+      "id": "vanderbilt-interrupt",
+      "title": "Vanderbilt archive: Managing the Java Lifecycle — Stopping a Java Thread via an Interrupt",
+      "url": "https://www.dre.vanderbilt.edu/~schmidt/cs891s/2020-PDFs/13.4.3-thread-lifecycle-pt3-stopping-a-thread-via-interrupts.pdf",
+      "kind": "supplementary-lecture",
+      "section": "2020 PDF archive, not a verified current offering",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply",
+      "institution": "Vanderbilt University",
+      "year": 2020,
+      "semester": "Not stated on the source; not inferred from directory name"
+    },
+    {
+      "id": "structured25",
+      "title": "Java SE 25: StructuredTaskScope",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html",
+      "kind": "optional-preview-reading",
+      "section": "Preview API in this JDK; not compiled or exercised here",
+      "verifiedOn": "2026-11-14",
+      "status": "published",
+      "publicAccess": "Read without an account; linked source terms apply"
+    }
+  ],
+  "units": [
+    {
+      "id": "measure",
+      "title": {
+        "en": "Measure a lifecycle before claiming performance",
+        "zh": "先测生命周期，再谈性能"
+      },
+      "resourceIds": [
+        "mit-10",
+        "jfr25"
+      ],
+      "predict": {
+        "en": "Which counts must repeat exactly? Which timestamps may vary?",
+        "zh": "哪些计数应精确重现？哪些时间戳会变化？"
+      },
+      "command": "python3 scripts/learn.py measure",
+      "observe": {
+        "en": "Read actual JFR counts and per-path task order. Compare saved repetitions instead of averaging away failed paths.",
+        "zh": "读取真实 JFR 计数与任务顺序。逐轮比较，不用平均值掩盖失败路径。"
+      },
+      "boundary": {
+        "en": "JFR, scheduling and sleeps affect elapsed time. This is not a JMH throughput benchmark.",
+        "zh": "JFR、调度与 sleep 会影响耗时；这不是 JMH 吞吐基准。"
+      },
+      "exerciseOrigin": "Original Lab exercise; not a university assignment solution"
+    },
+    {
+      "id": "pool",
+      "title": {
+        "en": "Bound execution and follow the submitter",
+        "zh": "限制执行，并跟踪提交者"
+      },
+      "resourceIds": [
+        "mit-6",
+        "executor25"
+      ],
+      "predict": {
+        "en": "Does CallerRuns overflow mean a rejected request?",
+        "zh": "CallerRuns 的 overflow 是否代表请求被拒绝？"
+      },
+      "command": "python3 scripts/learn.py pool",
+      "observe": {
+        "en": "Check submitted = completed + rejected and inspect callerRuns. Follow task 5 from submitted to its terminal event.",
+        "zh": "检查提交 = 完成 + 拒绝，以及 callerRuns。跟踪任务 5 的提交到终态。"
+      },
+      "boundary": {
+        "en": "The C course provides concurrency foundations; rejection-policy behavior is specified by the Java API.",
+        "zh": "C 语言课程提供并发基础；拒绝策略的具体行为以 Java API 为准。"
+      },
+      "exerciseOrigin": "Original Lab exercise; not a university assignment solution"
+    },
+    {
+      "id": "capacity",
+      "title": {
+        "en": "Cheap threads, finite downstream slots",
+        "zh": "线程便宜，下游槽位有限"
+      },
+      "resourceIds": [
+        "mit-6",
+        "jep444",
+        "semaphore25"
+      ],
+      "predict": {
+        "en": "For N=7, C=2: predict peak downstream occupancy, waiting tasks and rejected tasks for each policy.",
+        "zh": "N=7、C=2 时，先预测各策略的下游峰值、等待数与拒绝数。"
+      },
+      "command": "python3 scripts/learn.py capacity --requests 7 --capacity 2",
+      "observe": {
+        "en": "Real virtual threads: unbounded peak 7; queue peak 2 and waiting peak 5; reject completes 2 and rejects 5. Check every task and restored permits.",
+        "zh": "真实虚拟线程：无限制峰值 7；排队峰值 2、最多等待 5；拒绝策略完成 2、拒绝 5。检查每个任务和许可归还。"
+      },
+      "boundary": {
+        "en": "The gate forces overlap. Capacity is a declared local resource limit, not a measured remote server throughput. Waiting count is bounded only by this finite burst.",
+        "zh": "门闩强制重叠。容量是本地声明的资源界限，不是远程服务吞吐测量。等待数仅因有限突发而有界。"
+      },
+      "exerciseOrigin": "Original Lab exercise; not a university assignment solution"
+    },
+    {
+      "id": "cancel",
+      "title": {
+        "en": "Cancel a waiter and a permit holder",
+        "zh": "取消等待者与许可持有者"
+      },
+      "resourceIds": [
+        "future25",
+        "semaphore25",
+        "vanderbilt-interrupt"
+      ],
+      "predict": {
+        "en": "After cancel(true), can isCancelled be true while a downstream slot remains occupied?",
+        "zh": "cancel(true) 后，isCancelled 为 true 时下游槽位是否还可能被占用？"
+      },
+      "command": "python3 scripts/learn.py cancel",
+      "observe": {
+        "en": "Queued cancellation never enters downstream. A cooperative holder releases its permit; the ignoring control still occupies it at cancel_snapshot. All permits return after actual work exits.",
+        "zh": "等待中取消从未进入下游。协作任务归还许可；忽略中断的对照在 cancel_snapshot 时仍占用许可。实际退出后才归还全部许可。"
+      },
+      "boundary": {
+        "en": "The 35 ms timeout limits Future.get waiting. It is not an end-to-end deadline. The ignore control has a finite watchdog.",
+        "zh": "35 毫秒只限制 Future.get 等待，不是端到端 deadline。忽略中断的对照有有限 watchdog。"
+      },
+      "exerciseOrigin": "Original Lab exercise; not a university assignment solution"
+    },
+    {
+      "id": "retry",
+      "title": {
+        "en": "Count work amplification as well as success",
+        "zh": "同时统计成功与工作放大"
+      },
+      "resourceIds": [
+        "mit-2",
+        "future25"
+      ],
+      "predict": {
+        "en": "Which policy spends more downstream attempts, and which intentionally exposes request failures?",
+        "zh": "哪个策略花费更多下游尝试？哪个策略会主动暴露请求失败？"
+      },
+      "command": "python3 scripts/learn.py retry",
+      "observe": {
+        "en": "Compare attempts, successes and failed requests under the same regenerated failure schedule. Modify --failures through lab.py run and explain the changed work.",
+        "zh": "比较相同失败计划下的尝试数、成功与失败请求。通过 lab.py run 修改 --failures 并解释工作量变化。"
+      },
+      "boundary": {
+        "en": "Lecture 2 motivates accounting for work; it does not prescribe a retry algorithm. This Lab uses finite synthetic failures, not a cascading-outage model.",
+        "zh": "第 2 讲用于工作量分析，不是重试算法教学。本实验使用有限合成失败，不是级联故障模型。"
+      },
+      "exerciseOrigin": "Original Lab exercise; not a university assignment solution"
+    },
+    {
+      "id": "evidence",
+      "title": {
+        "en": "Challenge a recording with independent evidence",
+        "zh": "用独立证据质疑记录"
+      },
+      "resourceIds": [
+        "mit-7",
+        "virtual25",
+        "jep491",
+        "jfr25"
+      ],
+      "predict": {
+        "en": "Would a summary-only checker notice a leaked permit, a forged thread type or missing actual JFR transitions?",
+        "zh": "只查汇总能否发现许可泄漏、伪造线程类型或缺失的真实 JFR 转换？"
+      },
+      "command": "python3 scripts/learn.py evidence",
+      "observe": {
+        "en": "Replay JSON as a state machine, compare scenario/transition counts with separately read real JFR, then run deliberate corruption checks. Inspect virtual starts/ends and the explicit pinned count.",
+        "zh": "将 JSON 重放为状态机，与另一个 JVM 读取的真实 JFR 场景/转换计数比对，再执行故意损坏记录的反例检查。查看虚拟线程开始/结束与明确的 pinned 计数。"
+      },
+      "boundary": {
+        "en": "JEP 491 changed synchronized blocking in JDK 24. Zero recorded pinned events does not establish universal absence. This is not an LLM evaluation.",
+        "zh": "JEP 491 在 JDK 24 改变 synchronized 阻塞行为。未记录 pinned 事件不证明普遍不存在。这不是 LLM 评测。"
+      },
+      "exerciseOrigin": "Original Lab exercise; not a university assignment solution"
+    }
+  ],
+  "scope": {
+    "en": "One focused historical course, current versioned Java documentation, six original executable exercises. No university assignment solutions are reproduced.",
+    "zh": "一门聚焦的历史课程、按版本标注的 Java 官方文档、六个原创可执行练习；不转载大学作业解答。"
+  }
+}

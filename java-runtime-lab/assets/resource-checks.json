@@ -1,0 +1,104 @@
+{
+  "checkedAt": "2026-11-13T18:06:14.924342+00:00",
+  "method": "Anonymous HTTP GET; no registration/cookies/credentials; bodies discarded",
+  "resources": [
+    {
+      "id": "mit-syllabus",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/pages/syllabus/",
+      "publicRead": true,
+      "bytes": 73351,
+      "sha256": "ad73d9b19d4e62c990fbfeea4c773887ce8aff2446046d70092260b15bc0e272"
+    },
+    {
+      "id": "mit-2",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/resources/mit6_172f18_lec2/",
+      "publicRead": true,
+      "bytes": 73566,
+      "sha256": "215f09f2562bee89296a23ac64ad2b5207d9ece986949ea72f2a09dbbdb4cccf"
+    },
+    {
+      "id": "mit-6",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/resources/mit6_172f18_lec6/",
+      "publicRead": true,
+      "bytes": 73506,
+      "sha256": "f891c845cea7a66758973570b1757b48ec846736f1c5423bc67a97578c388574"
+    },
+    {
+      "id": "mit-7",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/resources/mit6_172f18_lec7/",
+      "publicRead": true,
+      "bytes": 73506,
+      "sha256": "cb2cabe202678fe61389ab2a6b54fb5a6bcd22372e43ff25ff7df326bf8ce7c1"
+    },
+    {
+      "id": "mit-10",
+      "url": "https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/resources/mit6_172f18_lec10/",
+      "publicRead": true,
+      "bytes": 73524,
+      "sha256": "463e8261be0c5ddfd2918fb65c6763042416e2e1fd5fbbf6cee797386917af33"
+    },
+    {
+      "id": "jep444",
+      "url": "https://openjdk.org/jeps/444",
+      "publicRead": true,
+      "bytes": 73887,
+      "sha256": "b84442e9b3687e3ddc4b74fe0aa4513f1c7bb710dee6a47f3276487e54a2fee1"
+    },
+    {
+      "id": "jep491",
+      "url": "https://openjdk.org/jeps/491",
+      "publicRead": true,
+      "bytes": 28518,
+      "sha256": "bfa7526a554241805f77438ea25db91cb27e8b25f0303667a02f26175c164d39"
+    },
+    {
+      "id": "virtual25",
+      "url": "https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html",
+      "publicRead": true,
+      "bytes": 54606,
+      "sha256": "b62dc2bf378a9b104c1c039202605cfd3ccc3384b83f84d962ac4f3dc647faf9"
+    },
+    {
+      "id": "semaphore25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html",
+      "publicRead": true,
+      "bytes": 57634,
+      "sha256": "4e224b865712316f917c643b74d3e9eb1eca4c47b21194c1020e8cea72550357"
+    },
+    {
+      "id": "future25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html",
+      "publicRead": true,
+      "bytes": 28857,
+      "sha256": "ee0f17b511e78f5c83e0cf93f3eb430812700dc3fd12f47e0e4acbf5cacdd94e"
+    },
+    {
+      "id": "executor25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html",
+      "publicRead": true,
+      "bytes": 108494,
+      "sha256": "9e8a76049ac16b7a88cff79614bf6450126067c0212141a99056d28404d9e074"
+    },
+    {
+      "id": "jfr25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingFile.html",
+      "publicRead": true,
+      "bytes": 26961,
+      "sha256": "d1d4addb58ce92f75d67a8e4dbd09b1ce3953aef4dbfb8de3d4fa0787f0640bc"
+    },
+    {
+      "id": "vanderbilt-interrupt",
+      "url": "https://www.dre.vanderbilt.edu/~schmidt/cs891s/2020-PDFs/13.4.3-thread-lifecycle-pt3-stopping-a-thread-via-interrupts.pdf",
+      "publicRead": true,
+      "bytes": 639302,
+      "sha256": "c21ea5a75d98bfffff7f99249cee89444ecbfaf5856eb92aa25eefdb7fa39460"
+    },
+    {
+      "id": "structured25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html",
+      "publicRead": true,
+      "bytes": 75888,
+      "sha256": "9e7d797c2d4271688864b221a2e057cd0963c905755570607871bd0bc196380d"
+    }
+  ]
+}
