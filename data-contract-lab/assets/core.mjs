@@ -10,8 +10,8 @@ const ts=s=>Array.isArray(s.type)?s.type:[s.type];
 const issue=(path,code,message)=>({path,code,message});
 export function parseJSON(text){
  if(typeof text!=='string'||new TextEncoder().encode(text).length>2_000_000)throw Error('Input must be text, at most 2 MB.');
- let i=0;const ws=()=>{while(/\s/.test(text[i]||'x')){if(!' \t\r\n'.includes(text[i]))throw Error('Invalid JSON whitespace');i++;}};
- function value(depth=0){if(depth>24)throw Error('JSON nesting exceeds 24.');ws();const c=text[i];
+ let i=0,nodes=0;const ws=()=>{while(/\s/.test(text[i]||'x')){if(!' \t\r\n'.includes(text[i]))throw Error('Invalid JSON whitespace');i++;}};
+ function value(depth=0){if(++nodes>50000)throw Error('JSON exceeds 50,000 value nodes.');if(depth>24)throw Error('JSON nesting exceeds 24.');ws();const c=text[i];
   if(c==='"'){let start=i++;while(i<text.length){if(text[i]==='\\'){i+=2;continue;}if(text[i++]==='"')return JSON.parse(text.slice(start,i));}throw Error('Unterminated string.');}
   if(c==='{'||c==='['){i++;const isO=c==='{',out=isO?Object.create(null):[],end=isO?'}':']';ws();if(text[i]===end){i++;return out;}while(true){ws();let k;if(isO){if(text[i]!=='"')throw Error('Expected quoted object key.');k=value(depth+1);if(own(out,k))throw Error('Duplicate object key: '+k);ws();if(text[i++]!==':')throw Error('Expected colon.');}const v=value(depth+1);if(isO)out[k]=v;else out.push(v);ws();if(text[i]===end){i++;return out;}if(text[i++]!==',')throw Error('Expected comma.');}}
   for(const [literal,v] of [['true',true],['false',false],['null',null]])if(text.startsWith(literal,i)){i+=literal.length;return v;}
@@ -21,13 +21,14 @@ export function parseJSON(text){
  const v=value();ws();if(i!==text.length)throw Error('Trailing JSON content near character '+(i+1)+'.');return v;
 }
 function typeOK(t,v){return t==='null'?v===null:t==='object'?obj(v):t==='array'?Array.isArray(v):t==='integer'?typeof v==='number'&&Number.isSafeInteger(v):t==='number'?typeof v==='number'&&Number.isFinite(v):typeof v===t;}
-export function validate(s,v,path=''){
+export function validate(s,v,path='',work={left:20000}){
+ if(--work.left<0)throw Error('Validation exceeds 20,000 value visits; reduce sample size.');
  const out=[];if(!ts(s).some(t=>typeOK(t,v)))return [issue(path,'type','Expected '+ts(s).join(' | ')+'.')];
  if(s.enum&&!s.enum.some(e=>equal(e,v)))out.push(issue(path,'enum','Value is outside the declared enum.'));
  if(v===null)return out;
  if(obj(v)){for(const k of s.required||[])if(!own(v,k))out.push(issue(ptr(path,k),'required','Required property is missing.'));
-  for(const k of Object.keys(v)){if(own(s.properties||{},k))out.push(...validate(s.properties[k],v[k],ptr(path,k)));else if(s.additionalProperties===false)out.push(issue(ptr(path,k),'additionalProperties','Undeclared property is forbidden.'));}}
- if(Array.isArray(v)){if(v.length<(s.minItems??0)||v.length>(s.maxItems??Infinity))out.push(issue(path,'items-range','Array length is outside bounds.'));v.forEach((x,i)=>out.push(...validate(s.items,x,ptr(path,i))));}
+  for(const k of Object.keys(v)){if(own(s.properties||{},k))out.push(...validate(s.properties[k],v[k],ptr(path,k),work));else if(s.additionalProperties===false)out.push(issue(ptr(path,k),'additionalProperties','Undeclared property is forbidden.'));}}
+ if(Array.isArray(v)){if(v.length<(s.minItems??0)||v.length>(s.maxItems??Infinity))out.push(issue(path,'items-range','Array length is outside bounds.'));v.forEach((x,i)=>out.push(...validate(s.items,x,ptr(path,i),work)));}
  if(typeof v==='string'){const n=[...v].length;if(n<(s.minLength??0)||n>(s.maxLength??Infinity))out.push(issue(path,'length','Unicode code-point length is outside bounds.'));}
  if(typeof v==='number'&&(v<(s.minimum??-Infinity)||v>(s.maximum??Infinity)))out.push(issue(path,'range','Number is outside inclusive bounds.'));
  return out;
@@ -96,11 +97,12 @@ export function compare(producer,consumer){const concerns=inclusion(producer.sch
  return {structural:concerns.length?(witness!==undefined?'counterexample':'not-proven'):'proven',concerns,...(witness!==undefined?{witness,witnessChecks:{producer:validate(producer.schema,witness),consumer:validate(consumer.schema,witness)}}:{}),semantic:semantic.length?'review-required':Object.keys(consumer.semantics||{}).length?'declared-match':'not-declared',semanticConcerns:semantic,semanticScope:Object.keys(consumer.semantics||{}).length?'Consumer-declared paths only; declarations are promises, not behavior proof.':'No consumer semantic expectations declared; business compatibility is unknown.'};}
 export function run(oldC,newC,consumers,text){checkContract(oldC);checkContract(newC);if(!Array.isArray(consumers)||!consumers.length||consumers.length>12)throw Error('Provide 1–12 consumers.');const names=new Set();for(const c of consumers){keys(c,['name','contract'],'Consumer');if(typeof c.name!=='string'||!c.name.trim()||c.name.length>100||names.has(c.name))throw Error('Consumers need unique names, at most 100 characters.');names.add(c.name);checkContract(c.contract);}
  if(new TextEncoder().encode(text).length>2_000_000)throw Error('JSONL exceeds 2 MB.');const lines=text.split(/\r?\n/);if(lines.at(-1)==='')lines.pop();if(lines.length>500)throw Error('At most 500 JSONL lines.');if(!text.trim())throw Error('Empty JSONL input is not a successful replay.');
- const errors=[],rows=[];for(let i=0;i<lines.length;i++){let v;try{if(!lines[i].trim())throw Error('Blank JSONL line.');v=parseJSON(lines[i]);}catch(e){errors.push({stage:'parse',line:i+1,path:'',code:'jsonl',message:e.message});rows.push({line:i+1,status:'parse-error'});continue;}
+ let replayNodes=0;const errors=[],rows=[];for(let i=0;i<lines.length;i++){let v;try{if(!lines[i].trim())throw Error('Blank JSONL line.');v=parseJSON(lines[i]);}catch(e){errors.push({stage:'parse',line:i+1,path:'',code:'jsonl',message:e.message});rows.push({line:i+1,status:'parse-error'});continue;}
+  const stack=[v];while(stack.length){if(++replayNodes>50000)throw Error('Replay exceeds 50,000 value nodes; reduce sample size.');const x=stack.pop();if(Array.isArray(x))stack.push(...x);else if(obj(x))stack.push(...Object.values(x));}
   const oldS=validate(oldC.schema,v),newS=validate(newC.schema,v),oldB=semanticErrors(oldC,v),newB=semanticErrors(newC,v);const oldE=[...oldS,...oldB],newE=[...newS,...newB];const key=e=>e.path+'|'+e.code;const oldK=new Set(oldE.map(key)),newK=new Set(newE.map(key));
   const cs=consumers.map(c=>({name:c.name,structural:validate(c.contract.schema,v),semantic:semanticErrors(c.contract,v)}));const status=!oldE.length&&!newE.length?'pass':!oldE.length?'new-failure':!newE.length?'fixed':'still-failing';
   rows.push({line:i+1,status,old:{structural:oldS,semantic:oldB},new:{structural:newS,semantic:newB},introduced:newE.filter(e=>!oldK.has(key(e))),resolved:oldE.filter(e=>!newK.has(key(e))),unchanged:newE.filter(e=>oldK.has(key(e))),consumers:cs});
-  for(const [stage,es] of [['old-structure',oldS],['new-structure',newS],['old-semantic',oldB],['new-semantic',newB],...cs.flatMap(c=>[['consumer:'+c.name+':structure',c.structural],['consumer:'+c.name+':semantic',c.semantic]])])for(const e of es)errors.push({stage,line:i+1,...e});
+  for(const [stage,es] of [['old-structure',oldS],['new-structure',newS],['old-semantic',oldB],['new-semantic',newB],...cs.flatMap(c=>[['consumer:'+c.name+':structure',c.structural],['consumer:'+c.name+':semantic',c.semantic]])])for(const e of es){if(errors.length>=20000)throw Error('Replay exceeds 20,000 diagnostics; reduce sample size.');errors.push({stage,line:i+1,...e});}
  }
  const n=s=>rows.filter(x=>x.status===s).length;return {format:'data-contract-report/1',engine:VERSION,dialect:'dcl/1',generatedAt:new Date().toISOString(),direction:'New producer → existing consumer; structural value-set inclusion within DCL/1, separately declared semantics.',scope:'No producer implementation or consumer integration was executed. Replay covers only supplied sample rows. Imported event values are omitted from report; generated structural witnesses may contain schema enum values.',inputs:{old:oldC,new:newC,consumers},compatibility:consumers.map(c=>({name:c.name,old:compare(oldC,c.contract),new:compare(newC,c.contract)})),producerDirections:{newToOld:compare(newC,oldC),oldToNew:compare(oldC,newC)},summary:{total:rows.length,parsed:rows.length-n('parse-error'),parseErrors:n('parse-error'),pass:n('pass'),newFailures:n('new-failure'),fixed:n('fixed'),stillFailing:n('still-failing'),introducedErrors:rows.reduce((n,r)=>n+(r.introduced?.length||0),0),resolvedErrors:rows.reduce((n,r)=>n+(r.resolved?.length||0),0)},rows,errors};
 }
