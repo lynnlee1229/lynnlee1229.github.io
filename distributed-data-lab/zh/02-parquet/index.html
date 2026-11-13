@@ -1,0 +1,38 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Parquet 物理布局 · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/02-parquet/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/02-parquet/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/02-parquet/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/02-parquet">English</a></nav></div></header><main id="main" class="wrap "><div class="chapter-layout"><aside class="sidebar" aria-label="Chapters"><a href="/distributed-data-lab/zh/01-foundations/">01 名称、字节与元数据权威</a><a href="/distributed-data-lab/zh/02-parquet/" aria-current="page">02 Parquet 物理布局</a><a href="/distributed-data-lab/zh/03-hdfs/">03 HDFS 块与故障恢复</a><a href="/distributed-data-lab/zh/04-storage-engine/">04 WAL、LSM、MVCC 与索引</a><a href="/distributed-data-lab/zh/05-transactions/">05 跨范围分布式事务</a><a href="/distributed-data-lab/zh/06-lakehouse/">06 表快照与分区演进</a></aside><article class="prose"><p class="eyebrow">真实实操</p><h1>02 · Parquet：先理解布局，再调参数</h1>
+<h2>目标与前置</h2>
+<p>完成 01，理解行、列和整数条件。能够解释 Row Group，检查编码与压缩，并测量读取器真正请求了哪些字节。</p>
+<h2>先横向分组，再纵向分列</h2>
+<p>一个 Row Group 包含一组行；组内每个叶子列对应一个 Column Chunk，Chunk 再分为 Page。字典编码把重复值替换为编号，游程编码表示连续重复，压缩再转换已编码的页字节。它们是不同决策。低基数标签适合字典，不代表随机载荷也适合。</p>
+<p>Footer 让读取器不用解码每一行就能定位列块。若某组 id 的整数范围为 [0,4095]，它不可能满足 [32000,33023]。若范围是 [0,131071]，即使实际没有匹配行，也不能只凭这两个界限排除它。统计提供安全排除条件，不直接提供查询答案。</p>
+<p>按键排序会收紧该键的 min/max 区间。小组裁剪更精细，也增加元数据与调度工作；大组可能利于顺序读和压缩，却带入更多无关行。不存在适合所有查询的唯一组大小。</p>
+<h2>数据与可执行代码</h2>
+<p><code>experiments/parquet_layout.py</code> 以种子 9162026 生成 131,072 行。Schema 包含整数 id/value、32 类 bucket 和确定性 SHA256 文本载荷。五个文件对比排序/打乱、每组 4,096/32,768 行目标以及 ZSTD/Snappy。只对 bucket 使用字典编码。查询前，每个文件都完整解码、按 id 排序，并与同一逻辑表逐项比较。</p>
+<pre><code class="language-sh">python lab.py parquet
+python scripts/inspect_parquet.py build/parquet/sorted-4096-zstd.parquet
+</code></pre>
+<p>三种模式返回完全相同且有序的 id/value：全列读取并下推过滤；只读所需列并下推过滤；只读所需列、取消下推，再精确过滤。最后一种是扫描所有组的对照。每种模式保留一次预热和三次交替顺序的正式测量。</p>
+<h2>实际结果与解释</h2>
+<p>证据页保留全部 45 次正式查询。已保存的 4,096 行 ZSTD 文件中，排序布局保留 2/32 个候选组，打乱布局保留 32/32；精确结果为 1,024 行。列选择还会去掉 payload 的请求。报告分开记录候选压缩列块字节估算和引擎实际读取请求；元数据可能重复读取，命中缓存也算请求，这不是物理磁盘或网络计数。</p>
+<p>计时包含读取、解码、精确过滤与结果排序，不包含文件生成和结果验证。这是热缓存笔记本观察。少请求字节不保证小查询一定更快，固定开销和缓存同样影响结果。</p>
+<h2>动手任务</h2>
+<p>把条件改成完全落在一个有序组内，再改成跨组边界；先预测候选数，再运行。把排序键改成 bucket，它还能帮助 id 条件吗？用浏览器检查器打开合成文件，选择列并比较 min/max 条带。检查器的估算不代表已经执行 SQL 查询。</p>
+<h2>自测</h2>
+<p><strong>只选择少数列，仍可能读取过滤列吗？</strong> 会，除非元数据已经解决条件，否则仍需列值。<strong>有压缩就不用裁剪吗？</strong> 不是，跳过块与解压块解决不同成本。<strong>没有统计能否证明排除？</strong> 不能，必须保留为候选。</p>
+<h2>大学课程导读与原创练习</h2>
+<ul>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/06-storage3.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #06 · Storage Models &amp; Compression</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec10.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 10 / 2026-03-10 · OLAP &amp; Column Stores</a></li>
+<li><a href="https://parquet.apache.org/docs/file-format/metadata/">Apache Parquet · File metadata and page headers · Parquet metadata</a></li>
+</ul>
+<p>先预测候选组，再比较真实读取区间；在自己的副本中修改一个过滤边界。</p>
+<pre><code class="language-sh">python lab.py parquet
+</code></pre>
+<p>45 次查询均与源数据 oracle 相同；4096 有序布局候选 2/32，打乱为 32/32。</p>
+<p>以上是原创 Lab 练习，不是大学课程作业答案。公开阅读不等于注册、学分或评分资格；可检索资源库列出先修与核验日期。</p>
+<h2>原始来源</h2>
+<ul>
+<li><a href="https://parquet.apache.org/docs/file-format/data-pages/columnchunks/">Parquet 列块</a></li>
+<li><a href="https://parquet.apache.org/docs/file-format/data-pages/encodings/">Parquet 编码</a></li>
+<li><a href="https://parquet.apache.org/docs/file-format/metadata/">Parquet 元数据</a></li>
+<li><a href="https://arrow.apache.org/docs/20.0/python/generated/pyarrow.parquet.read_table.html">PyArrow 20 读取 API</a></li>
+</ul><div class="pager"><a href="/distributed-data-lab/zh/01-foundations/">← 上一章</a><a href="/distributed-data-lab/zh/03-hdfs/">下一章 →</a></div></article></div></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

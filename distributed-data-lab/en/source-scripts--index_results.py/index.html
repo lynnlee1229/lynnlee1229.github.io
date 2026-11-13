@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>scripts/index_results.py · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--index_results.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--index_results.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--index_results.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/source-scripts--index_results.py">中文</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>scripts/index_results.py</h1><p><a href="/distributed-data-lab/en/source/">← Source index</a></p><pre>#!/usr/bin/env python3
+import hashlib, json
+from pathlib import Path
+
+R = Path(__file__).resolve().parents[1] / &quot;results&quot;
+files = {
+    p.name: {
+        &quot;sha256&quot;: hashlib.sha256(p.read_bytes()).hexdigest(),
+        &quot;bytes&quot;: p.stat().st_size,
+    }
+    for p in (R / (n + &quot;.json&quot;) for n in [&quot;parquet&quot;, &quot;hdfs&quot;, &quot;database&quot;, &quot;iceberg&quot;])
+}
+(R / &quot;index.json&quot;).write_text(
+    json.dumps(
+        {
+            &quot;scope&quot;: &quot;actual synthetic local measurements; sanitized fields only; single host&quot;,
+            &quot;files&quot;: files,
+        },
+        indent=2,
+    )
+)
+</pre></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

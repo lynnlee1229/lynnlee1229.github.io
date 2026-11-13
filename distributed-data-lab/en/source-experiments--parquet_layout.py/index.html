@@ -1,0 +1,220 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>experiments/parquet_layout.py · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-experiments--parquet_layout.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-experiments--parquet_layout.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-experiments--parquet_layout.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/source-experiments--parquet_layout.py">中文</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>experiments/parquet_layout.py</h1><p><a href="/distributed-data-lab/en/source/">← Source index</a></p><pre>&quot;&quot;&quot;Seeded, equal-result Parquet layout experiments; counted engine read requests.&quot;&quot;&quot;
+
+import gc, hashlib, io, json, random, time
+from pathlib import Path
+import pyarrow as pa, pyarrow.parquet as pq, pyarrow.compute as pc
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class CountedFile(io.RawIOBase):
+    def __init__(self, path):
+        self.f = open(path, &quot;rb&quot;)
+        self.reads = []
+
+    def readable(self):
+        return True
+
+    def seekable(self):
+        return True
+
+    def tell(self):
+        return self.f.tell()
+
+    def seek(self, *a):
+        return self.f.seek(*a)
+
+    def read(self, n=-1):
+        offset = self.f.tell()
+        data = self.f.read(n)
+        self.reads.append({&quot;offset&quot;: offset, &quot;bytes&quot;: len(data)})
+        return data
+
+    def readinto(self, b):
+        data = self.read(len(b))
+        b[: len(data)] = data
+        return len(data)
+
+    def close(self):
+        if not self.closed:
+            self.f.close()
+        super().close()
+
+
+def metadata(path, lo=32000, hi=33023):
+    f = pq.ParquetFile(path)
+    groups = []
+    for i in range(f.num_row_groups):
+        r = f.metadata.row_group(i)
+        cols = []
+        for j in range(r.num_columns):
+            c = r.column(j)
+            s = c.statistics
+            cols.append(
+                {
+                    &quot;path&quot;: c.path_in_schema,
+                    &quot;physical_type&quot;: c.physical_type,
+                    &quot;codec&quot;: c.compression,
+                    &quot;encodings&quot;: list(c.encodings),
+                    &quot;compressed_bytes&quot;: c.total_compressed_size,
+                    &quot;uncompressed_bytes&quot;: c.total_uncompressed_size,
+                    &quot;min&quot;: s.min if s and s.has_min_max else None,
+                    &quot;max&quot;: s.max if s and s.has_min_max else None,
+                    &quot;null_count&quot;: s.null_count if s else None,
+                }
+            )
+        key = cols[0]
+        candidate = key[&quot;min&quot;] is None or not (key[&quot;max&quot;] &lt; lo or key[&quot;min&quot;] &gt; hi)
+        groups.append(
+            {&quot;index&quot;: i, &quot;rows&quot;: r.num_rows, &quot;candidate&quot;: candidate, &quot;columns&quot;: cols}
+        )
+    return {
+        &quot;rows&quot;: f.metadata.num_rows,
+        &quot;file_bytes&quot;: path.stat().st_size,
+        &quot;row_groups&quot;: groups,
+        &quot;candidate_groups&quot;: sum(g[&quot;candidate&quot;] for g in groups),
+        &quot;candidate_projected_chunk_bytes&quot;: sum(
+            c[&quot;compressed_bytes&quot;]
+            for g in groups
+            if g[&quot;candidate&quot;]
+            for c in g[&quot;columns&quot;]
+            if c[&quot;path&quot;] in [&quot;id&quot;, &quot;value&quot;]
+        ),
+    }
+
+
+def run(smoke=False, out=None):
+    n = 65536 if smoke else 131072
+    seed = 9162026
+    work = ROOT / &quot;build/parquet&quot;
+    work.mkdir(parents=True, exist_ok=True)
+    base = pa.table(
+        {
+            &quot;id&quot;: pa.array(range(n), type=pa.int64()),
+            &quot;value&quot;: pa.array([(i * 7) % 1009 for i in range(n)], type=pa.int64()),
+            &quot;bucket&quot;: [f&quot;b{i%32:02}&quot; for i in range(n)],
+            &quot;payload&quot;: [
+                hashlib.sha256(f&quot;{seed}:{i}&quot;.encode()).hexdigest() for i in range(n)
+            ],
+        }
+    )
+    ids = list(range(n))
+    random.Random(seed).shuffle(ids)
+    shuffled = base.take(pa.array(ids))
+    lo, hi = 32000, 33023
+    expected = base.filter(
+        pc.and_(pc.greater_equal(base[&quot;id&quot;], lo), pc.less_equal(base[&quot;id&quot;], hi))
+    ).select([&quot;id&quot;, &quot;value&quot;])
+    reports = []
+    variants = [
+        (&quot;shuffled&quot;, 4096, &quot;zstd&quot;),
+        (&quot;sorted&quot;, 4096, &quot;zstd&quot;),
+        (&quot;shuffled&quot;, 32768, &quot;zstd&quot;),
+        (&quot;sorted&quot;, 32768, &quot;zstd&quot;),
+        (&quot;sorted&quot;, 4096, &quot;snappy&quot;),
+    ]
+    for order, rg, codec in variants:
+        path = work / f&quot;{order}-{rg}-{codec}.parquet&quot;
+        pq.write_table(
+            base if order == &quot;sorted&quot; else shuffled,
+            path,
+            row_group_size=rg,
+            compression=codec,
+            use_dictionary=[&quot;bucket&quot;],
+            write_statistics=True,
+        )
+        all_rows = pq.read_table(path).sort_by(&quot;id&quot;)
+        assert all_rows.equals(base), &quot;Logical dataset differs&quot;
+        report = {
+            &quot;name&quot;: path.stem,
+            &quot;row_group_target&quot;: rg,
+            &quot;order&quot;: order,
+            &quot;codec&quot;: codec,
+            &quot;logical_equal&quot;: True,
+            &quot;metadata&quot;: metadata(path),
+            &quot;runs&quot;: [],
+        }
+
+        def query(mode):
+            source = CountedFile(path)
+            with pa.PythonFile(source, mode=&quot;r&quot;) as stream:
+                start = time.perf_counter()
+                table = pq.read_table(
+                    stream,
+                    columns=None if mode == &quot;wide_filter&quot; else [&quot;id&quot;, &quot;value&quot;],
+                    filters=(
+                        None
+                        if mode == &quot;projected_no_pushdown&quot;
+                        else [(&quot;id&quot;, &quot;&gt;=&quot;, lo), (&quot;id&quot;, &quot;&lt;=&quot;, hi)]
+                    ),
+                    use_threads=False,
+                    pre_buffer=False,
+                )
+                if mode == &quot;projected_no_pushdown&quot;:
+                    table = table.filter(
+                        pc.and_(
+                            pc.greater_equal(table[&quot;id&quot;], lo),
+                            pc.less_equal(table[&quot;id&quot;], hi),
+                        )
+                    )
+                result = table.select([&quot;id&quot;, &quot;value&quot;]).sort_by(&quot;id&quot;)
+                elapsed = (time.perf_counter() - start) * 1000
+                assert result.equals(expected), &quot;Query result differs&quot;
+                reads = list(source.reads)
+            return {
+                &quot;mode&quot;: mode,
+                &quot;elapsed_ms&quot;: elapsed,
+                &quot;engine_requested_bytes&quot;: sum(x[&quot;bytes&quot;] for x in reads),
+                &quot;read_calls&quot;: reads,
+                &quot;rows&quot;: result.num_rows,
+                &quot;id_sum&quot;: sum(result[&quot;id&quot;].to_pylist()),
+                &quot;value_sum&quot;: sum(result[&quot;value&quot;].to_pylist()),
+                &quot;equal&quot;: True,
+            }
+
+        modes = [&quot;wide_filter&quot;, &quot;projected_filter&quot;, &quot;projected_no_pushdown&quot;]
+        for mode in modes:
+            query(mode)  # warm-up
+        for rep in range(3):
+            for mode in modes if rep % 2 == 0 else list(reversed(modes)):
+                report[&quot;runs&quot;].append({&quot;repeat&quot;: rep + 1, **query(mode)})
+        reports.append(report)
+    result = {
+        &quot;experiment&quot;: &quot;parquet&quot;,
+        &quot;executed_at&quot;: __import__(&quot;datetime&quot;)
+        .datetime.now(__import__(&quot;datetime&quot;).timezone.utc)
+        .isoformat(),
+        &quot;versions&quot;: {&quot;pyarrow&quot;: pa.__version__},
+        &quot;seed&quot;: seed,
+        &quot;rows&quot;: n,
+        &quot;predicate&quot;: {&quot;column&quot;: &quot;id&quot;, &quot;lower_inclusive&quot;: lo, &quot;upper_inclusive&quot;: hi},
+        &quot;expected&quot;: {
+            &quot;rows&quot;: expected.num_rows,
+            &quot;id_sum&quot;: sum(expected[&quot;id&quot;].to_pylist()),
+            &quot;value_sum&quot;: sum(expected[&quot;value&quot;].to_pylist()),
+        },
+        &quot;method&quot;: &quot;One warm-up per mode, three measured alternating-order repetitions. Engine-requested read bytes are counted at Python file read(), may include overlapping metadata reads and cache hits; not physical disk or network bytes. Candidate chunk bytes are only a footer-based estimate, excluding metadata, page indexes and read coalescing. Timings include read/filter/sort but exclude validation, file generation and process startup. OS cache is not flushed.&quot;,
+        &quot;variants&quot;: reports,
+    }
+    target = Path(out or ROOT / &quot;results/parquet.json&quot;)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(result, indent=2))
+    print(
+        &quot;Parquet:&quot;,
+        n,
+        &quot;rows;&quot;,
+        len(reports) * 9,
+        &quot;equal-result measured runs&quot;,
+        flush=True,
+    )
+
+
+if __name__ == &quot;__main__&quot;:
+    import argparse
+
+    p = argparse.ArgumentParser()
+    p.add_argument(&quot;--smoke&quot;, action=&quot;store_true&quot;)
+    p.add_argument(&quot;--out&quot;)
+    a = p.parse_args()
+    run(a.smoke, a.out)
+</pre></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

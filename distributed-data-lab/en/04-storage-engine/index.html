@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>WAL, LSM, MVCC &amp; indexes · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/04-storage-engine/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/04-storage-engine/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/04-storage-engine/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/04-storage-engine">中文</a></nav></div></header><main id="main" class="wrap "><div class="chapter-layout"><aside class="sidebar" aria-label="Chapters"><a href="/distributed-data-lab/en/01-foundations/">01 Names, bytes & authority</a><a href="/distributed-data-lab/en/02-parquet/">02 Parquet physical layout</a><a href="/distributed-data-lab/en/03-hdfs/">03 HDFS blocks & recovery</a><a href="/distributed-data-lab/en/04-storage-engine/" aria-current="page">04 WAL, LSM, MVCC & indexes</a><a href="/distributed-data-lab/en/05-transactions/">05 Cross-range transactions</a><a href="/distributed-data-lab/en/06-lakehouse/">06 Snapshots & evolution</a></aside><article class="prose"><p class="eyebrow">Reading / reasoning</p><h1>04 · WAL, LSM, MVCC and the cost of an index</h1>
+<h2>Goal and prerequisites</h2>
+<p>Complete 01–03. Know primary keys and transactions. Separate recovery, layout, version visibility and distributed agreement. This chapter is a reading / reasoning bridge; it does not claim to measure compaction or crash recovery.</p>
+<h2>Four mechanisms, four questions</h2>
+<p>A write-ahead log records changes before their durable application to other structures. It supports recovery, subject to the actual sync policy and failure model. An LSM engine collects writes in memory, flushes sorted tables and compacts them later. Moving work from immediate updates to background merging trades write, read and space amplification. “Sequential writes” does not make every LSM workload cheap.</p>
+<p>MVCC keeps multiple versions so readers can choose a consistent visibility point. Old versions need retention and reclamation rules. A snapshot protects a view; it does not mean every concurrent read-modify-write sequence can commit safely. Serializable execution requires additional conflict control.</p>
+<p>Replication agreement addresses copies on different nodes. Raft log entries and an engine WAL have different roles, even when both are logs. A majority acknowledging a command and a transaction deciding all participant updates form different protocol layers. Neither is equivalent to putting a file in HDFS.</p>
+<h2>Index keys become placement keys</h2>
+<p>A row's primary index stores its encoded key/value representation. A secondary index introduces more keys, often elsewhere in the sorted keyspace, so one logical row update can touch more than one range. A range is a contiguous key interval; each range can be replicated. A leaseholder serves particular request responsibilities while replicas maintain the range. More ranges do not create unlimited independent capacity: a single hot key still belongs to one range at a time.</p>
+<p>The next experiment uses a real CockroachDB 24.1.24 baseline with Pebble, MVCC and replicated ranges. The preserved evidence checks range placement and transaction outcomes; it does not inspect Pebble SSTables or prove fsync behavior.</p>
+<h2>Data and code</h2>
+<p>Read the accounts table in <code>experiments/distributed_transactions.py</code>. Three primary keys intentionally fall into separate intervals split at 1000 and 2000. Only three account rows are needed to test transaction correctness; a large dataset would obscure the schedule.</p>
+<pre><code class="language-sql">CREATE TABLE accounts (
+  id INT PRIMARY KEY,
+  balance INT NOT NULL CHECK (balance &gt;= 0)
+);
+ALTER TABLE accounts SPLIT AT VALUES (1000), (2000);
+SHOW RANGES FROM TABLE accounts WITH DETAILS;
+</code></pre>
+<h2>Hands-on task and expected result</h2>
+<p>Sketch an index entry for a primary key and a hypothetical secondary index on balance. List what changes during a transfer. Then distinguish these statements: “the row is durable locally”, “the range replicated its command”, “the transaction committed”, “a snapshot can observe the new version”. They need separate evidence. This is a paper exercise; the only measured claims are linked from chapter 05.</p>
+<h2>Self-check</h2>
+<p><strong>Does MVCC eliminate write conflicts?</strong> No. <strong>Does adding a secondary index have zero write cost?</strong> No; extra keys and coordination may be required. <strong>Can compaction delete every older version immediately?</strong> No; active readers and retention rules may need them. <strong>Can a range split alone solve one hot key?</strong> No; the key's traffic remains concentrated.</p>
+<h2>Guided university reading and original exercise</h2>
+<ul>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/05-storage2.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #05 · Database Storage II</a></li>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/20-multiversioning.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #20 · Multi-Version Concurrency Control</a></li>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/21-logging.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #21 · Database Logging</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec12.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 12 / 2026-03-19 · Optimistic Concurrency Control, Snapshot Isolation</a></li>
+</ul>
+<p>Read the primary-index path in the executed plan and the version/conflict schedule. Separately list what would be needed to test WAL durability or LSM compaction.</p>
+<pre><code class="language-sh">python scripts/bootstrap.py database
+python lab.py database
+</code></pre>
+<p>Plan identifies accounts_pkey; observed serializable conflict is not a WAL fsync or compaction measurement. Those remain reading-only.</p>
+<p>These are original Lab exercises, not the universities’ assignment solutions. Public reading access does not grant enrollment, credit or grading. See the searchable resource library for prerequisites and verification dates.</p>
+<h2>Original sources</h2>
+<ul>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/architecture/storage-layer">CockroachDB storage layer</a></li>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/architecture/replication-layer">CockroachDB replication layer</a></li>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/architecture/transaction-layer">CockroachDB transaction layer</a></li>
+<li><a href="https://github.com/cockroachdb/pebble">Pebble project and documentation</a></li>
+</ul><div class="pager"><a href="/distributed-data-lab/en/03-hdfs/">← Previous</a><a href="/distributed-data-lab/en/05-transactions/">Next →</a></div></article></div></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

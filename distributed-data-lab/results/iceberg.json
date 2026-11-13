@@ -1,0 +1,553 @@
+{
+  "experiment": "iceberg",
+  "executed_at": "2026-11-13T18:15:19.067610+00:00",
+  "versions": {
+    "pyiceberg": "0.10.0",
+    "pyarrow": "20.0.0",
+    "sqlalchemy": "2.0.44",
+    "sqlite": "3.40.1"
+  },
+  "table_format_version": 2,
+  "data_source": "six enumerated synthetic records and one explicitly uncommitted synthetic counterexample; no personal data",
+  "scope": "single-process local SQLite catalog and filesystem; not a distributed catalog, cloud, SQL-engine interoperability, concurrency or AI-quality benchmark",
+  "snapshots": [
+    {
+      "label": "base",
+      "snapshot_id": "1980164865517987357",
+      "parent_snapshot_id": null,
+      "schema_id": 0,
+      "rows": 3,
+      "manifest_list": "warehouse/lab/corpus/metadata/snap-1980164865517987357-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.avro",
+      "files": [
+        {
+          "path": "warehouse/lab/corpus/data/00000-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.parquet",
+          "spec_id": 0,
+          "record_count": 3,
+          "file_bytes": 1366
+        }
+      ],
+      "summary": {
+        "operation": "append",
+        "added-files-size": "1366",
+        "added-data-files": "1",
+        "added-records": "3",
+        "total-data-files": "1",
+        "total-delete-files": "0",
+        "total-records": "3",
+        "total-files-size": "1366",
+        "total-position-deletes": "0",
+        "total-equality-deletes": "0"
+      }
+    },
+    {
+      "label": "second_append",
+      "snapshot_id": "4663819770401274774",
+      "parent_snapshot_id": "1980164865517987357",
+      "schema_id": 0,
+      "rows": 5,
+      "manifest_list": "warehouse/lab/corpus/metadata/snap-4663819770401274774-0-702100f5-4887-4cde-b723-821c0d698496.avro",
+      "files": [
+        {
+          "path": "warehouse/lab/corpus/data/00000-0-702100f5-4887-4cde-b723-821c0d698496.parquet",
+          "spec_id": 0,
+          "record_count": 2,
+          "file_bytes": 1361
+        },
+        {
+          "path": "warehouse/lab/corpus/data/00000-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.parquet",
+          "spec_id": 0,
+          "record_count": 3,
+          "file_bytes": 1366
+        }
+      ],
+      "summary": {
+        "operation": "append",
+        "added-files-size": "1361",
+        "added-data-files": "1",
+        "added-records": "2",
+        "total-data-files": "2",
+        "total-delete-files": "0",
+        "total-records": "5",
+        "total-files-size": "2727",
+        "total-position-deletes": "0",
+        "total-equality-deletes": "0"
+      }
+    },
+    {
+      "label": "evolved_append",
+      "snapshot_id": "6009185341738630540",
+      "parent_snapshot_id": "4663819770401274774",
+      "schema_id": 1,
+      "rows": 6,
+      "manifest_list": "warehouse/lab/corpus/metadata/snap-6009185341738630540-0-f78d002a-ff4e-4e78-9401-a8f552a0d7b7.avro",
+      "files": [
+        {
+          "path": "warehouse/lab/corpus/data/00000-0-702100f5-4887-4cde-b723-821c0d698496.parquet",
+          "spec_id": 0,
+          "record_count": 2,
+          "file_bytes": 1361
+        },
+        {
+          "path": "warehouse/lab/corpus/data/00000-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.parquet",
+          "spec_id": 0,
+          "record_count": 3,
+          "file_bytes": 1366
+        },
+        {
+          "path": "warehouse/lab/corpus/data/topic=storage/00000-0-f78d002a-ff4e-4e78-9401-a8f552a0d7b7.parquet",
+          "spec_id": 1,
+          "record_count": 1,
+          "file_bytes": 1649
+        }
+      ],
+      "summary": {
+        "operation": "append",
+        "added-files-size": "1649",
+        "added-data-files": "1",
+        "added-records": "1",
+        "changed-partition-count": "1",
+        "total-data-files": "3",
+        "total-delete-files": "0",
+        "total-records": "6",
+        "total-files-size": "4376",
+        "total-position-deletes": "0",
+        "total-equality-deletes": "0"
+      }
+    }
+  ],
+  "schema_evolution": {
+    "before_schema_id": 0,
+    "after_schema_id": 1,
+    "before_fields": [
+      {
+        "id": 1,
+        "name": "id",
+        "type": "long",
+        "required": true
+      },
+      {
+        "id": 2,
+        "name": "category",
+        "type": "string",
+        "required": false
+      },
+      {
+        "id": 3,
+        "name": "text",
+        "type": "string",
+        "required": false
+      }
+    ],
+    "after_fields": [
+      {
+        "id": 1,
+        "name": "id",
+        "type": "long",
+        "required": true
+      },
+      {
+        "id": 2,
+        "name": "topic",
+        "type": "string",
+        "required": false
+      },
+      {
+        "id": 3,
+        "name": "text",
+        "type": "string",
+        "required": false
+      },
+      {
+        "id": 4,
+        "name": "quality",
+        "type": "int",
+        "required": false
+      }
+    ],
+    "data_snapshot_unchanged_during_schema_commit": true,
+    "data_snapshot_id_before": "4663819770401274774",
+    "data_snapshot_id_after": "4663819770401274774",
+    "current_projection_after_schema": [
+      {
+        "id": 1,
+        "topic": "storage",
+        "text": "column chunk",
+        "quality": null
+      },
+      {
+        "id": 2,
+        "topic": "database",
+        "text": "serializable",
+        "quality": null
+      },
+      {
+        "id": 3,
+        "topic": "storage",
+        "text": "replica block",
+        "quality": null
+      },
+      {
+        "id": 4,
+        "topic": "database",
+        "text": "index range",
+        "quality": null
+      },
+      {
+        "id": 5,
+        "topic": "lakehouse",
+        "text": "snapshot manifest",
+        "quality": null
+      }
+    ],
+    "explicit_snapshot_projection_after_schema": [
+      {
+        "id": 1,
+        "category": "storage",
+        "text": "column chunk"
+      },
+      {
+        "id": 2,
+        "category": "database",
+        "text": "serializable"
+      },
+      {
+        "id": 3,
+        "category": "storage",
+        "text": "replica block"
+      },
+      {
+        "id": 4,
+        "category": "database",
+        "text": "index range"
+      },
+      {
+        "id": 5,
+        "category": "lakehouse",
+        "text": "snapshot manifest"
+      }
+    ],
+    "note": "PyIceberg 0.10.0 scan() uses current table schema; scan(snapshot_id=...) uses the stored snapshot schema. A schema-only metadata commit does not itself create a new data snapshot."
+  },
+  "partition_evolution": {
+    "old_spec_id": 0,
+    "new_spec_id": 1,
+    "current_file_spec_ids": [
+      0,
+      1
+    ],
+    "files": [
+      {
+        "path": "warehouse/lab/corpus/data/00000-0-702100f5-4887-4cde-b723-821c0d698496.parquet",
+        "spec_id": 0,
+        "record_count": 2,
+        "file_bytes": 1361
+      },
+      {
+        "path": "warehouse/lab/corpus/data/00000-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.parquet",
+        "spec_id": 0,
+        "record_count": 3,
+        "file_bytes": 1366
+      },
+      {
+        "path": "warehouse/lab/corpus/data/topic=storage/00000-0-f78d002a-ff4e-4e78-9401-a8f552a0d7b7.parquet",
+        "spec_id": 1,
+        "record_count": 1,
+        "file_bytes": 1649
+      }
+    ],
+    "filtered_storage_rows": [
+      {
+        "id": 1,
+        "topic": "storage",
+        "text": "column chunk",
+        "quality": null
+      },
+      {
+        "id": 3,
+        "topic": "storage",
+        "text": "replica block",
+        "quality": null
+      },
+      {
+        "id": 6,
+        "topic": "storage",
+        "text": "immutable files",
+        "quality": 9
+      }
+    ],
+    "filtered_plan_files": [
+      {
+        "path": "warehouse/lab/corpus/data/00000-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.parquet",
+        "spec_id": 0,
+        "record_count": 3,
+        "file_bytes": 1366
+      },
+      {
+        "path": "warehouse/lab/corpus/data/topic=storage/00000-0-f78d002a-ff4e-4e78-9401-a8f552a0d7b7.parquet",
+        "spec_id": 1,
+        "record_count": 1,
+        "file_bytes": 1649
+      }
+    ],
+    "note": "Old spec-0 files remain candidates where partition metadata cannot reject them; a true row predicate is still applied. File plans are not physical I/O counters."
+  },
+  "time_travel": {
+    "base_rows_after_later_commits": [
+      {
+        "id": 1,
+        "category": "storage",
+        "text": "column chunk"
+      },
+      {
+        "id": 2,
+        "category": "database",
+        "text": "serializable"
+      },
+      {
+        "id": 3,
+        "category": "storage",
+        "text": "replica block"
+      }
+    ],
+    "second_rows_after_later_commits": [
+      {
+        "id": 1,
+        "category": "storage",
+        "text": "column chunk"
+      },
+      {
+        "id": 2,
+        "category": "database",
+        "text": "serializable"
+      },
+      {
+        "id": 3,
+        "category": "storage",
+        "text": "replica block"
+      },
+      {
+        "id": 4,
+        "category": "database",
+        "text": "index range"
+      },
+      {
+        "id": 5,
+        "category": "lakehouse",
+        "text": "snapshot manifest"
+      }
+    ],
+    "current_rows": [
+      {
+        "id": 1,
+        "topic": "storage",
+        "text": "column chunk",
+        "quality": null
+      },
+      {
+        "id": 2,
+        "topic": "database",
+        "text": "serializable",
+        "quality": null
+      },
+      {
+        "id": 3,
+        "topic": "storage",
+        "text": "replica block",
+        "quality": null
+      },
+      {
+        "id": 4,
+        "topic": "database",
+        "text": "index range",
+        "quality": null
+      },
+      {
+        "id": 5,
+        "topic": "lakehouse",
+        "text": "snapshot manifest",
+        "quality": null
+      },
+      {
+        "id": 6,
+        "topic": "storage",
+        "text": "immutable files",
+        "quality": 9
+      }
+    ],
+    "base_logical_sha256_before": "275951cdeda48d3f4e02259af0270a02e6cdcd00287f765ec206ae6c6a9f6c7f",
+    "base_logical_sha256_after": "275951cdeda48d3f4e02259af0270a02e6cdcd00287f765ec206ae6c6a9f6c7f",
+    "current_logical_sha256": "182f9970809d4f0f6d94e4fe2caaa483697993fb8f618f70972d4c4d5e52f817",
+    "hash_definition": "SHA256 of JSON rows sorted by id, object keys sorted, compact UTF-8, schema column names retained"
+  },
+  "counterexample": {
+    "valid_uncommitted_file": "warehouse/lab/corpus/data/uncommitted-example.parquet",
+    "uncommitted_row_id": 999,
+    "committed_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "naive_directory_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      999
+    ],
+    "uncommitted_file_excluded_by_table_scan": true,
+    "note": "The extra file is valid Parquet, but no committed Iceberg manifest references it. Directory globbing is not a committed table read. No file or snapshot is removed."
+  },
+  "metadata_validation": {
+    "current_metadata_file": "warehouse/lab/corpus/metadata/00005-74e27f51-d39c-45c2-bcdd-7ec192eea5b1.metadata.json",
+    "metadata_sha256": "58f01482c780edcb6de2f6b1aab8e80bd4bf7181a262670486cdb51a5e660895",
+    "first_metadata_file": "warehouse/lab/corpus/metadata/00001-42cceaba-a5a3-48a6-8976-c0eb9bb5783c.metadata.json",
+    "current_snapshot_id": "6009185341738630540",
+    "schema_count": 2,
+    "partition_spec_count": 2,
+    "catalog_reopened": true,
+    "schemas": [
+      {
+        "schema_id": 0,
+        "fields": [
+          {
+            "id": 1,
+            "name": "id",
+            "type": "long",
+            "required": true
+          },
+          {
+            "id": 2,
+            "name": "category",
+            "type": "string",
+            "required": false
+          },
+          {
+            "id": 3,
+            "name": "text",
+            "type": "string",
+            "required": false
+          }
+        ]
+      },
+      {
+        "schema_id": 1,
+        "fields": [
+          {
+            "id": 1,
+            "name": "id",
+            "type": "long",
+            "required": true
+          },
+          {
+            "id": 2,
+            "name": "topic",
+            "type": "string",
+            "required": false
+          },
+          {
+            "id": 3,
+            "name": "text",
+            "type": "string",
+            "required": false
+          },
+          {
+            "id": 4,
+            "name": "quality",
+            "type": "int",
+            "required": false
+          }
+        ]
+      }
+    ],
+    "partition_specs": [
+      {
+        "spec-id": 0,
+        "fields": []
+      },
+      {
+        "spec-id": 1,
+        "fields": [
+          {
+            "source-id": 2,
+            "field-id": 1000,
+            "transform": "identity",
+            "name": "topic"
+          }
+        ]
+      }
+    ],
+    "original_data_file_hashes_before": {
+      "warehouse/lab/corpus/data/00000-0-702100f5-4887-4cde-b723-821c0d698496.parquet": "edbd42d3cb92967854a450ca092bef27a5cff922197a0580c585125589a257d0",
+      "warehouse/lab/corpus/data/00000-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.parquet": "80849e6d007ecb813e22a02e59f217e9f854343aad4d823424e15cefe71cf6cf"
+    },
+    "original_data_file_hashes_after": {
+      "warehouse/lab/corpus/data/00000-0-702100f5-4887-4cde-b723-821c0d698496.parquet": "edbd42d3cb92967854a450ca092bef27a5cff922197a0580c585125589a257d0",
+      "warehouse/lab/corpus/data/00000-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.parquet": "80849e6d007ecb813e22a02e59f217e9f854343aad4d823424e15cefe71cf6cf"
+    },
+    "old_data_files_unchanged": true,
+    "physical_file_schemas": [
+      {
+        "path": "warehouse/lab/corpus/data/00000-0-702100f5-4887-4cde-b723-821c0d698496.parquet",
+        "fields": [
+          {
+            "name": "id",
+            "field_id": "1"
+          },
+          {
+            "name": "category",
+            "field_id": "2"
+          },
+          {
+            "name": "text",
+            "field_id": "3"
+          }
+        ]
+      },
+      {
+        "path": "warehouse/lab/corpus/data/00000-0-93c59b8e-ee24-45d9-a292-d8e93af8c783.parquet",
+        "fields": [
+          {
+            "name": "id",
+            "field_id": "1"
+          },
+          {
+            "name": "category",
+            "field_id": "2"
+          },
+          {
+            "name": "text",
+            "field_id": "3"
+          }
+        ]
+      },
+      {
+        "path": "warehouse/lab/corpus/data/topic=storage/00000-0-f78d002a-ff4e-4e78-9401-a8f552a0d7b7.parquet",
+        "fields": [
+          {
+            "name": "id",
+            "field_id": "1"
+          },
+          {
+            "name": "topic",
+            "field_id": "2"
+          },
+          {
+            "name": "text",
+            "field_id": "3"
+          },
+          {
+            "name": "quality",
+            "field_id": "4"
+          }
+        ]
+      }
+    ]
+  },
+  "local_artifact_directory": "build/iceberg/20261113T181518Z-306b08de61",
+  "all_oracles_passed": true
+}

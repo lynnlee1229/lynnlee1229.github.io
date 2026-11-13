@@ -1,0 +1,291 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>experiments/distributed_transactions.py · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-experiments--distributed_transactions.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-experiments--distributed_transactions.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-experiments--distributed_transactions.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/source-experiments--distributed_transactions.py">English</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>experiments/distributed_transactions.py</h1><p><a href="/distributed-data-lab/zh/source/">← 代码目录</a></p><pre>&quot;&quot;&quot;Three actual CockroachDB nodes: cross-range transfer and write-skew conflict.&quot;&quot;&quot;
+
+import concurrent.futures, datetime, json, os, platform, re, shutil, socket, subprocess, time, urllib.request
+from pathlib import Path
+import psycopg2, psycopg2.extras
+
+ROOT = Path(__file__).resolve().parents[1]
+SQL = [19300, 19301, 19302]
+HTTP = [19400, 19401, 19402]
+
+
+def run(out=None):
+    candidates = list((ROOT / &quot;build/vendor&quot;).glob(&quot;cockroach-v24.1.24.*/cockroach&quot;))
+    assert candidates, &quot;Run bootstrap.py database first&quot;
+    binary = candidates[0]
+    work = ROOT / &quot;build/database&quot;
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+    procs = []
+    handles = []
+    for port in SQL + HTTP:
+        with socket.socket() as s:
+            s.bind((&quot;127.0.0.1&quot;, port))
+
+    def connect(i=0):
+        c = psycopg2.connect(
+            host=&quot;127.0.0.1&quot;,
+            port=SQL[i],
+            user=&quot;root&quot;,
+            dbname=&quot;defaultdb&quot;,
+            sslmode=&quot;disable&quot;,
+            connect_timeout=3,
+            application_name=&quot;distributed-data-lab&quot;,
+        )
+        c.autocommit = True
+        return c
+
+    def query(c, sql, args=None):
+        with c.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, args)
+            return [dict(x) for x in cur.fetchall()] if cur.description else []
+
+    def wait(fn, seconds=90):
+        end = time.monotonic() + seconds
+        while time.monotonic() &lt; end:
+            try:
+                val = fn()
+                if val:
+                    return val
+            except (OSError, psycopg2.Error):
+                pass
+            time.sleep(1)
+        raise RuntimeError(&quot;Database readiness timeout&quot;)
+
+    env = {
+        **os.environ,
+        &quot;COCKROACH_SKIP_ENABLING_DIAGNOSTIC_REPORTING&quot;: &quot;true&quot;,
+        &quot;COCKROACH_CRASH_REPORTS&quot;: &quot;&quot;,
+        &quot;COCKROACH_AUTO_BALLAST&quot;: &quot;false&quot;,
+    }
+    try:
+        for i in range(3):
+            h = open(work / f&quot;node{i}.log&quot;, &quot;wb&quot;)
+            handles.append(h)
+            args = [
+                str(binary),
+                &quot;start&quot;,
+                &quot;--insecure&quot;,
+                f&quot;--listen-addr=127.0.0.1:{SQL[i]}&quot;,
+                f&quot;--http-addr=127.0.0.1:{HTTP[i]}&quot;,
+                f&#x27;--store={work/f&quot;node{i}&quot;},ballast-size=0&#x27;,
+                &quot;--join=&quot; + &quot;,&quot;.join(f&quot;127.0.0.1:{p}&quot; for p in SQL),
+                &quot;--cache=64MiB&quot;,
+                &quot;--max-sql-memory=64MiB&quot;,
+                &quot;--locality=labnode=&quot; + str(i + 1),
+            ]
+            procs.append(subprocess.Popen(args, env=env, stdout=h, stderr=h))
+        time.sleep(3)
+        subprocess.run(
+            [str(binary), &quot;init&quot;, &quot;--insecure&quot;, &quot;--host=127.0.0.1:19300&quot;],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+            timeout=60,
+        )
+        c = wait(lambda: connect())
+        query(c, &quot;SET CLUSTER SETTING diagnostics.reporting.enabled = false&quot;)
+        query(c, &quot;SET CLUSTER SETTING diagnostics.reporting.send_crash_reports = false&quot;)
+        version = query(c, &quot;SELECT version() AS version&quot;)[0][&quot;version&quot;]
+        query(
+            c,
+            &quot;CREATE TABLE accounts (id INT PRIMARY KEY, balance INT NOT NULL CHECK(balance&gt;=0))&quot;,
+        )
+        query(c, &quot;INSERT INTO accounts VALUES (1,100),(1001,100),(2001,100)&quot;)
+        query(c, &quot;ALTER TABLE accounts SPLIT AT VALUES (1000),(2000)&quot;)
+        ranges = wait(
+            lambda: (
+                r
+                if len(r := query(c, &quot;SHOW RANGES FROM TABLE accounts WITH DETAILS&quot;))
+                &gt;= 3
+                and all(len(x[&quot;replicas&quot;]) == 3 for x in r)
+                else False
+            ),
+            120,
+        )
+        # Explicitly move leases, then verify instead of inferring placement from process count.
+        for i, r in enumerate(sorted(ranges, key=lambda x: x[&quot;range_id&quot;])):
+            query(c, f&quot;ALTER RANGE {r[&#x27;range_id&#x27;]} RELOCATE LEASE TO {i%3+1}&quot;)
+        ranges = query(c, &quot;SHOW RANGES FROM TABLE accounts WITH DETAILS&quot;)
+        assert len(set(r[&quot;lease_holder&quot;] for r in ranges)) &gt;= 2
+        nodes = query(
+            c,
+            &quot;SELECT node_id, address FROM crdb_internal.gossip_nodes ORDER BY node_id&quot;,
+        )
+        assert len(nodes) == 3
+
+        def metrics():
+            out = []
+            for i, port in enumerate(HTTP):
+                text = (
+                    urllib.request.urlopen(
+                        f&quot;http://127.0.0.1:{port}/_status/vars&quot;, timeout=5
+                    )
+                    .read()
+                    .decode()
+                )
+                vals = {}
+                for line in text.splitlines():
+                    if line.startswith(&quot;#&quot;):
+                        continue
+                    name = line.split(&quot; &quot;)[0].split(&quot;{&quot;)[0]
+                    if re.fullmatch(
+                        r&quot;(sql_txn_(commit|abort|begin)_count|txn_restarts_serializable|txn_restarts_writetooold|txn_commits|txn_aborts)&quot;,
+                        name,
+                    ):
+                        try:
+                            vals[name] = float(line.split()[-1])
+                        except ValueError:
+                            pass
+                out.append({&quot;http_port&quot;: port, &quot;counters&quot;: vals})
+            return out
+
+        before_metrics = metrics()
+        query(c, &quot;SET tracing=on,kv&quot;)
+        query(c, &quot;BEGIN&quot;)
+        query(c, &quot;UPDATE accounts SET balance=balance-7 WHERE id=1&quot;)
+        query(c, &quot;UPDATE accounts SET balance=balance+7 WHERE id=1001&quot;)
+        query(c, &quot;COMMIT&quot;)
+        query(c, &quot;SET tracing=off&quot;)
+        trace = query(c, &quot;SHOW KV TRACE FOR SESSION&quot;)
+        events = []
+        for row in trace:
+            message = str(row.get(&quot;message&quot;, &quot;&quot;))
+            if any(
+                s in message
+                for s in [&quot;Put &quot;, &quot;CPut &quot;, &quot;Get &quot;, &quot;EndTxn&quot;, &quot;r&quot;, &quot;sending batch&quot;]
+            ):
+                events.append(
+                    {
+                        k: str(v)
+                        for k, v in row.items()
+                        if k in [&quot;message&quot;, &quot;operation&quot;, &quot;age&quot;, &quot;location&quot;]
+                    }
+                )
+        transferred = query(c, &quot;SELECT * FROM accounts ORDER BY id&quot;)
+        assert [r[&quot;balance&quot;] for r in transferred] == [93, 107, 100]
+        # A classic write-skew schedule: both read the same total, then write disjoint keys.
+        # A result delivered to each client prevents silent replay across its earlier read.
+        a, b = connect(0), connect(1)
+        query(a, &quot;BEGIN ISOLATION LEVEL SERIALIZABLE&quot;)
+        query(b, &quot;BEGIN ISOLATION LEVEL SERIALIZABLE&quot;)
+        reads = [
+            query(x, &quot;SELECT SUM(balance)::INT AS total FROM accounts&quot;)[0][&quot;total&quot;]
+            for x in (a, b)
+        ]
+        assert reads == [300, 300]
+        query(a, &quot;UPDATE accounts SET balance=balance-80 WHERE id=1&quot;)
+        query(b, &quot;UPDATE accounts SET balance=balance-80 WHERE id=1001&quot;)
+
+        def commit(label, conn):
+            start = time.perf_counter()
+            try:
+                query(conn, &quot;COMMIT&quot;)
+                return {
+                    &quot;client&quot;: label,
+                    &quot;status&quot;: &quot;committed&quot;,
+                    &quot;sqlstate&quot;: &quot;00000&quot;,
+                    &quot;elapsed_ms&quot;: (time.perf_counter() - start) * 1000,
+                }
+            except psycopg2.Error as e:
+
+                try:
+                    query(conn, &quot;ROLLBACK&quot;)
+                except psycopg2.Error as rollback_error:
+                    if rollback_error.pgcode != &quot;25P01&quot;:
+                        raise
+                return {
+                    &quot;client&quot;: label,
+                    &quot;status&quot;: &quot;retry_required&quot;,
+                    &quot;sqlstate&quot;: e.pgcode,
+                    &quot;message&quot;: e.diag.message_primary,
+                    &quot;elapsed_ms&quot;: (time.perf_counter() - start) * 1000,
+                }
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(lambda pair: commit(*pair), [(&quot;A&quot;, a), (&quot;B&quot;, b)]))
+        a.close()
+        b.close()
+        assert sum(x[&quot;status&quot;] == &quot;committed&quot; for x in outcomes) == 1 and any(
+            x[&quot;sqlstate&quot;] == &quot;40001&quot; for x in outcomes
+        ), outcomes
+        after_conflict = query(c, &quot;SELECT * FROM accounts ORDER BY id&quot;)
+        assert sum(x[&quot;balance&quot;] for x in after_conflict) == 220
+        # Retry the entire failed business transaction against fresh state: total-80&lt;220, so decline.
+        retry_read = query(c, &quot;SELECT SUM(balance)::INT AS total FROM accounts&quot;)[0][
+            &quot;total&quot;
+        ]
+        retry = {
+            &quot;fresh_total&quot;: retry_read,
+            &quot;minimum_total&quot;: 220,
+            &quot;withdrawal&quot;: 80,
+            &quot;decision&quot;: &quot;declined&quot; if retry_read - 80 &lt; 220 else &quot;allowed&quot;,
+        }
+        assert retry[&quot;decision&quot;] == &quot;declined&quot;
+        plan = query(c, &quot;EXPLAIN ANALYZE SELECT SUM(balance) FROM accounts&quot;)
+        plan_lines = [str(next(iter(x.values()))) for x in plan]
+        plan_lines = [s for s in plan_lines if &quot;http&quot; not in s]
+        after_metrics = metrics()
+        final = query(c, &quot;SELECT * FROM accounts ORDER BY id&quot;)
+        c.close()
+        result = {
+            &quot;experiment&quot;: &quot;database&quot;,
+            &quot;executed_at&quot;: datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            &quot;version&quot;: version,
+            &quot;topology&quot;: {
+                &quot;nodes&quot;: nodes,
+                &quot;replicas_per_range&quot;: 3,
+                &quot;single_host&quot;: True,
+                &quot;bind&quot;: &quot;127.0.0.1&quot;,
+                &quot;each_node_cache_mib&quot;: 64,
+                &quot;each_node_sql_mib&quot;: 64,
+            },
+            &quot;ranges&quot;: ranges,
+            &quot;transfer&quot;: {
+                &quot;before&quot;: [100, 100, 100],
+                &quot;after&quot;: transferred,
+                &quot;amount&quot;: 7,
+                &quot;sum&quot;: 300,
+                &quot;kv_trace&quot;: events,
+            },
+            &quot;conflict&quot;: {
+                &quot;schedule&quot;: &quot;Both SERIALIZABLE transactions read total=300; A subtracts 80 at id=1, B at id=1001; commits concurrently. Business rule: remaining total &gt;=220.&quot;,
+                &quot;read_totals&quot;: reads,
+                &quot;outcomes&quot;: outcomes,
+                &quot;after&quot;: after_conflict,
+                &quot;retry&quot;: retry,
+                &quot;final&quot;: final,
+            },
+            &quot;plan&quot;: plan_lines,
+            &quot;metrics_before&quot;: before_metrics,
+            &quot;metrics_after&quot;: after_metrics,
+            &quot;method&quot;: &quot;Real three-process cluster, replicated ranges and verified distinct leaseholders. A cross-range transfer commits two updates atomically; a separate write-skew schedule on distinct keys produces a real 40001 error without fault injection. Timing is diagnostic only. No network partition, node-failure, multi-host scaling, production capacity or disk durability validation. Binary is a pinned non-production teaching baseline; no paid feature or cloud account used.&quot;,
+        }
+        Path(out or ROOT / &quot;results/database.json&quot;).write_text(
+            json.dumps(result, indent=2, default=str)
+        )
+        print(
+            &quot;Database: 3 nodes, leases on&quot;,
+            sorted(set(r[&quot;lease_holder&quot;] for r in ranges)),
+            &quot;cross-range transfer and 40001 verified&quot;,
+            flush=True,
+        )
+    finally:
+        for p in reversed(procs):
+            if p.poll() is None:
+                p.terminate()
+        for p in reversed(procs):
+            try:
+                p.wait(timeout=25)
+            except subprocess.TimeoutExpired:
+                p.kill()
+                p.wait()
+        for h in handles:
+            h.close()
+
+
+if __name__ == &quot;__main__&quot;:
+    run()
+</pre></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

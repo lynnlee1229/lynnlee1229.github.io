@@ -1,0 +1,21 @@
+{
+  "scope": "actual synthetic local measurements; sanitized fields only; single host",
+  "files": {
+    "parquet.json": {
+      "sha256": "a158319623ae1c3513caf572dd7f56d9a4d75263353e01abea1391791a520936",
+      "bytes": 353261
+    },
+    "hdfs.json": {
+      "sha256": "257d6850cdaf761bd085da28f0ca69fe6c617928c6e9216f8d7efd6c6fe84378",
+      "bytes": 18448
+    },
+    "database.json": {
+      "sha256": "88b9251fb3f7c35a67fed28c48eb73f76b461ca59f16a22dcfaa0a675b01adac",
+      "bytes": 13242
+    },
+    "iceberg.json": {
+      "sha256": "63e68cdacd97e703b417763a5337570c972b5c0039ee94e481fb8a37ea850b63",
+      "bytes": 14757
+    }
+  }
+}

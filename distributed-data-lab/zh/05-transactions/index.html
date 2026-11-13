@@ -1,0 +1,42 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>跨范围分布式事务 · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/05-transactions/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/05-transactions/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/05-transactions/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/05-transactions">English</a></nav></div></header><main id="main" class="wrap "><div class="chapter-layout"><aside class="sidebar" aria-label="Chapters"><a href="/distributed-data-lab/zh/01-foundations/">01 名称、字节与元数据权威</a><a href="/distributed-data-lab/zh/02-parquet/">02 Parquet 物理布局</a><a href="/distributed-data-lab/zh/03-hdfs/">03 HDFS 块与故障恢复</a><a href="/distributed-data-lab/zh/04-storage-engine/">04 WAL、LSM、MVCC 与索引</a><a href="/distributed-data-lab/zh/05-transactions/" aria-current="page">05 跨范围分布式事务</a><a href="/distributed-data-lab/zh/06-lakehouse/">06 表快照与分区演进</a></aside><article class="prose"><p class="eyebrow">真实实操</p><h1>05 · 跨范围、跨节点的事务</h1>
+<h2>目标与前置</h2>
+<p>完成 04，理解 BEGIN / COMMIT 与“读后修改”。验证真实范围放置，执行跨范围提交，并观察实际的可串行化冲突。</p>
+<h2>分布式必须靠观察确认</h2>
+<p>连接同一个单机数据库的三个 SQL 客户端，不构成分布式数据库实验。这里运行三个独立 CockroachDB 进程，加入同一个集群；每个进程使用独占持久化目录和回环 SQL / HTTP 端口。实验等待账户范围拥有三个副本，主动迁移租约，再读回放置状态。不同 Leaseholder 证明不同服务节点；它们依然共用一台物理宿主机。</p>
+<p>SQL 网关可以协调多个范围的操作。主键 1、1001、2001 跨越分界。转账在同一事务内从 id=1 扣 7、给 id=1001 加 7，总额必须保持 300。KV Trace 与实际执行过的聚合计划帮助检查请求路径；它们不是网络抓包，也不能证明所有崩溃场景。</p>
+<h2>不更新同一行，也可能冲突</h2>
+<p>业务规则要求总余额至少为 220。A、B 都读到 300；A 从 id=1 扣 80，B 从 id=1001 扣 80。单独执行各自都剩 220；若都基于过期总额提交，就只剩 140。写集合不相交，但决策依赖重叠读集合，这就是 Write Skew。</p>
+<p>实验使用 SERIALIZABLE 事务，先把总额返回给各客户端，再更新并发提交。一方提交成功，另一方必须收到 SQLSTATE 40001、要求重试；没有开启人为注入重试错误。提交后总额为 220。完整业务重试读取新总额，拒绝第二笔提款。只重放最后一条 UPDATE 会忽略原始决策条件。</p>
+<h2>数据与可执行代码</h2>
+<pre><code class="language-sh">python scripts/bootstrap.py database
+python lab.py database
+</code></pre>
+<p><code>experiments/distributed_transactions.py</code> 保存精确调度、连接、断言、KV Trace 与指标采集。证据页保留双方结果、余额、放置、计划与计数器快照。胜方可能变化，错误文本也可能变化，但不变量相同。微小耗时差不是吞吐比较。</p>
+<h2>实际结果与解释</h2>
+<p>检查三个在线节点 ID，每范围三个副本，以及不同 Leaseholder。验证转账后余额 [93,107,100]、总额仍为 300，随后有一条 40001，最终总额 220。失败方可能是 A 或 B，所以各账户最终余额可能随运行变化。计数器变化也包含准备与检查查询，只能作为背景，不能精确归因到一笔事务。</p>
+<h2>热点拓展：推理，不是容量实测</h2>
+<p>递增键可能把写入集中到边缘范围。预切分只有在键分布触达多个范围时才有帮助，不能把一个热键自动分散。更宽的索引也改变单次逻辑写的代价。要研究热点，应改变确定性的键分布并采集范围级速率与锁争用。本版选择实测冲突调度，没有声称完成热点性能基准。</p>
+<h2>动手任务</h2>
+<p>交换双方更新的主键，保留所有不变量检查。把总额读取改为只读取自己的账户，解释业务规则为何失去保护。真实应用不能省略 40001 处理：用有上限的策略重试完整事务，并重新判断业务条件。</p>
+<h2>自测</h2>
+<p><strong>一笔成功转账能证明节点崩溃时也原子吗？</strong> 不能，本实验没有注入节点崩溃。<strong>为什么副本之外还要查 Leaseholder？</strong> 数据副本与服务职责不同。<strong>重试错误等于保证失效吗？</strong> 在这里，拒绝提交正是阻止非法可串行化历史的机制。</p>
+<h2>大学课程导读与原创练习</h2>
+<ul>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec12.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 12 / 2026-03-19 · Optimistic Concurrency Control, Snapshot Isolation</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec15.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 15 / 2026-04-07 · Distributed Databases</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec16.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 16 / 2026-04-09 · Distributed Transactions</a></li>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/20-multiversioning.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #20 · Multi-Version Concurrency Control</a></li>
+</ul>
+<p>运行转账与过期总额 Write Skew，再基于新总额重试完整业务决策。</p>
+<pre><code class="language-sh">python scripts/bootstrap.py database
+python lab.py database
+</code></pre>
+<p>KV Put 到不同服务节点；转账总额 300，一条真实 40001，最终 220，第二次提款被拒绝。</p>
+<p>以上是原创 Lab 练习，不是大学课程作业答案。公开阅读不等于注册、学分或评分资格；可检索资源库列出先修与核验日期。</p>
+<h2>原始来源</h2>
+<ul>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/start-a-local-cluster">本地集群部署</a></li>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/show-ranges">SHOW RANGES</a></li>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/alter-range">租约迁移</a></li>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/transaction-retry-error-reference">事务重试错误</a></li>
+</ul><div class="pager"><a href="/distributed-data-lab/zh/04-storage-engine/">← 上一章</a><a href="/distributed-data-lab/zh/06-lakehouse/">下一章 →</a></div></article></div></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

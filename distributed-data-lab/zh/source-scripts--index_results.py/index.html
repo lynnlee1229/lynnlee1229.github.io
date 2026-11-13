@@ -1,0 +1,22 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>scripts/index_results.py · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--index_results.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--index_results.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--index_results.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/source-scripts--index_results.py">English</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>scripts/index_results.py</h1><p><a href="/distributed-data-lab/zh/source/">← 代码目录</a></p><pre>#!/usr/bin/env python3
+import hashlib, json
+from pathlib import Path
+
+R = Path(__file__).resolve().parents[1] / &quot;results&quot;
+files = {
+    p.name: {
+        &quot;sha256&quot;: hashlib.sha256(p.read_bytes()).hexdigest(),
+        &quot;bytes&quot;: p.stat().st_size,
+    }
+    for p in (R / (n + &quot;.json&quot;) for n in [&quot;parquet&quot;, &quot;hdfs&quot;, &quot;database&quot;, &quot;iceberg&quot;])
+}
+(R / &quot;index.json&quot;).write_text(
+    json.dumps(
+        {
+            &quot;scope&quot;: &quot;actual synthetic local measurements; sanitized fields only; single host&quot;,
+            &quot;files&quot;: files,
+        },
+        indent=2,
+    )
+)
+</pre></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

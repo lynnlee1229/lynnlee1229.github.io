@@ -1,0 +1,172 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>scripts/validate_iceberg.py · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--validate_iceberg.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--validate_iceberg.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--validate_iceberg.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/source-scripts--validate_iceberg.py">中文</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>scripts/validate_iceberg.py</h1><p><a href="/distributed-data-lab/en/source/">← Source index</a></p><pre>#!/usr/bin/env python3
+&quot;&quot;&quot;Independently validate the explicit learning contract in an Iceberg report.&quot;&quot;&quot;
+import argparse, hashlib, json
+from pathlib import Path
+
+
+def validate(report):
+    def require(test, message):
+        if not test:
+            raise ValueError(message)
+
+    require(report[&quot;experiment&quot;] == &quot;iceberg&quot;, &quot;Not an Iceberg report&quot;)
+    snapshots = report[&quot;snapshots&quot;]
+    require(
+        [x[&quot;rows&quot;] for x in snapshots] == [3, 5, 6],
+        &quot;Snapshot cardinality oracle failed&quot;,
+    )
+    ids = [x[&quot;snapshot_id&quot;] for x in snapshots]
+    require(len(set(ids)) == 3, &quot;Snapshots must be distinct&quot;)
+    require(
+        snapshots[0][&quot;parent_snapshot_id&quot;] is None, &quot;First snapshot must have no parent&quot;
+    )
+    require(
+        [x[&quot;parent_snapshot_id&quot;] for x in snapshots[1:]] == ids[:2],
+        &quot;Snapshot lineage is not a chain&quot;,
+    )
+    for s in snapshots:
+        require(
+            sum(x[&quot;record_count&quot;] for x in s[&quot;files&quot;]) == s[&quot;rows&quot;],
+            &quot;Manifest file count disagrees with row count&quot;,
+        )
+    schema = report[&quot;schema_evolution&quot;]
+    require(
+        schema[&quot;data_snapshot_id_before&quot;] == schema[&quot;data_snapshot_id_after&quot;] == ids[1],
+        &quot;Schema-only commit changed the data snapshot&quot;,
+    )
+    before = {x[&quot;name&quot;]: x for x in schema[&quot;before_fields&quot;]}
+    after = {x[&quot;name&quot;]: x for x in schema[&quot;after_fields&quot;]}
+    require(
+        before[&quot;category&quot;][&quot;id&quot;] == after[&quot;topic&quot;][&quot;id&quot;] == 2,
+        &quot;Rename lost stable field identity&quot;,
+    )
+    require(
+        &quot;category&quot; not in after and after[&quot;quality&quot;][&quot;required&quot;] is False,
+        &quot;Evolved schema contract failed&quot;,
+    )
+    require(
+        schema[&quot;before_schema_id&quot;] != schema[&quot;after_schema_id&quot;],
+        &quot;Schema ID did not change&quot;,
+    )
+    require(
+        report[&quot;partition_evolution&quot;][&quot;current_file_spec_ids&quot;] == [0, 1],
+        &quot;Mixed partition specs missing&quot;,
+    )
+    travel = report[&quot;time_travel&quot;]
+    require(
+        [r[&quot;id&quot;] for r in travel[&quot;base_rows_after_later_commits&quot;]] == [1, 2, 3],
+        &quot;Old snapshot row oracle failed&quot;,
+    )
+    require(
+        [r[&quot;id&quot;] for r in travel[&quot;second_rows_after_later_commits&quot;]] == [1, 2, 3, 4, 5],
+        &quot;Second snapshot row oracle failed&quot;,
+    )
+    expected = [
+        (1, &quot;storage&quot;, &quot;column chunk&quot;, None),
+        (2, &quot;database&quot;, &quot;serializable&quot;, None),
+        (3, &quot;storage&quot;, &quot;replica block&quot;, None),
+        (4, &quot;database&quot;, &quot;index range&quot;, None),
+        (5, &quot;lakehouse&quot;, &quot;snapshot manifest&quot;, None),
+        (6, &quot;storage&quot;, &quot;immutable files&quot;, 9),
+    ]
+    actual = [
+        (r[&quot;id&quot;], r[&quot;topic&quot;], r[&quot;text&quot;], r[&quot;quality&quot;]) for r in travel[&quot;current_rows&quot;]
+    ]
+    require(actual == expected, &quot;Independent current-row oracle failed&quot;)
+
+    def fingerprint(rows):
+        return hashlib.sha256(
+            json.dumps(
+                sorted(rows, key=lambda r: r[&quot;id&quot;]),
+                sort_keys=True,
+                separators=(&quot;,&quot;, &quot;:&quot;),
+                ensure_ascii=False,
+            ).encode()
+        ).hexdigest()
+
+    require(
+        fingerprint(travel[&quot;base_rows_after_later_commits&quot;])
+        == travel[&quot;base_logical_sha256_before&quot;]
+        == travel[&quot;base_logical_sha256_after&quot;],
+        &quot;Pinned snapshot changed&quot;,
+    )
+    require(
+        fingerprint(travel[&quot;current_rows&quot;])
+        == travel[&quot;current_logical_sha256&quot;]
+        != travel[&quot;base_logical_sha256_before&quot;],
+        &quot;Latest and pinned fingerprints must differ&quot;,
+    )
+    counter = report[&quot;counterexample&quot;]
+    require(
+        counter[&quot;committed_ids&quot;] == [1, 2, 3, 4, 5, 6]
+        and counter[&quot;naive_directory_ids&quot;] == [1, 2, 3, 4, 5, 6, 999],
+        &quot;Directory-listing counterexample missing&quot;,
+    )
+    require(
+        counter[&quot;valid_uncommitted_file&quot;]
+        not in {f[&quot;path&quot;] for s in snapshots for f in s[&quot;files&quot;]},
+        &quot;Uncommitted file became table membership&quot;,
+    )
+    metadata = report[&quot;metadata_validation&quot;]
+    require(
+        metadata[&quot;current_snapshot_id&quot;] == ids[-1] and metadata[&quot;catalog_reopened&quot;],
+        &quot;Persisted catalog pointer not checked&quot;,
+    )
+    require(
+        metadata[&quot;schema_count&quot;] == 2 and metadata[&quot;partition_spec_count&quot;] == 2,
+        &quot;Metadata evolution counts differ&quot;,
+    )
+    require(
+        metadata[&quot;original_data_file_hashes_before&quot;]
+        == metadata[&quot;original_data_file_hashes_after&quot;],
+        &quot;A metadata-only change rewrote old file bytes&quot;,
+    )
+    old = [
+        x
+        for x in metadata[&quot;physical_file_schemas&quot;]
+        if any(f[&quot;name&quot;] == &quot;category&quot; for f in x[&quot;fields&quot;])
+    ]
+    new = [
+        x
+        for x in metadata[&quot;physical_file_schemas&quot;]
+        if any(f[&quot;name&quot;] == &quot;topic&quot; for f in x[&quot;fields&quot;])
+    ]
+    require(
+        len(old) == 2 and len(new) == 1,
+        &quot;Expected two old-schema files and one evolved file&quot;,
+    )
+    require(
+        all(
+            next(
+                f[&quot;field_id&quot;] for f in x[&quot;fields&quot;] if f[&quot;name&quot;] in (&quot;category&quot;, &quot;topic&quot;)
+            )
+            == &quot;2&quot;
+            for x in old + new
+        ),
+        &quot;Physical Parquet field IDs disagree&quot;,
+    )
+    return {
+        &quot;valid&quot;: True,
+        &quot;properties&quot;: [
+            &quot;retained snapshot rowsets&quot;,
+            &quot;schema-only metadata commit&quot;,
+            &quot;field identity across rename&quot;,
+            &quot;mixed partition specifications&quot;,
+            &quot;immutable old file bytes&quot;,
+            &quot;persisted catalog pointer&quot;,
+            &quot;uncommitted valid file excluded&quot;,
+        ],
+    }
+
+
+if __name__ == &quot;__main__&quot;:
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        &quot;report&quot;,
+        type=Path,
+        nargs=&quot;?&quot;,
+        default=Path(__file__).resolve().parents[1] / &quot;results/iceberg.json&quot;,
+    )
+    a = p.parse_args()
+    print(json.dumps(validate(json.loads(a.report.read_text())), indent=2))
+</pre></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

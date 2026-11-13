@@ -1,0 +1,380 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>experiments/iceberg_snapshots.py · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-experiments--iceberg_snapshots.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-experiments--iceberg_snapshots.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-experiments--iceberg_snapshots.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/source-experiments--iceberg_snapshots.py">English</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>experiments/iceberg_snapshots.py</h1><p><a href="/distributed-data-lab/zh/source/">← 代码目录</a></p><pre>&quot;&quot;&quot;Real local Iceberg commits, schema/partition evolution, and a membership counterexample.
+
+No cloud, API key, deletes, snapshot expiration, or destructive maintenance. Every
+run creates an exclusive directory. All expected rowsets are literal independent
+oracles; snapshot IDs and file names are genuine runtime-generated values.
+&quot;&quot;&quot;
+
+from __future__ import annotations
+import argparse, datetime, hashlib, json, sqlite3, uuid
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pyiceberg
+import sqlalchemy
+from pyiceberg.catalog.sql import SqlCatalog
+from pyiceberg.expressions import EqualTo
+from pyiceberg.types import IntegerType
+
+ROOT = Path(__file__).resolve().parents[1]
+# Explicit expected rowsets, separate from the writer batches and reader logic.
+EXPECTED_BASE = [
+    {&quot;id&quot;: 1, &quot;category&quot;: &quot;storage&quot;, &quot;text&quot;: &quot;column chunk&quot;},
+    {&quot;id&quot;: 2, &quot;category&quot;: &quot;database&quot;, &quot;text&quot;: &quot;serializable&quot;},
+    {&quot;id&quot;: 3, &quot;category&quot;: &quot;storage&quot;, &quot;text&quot;: &quot;replica block&quot;},
+]
+EXPECTED_SECOND = EXPECTED_BASE + [
+    {&quot;id&quot;: 4, &quot;category&quot;: &quot;database&quot;, &quot;text&quot;: &quot;index range&quot;},
+    {&quot;id&quot;: 5, &quot;category&quot;: &quot;lakehouse&quot;, &quot;text&quot;: &quot;snapshot manifest&quot;},
+]
+EXPECTED_CURRENT = [
+    {&quot;id&quot;: 1, &quot;topic&quot;: &quot;storage&quot;, &quot;text&quot;: &quot;column chunk&quot;, &quot;quality&quot;: None},
+    {&quot;id&quot;: 2, &quot;topic&quot;: &quot;database&quot;, &quot;text&quot;: &quot;serializable&quot;, &quot;quality&quot;: None},
+    {&quot;id&quot;: 3, &quot;topic&quot;: &quot;storage&quot;, &quot;text&quot;: &quot;replica block&quot;, &quot;quality&quot;: None},
+    {&quot;id&quot;: 4, &quot;topic&quot;: &quot;database&quot;, &quot;text&quot;: &quot;index range&quot;, &quot;quality&quot;: None},
+    {&quot;id&quot;: 5, &quot;topic&quot;: &quot;lakehouse&quot;, &quot;text&quot;: &quot;snapshot manifest&quot;, &quot;quality&quot;: None},
+    {&quot;id&quot;: 6, &quot;topic&quot;: &quot;storage&quot;, &quot;text&quot;: &quot;immutable files&quot;, &quot;quality&quot;: 9},
+]
+
+
+def canonical(rows):
+    return sorted(rows, key=lambda r: r[&quot;id&quot;])
+
+
+def digest_rows(rows):
+    return hashlib.sha256(
+        json.dumps(
+            canonical(rows), sort_keys=True, separators=(&quot;,&quot;, &quot;:&quot;), ensure_ascii=False
+        ).encode()
+    ).hexdigest()
+
+
+def run(out=None):
+    run_id = (
+        datetime.datetime.now(datetime.timezone.utc).strftime(&quot;%Y%m%dT%H%M%SZ&quot;)
+        + &quot;-&quot;
+        + uuid.uuid4().hex[:10]
+    )
+    work = ROOT / &quot;build/iceberg&quot; / run_id
+    work.mkdir(parents=True, exist_ok=False)
+    warehouse = work / &quot;warehouse&quot;
+
+    # A raw Unicode path avoids percent-escaped file:// paths being treated as
+    # literal filesystem names by this pinned PyIceberg/Arrow combination.
+    def catalog():
+        return SqlCatalog(
+            &quot;distributed_data_lab_local&quot;,
+            uri=&quot;sqlite:///&quot; + str(work / &quot;catalog.db&quot;),
+            warehouse=str(warehouse),
+            **{&quot;py-io-impl&quot;: &quot;pyiceberg.io.pyarrow.PyArrowFileIO&quot;},
+        )
+
+    c = catalog()
+    c.create_namespace(&quot;lab&quot;)
+    schema = pa.schema(
+        [
+            pa.field(&quot;id&quot;, pa.int64(), nullable=False),
+            pa.field(&quot;category&quot;, pa.string()),
+            pa.field(&quot;text&quot;, pa.string()),
+        ]
+    )
+    t = c.create_table(&quot;lab.corpus&quot;, schema=schema, properties={&quot;format-version&quot;: &quot;2&quot;})
+
+    def path(uri):
+        parsed = urlsplit(uri)
+        p = Path(unquote(parsed.path) if parsed.scheme == &quot;file&quot; else uri).resolve()
+        assert p.is_relative_to(work.resolve()), &quot;Unexpected non-local data reference&quot;
+        return p
+
+    def relative(uri):
+        return str(path(uri).relative_to(work.resolve()))
+
+    def rows(scan):
+        return canonical(scan.to_arrow().to_pylist())
+
+    def file_records(scan):
+        return sorted(
+            [
+                {
+                    &quot;path&quot;: relative(x.file.file_path),
+                    &quot;spec_id&quot;: x.file.spec_id,
+                    &quot;record_count&quot;: x.file.record_count,
+                    &quot;file_bytes&quot;: x.file.file_size_in_bytes,
+                }
+                for x in scan.plan_files()
+            ],
+            key=lambda x: x[&quot;path&quot;],
+        )
+
+    def fields():
+        return [
+            {
+                &quot;id&quot;: f.field_id,
+                &quot;name&quot;: f.name,
+                &quot;type&quot;: str(f.field_type),
+                &quot;required&quot;: f.required,
+            }
+            for f in t.schema().fields
+        ]
+
+    # Batches are explicit writer inputs; expected results above are a separate contract.
+    t.append(
+        pa.Table.from_pylist(
+            [
+                {&quot;id&quot;: 1, &quot;category&quot;: &quot;storage&quot;, &quot;text&quot;: &quot;column chunk&quot;},
+                {&quot;id&quot;: 2, &quot;category&quot;: &quot;database&quot;, &quot;text&quot;: &quot;serializable&quot;},
+                {&quot;id&quot;: 3, &quot;category&quot;: &quot;storage&quot;, &quot;text&quot;: &quot;replica block&quot;},
+            ],
+            schema=schema,
+        )
+    )
+    s1 = t.current_snapshot().snapshot_id
+    base_rows = rows(t.scan())
+    assert base_rows == EXPECTED_BASE
+    metadata_s1 = t.metadata_location
+    files_s1 = file_records(t.scan())
+    base_hash = digest_rows(base_rows)
+    t.append(
+        pa.Table.from_pylist(
+            [
+                {&quot;id&quot;: 4, &quot;category&quot;: &quot;database&quot;, &quot;text&quot;: &quot;index range&quot;},
+                {&quot;id&quot;: 5, &quot;category&quot;: &quot;lakehouse&quot;, &quot;text&quot;: &quot;snapshot manifest&quot;},
+            ],
+            schema=schema,
+        )
+    )
+    s2 = t.current_snapshot().snapshot_id
+    second_rows = rows(t.scan())
+    assert second_rows == EXPECTED_SECOND
+    original_files = {
+        x[&quot;path&quot;]: hashlib.sha256((work / x[&quot;path&quot;]).read_bytes()).hexdigest()
+        for x in file_records(t.scan())
+    }
+    before_fields = fields()
+    before_schema_id = t.schema().schema_id
+    with t.update_schema() as update:
+        update.rename_column(&quot;category&quot;, &quot;topic&quot;).add_column(&quot;quality&quot;, IntegerType())
+    after_fields = fields()
+    schema_snapshot_after = t.current_snapshot().snapshot_id
+    assert (
+        t.current_snapshot().snapshot_id == s2
+    ), &quot;Schema metadata update unexpectedly created a data snapshot&quot;
+    assert (
+        next(f[&quot;id&quot;] for f in before_fields if f[&quot;name&quot;] == &quot;category&quot;)
+        == next(f[&quot;id&quot;] for f in after_fields if f[&quot;name&quot;] == &quot;topic&quot;)
+        == 2
+    )
+    assert t.schema().schema_id != before_schema_id
+    current_after_schema = rows(t.scan())
+    assert current_after_schema == EXPECTED_CURRENT[:5]
+    pinned_after_schema = rows(t.scan(snapshot_id=s2))
+    assert pinned_after_schema == EXPECTED_SECOND
+    # A metadata-only partition change; existing data files keep spec 0.
+    old_spec = t.spec().spec_id
+    with t.update_spec() as update:
+        update.add_identity(&quot;topic&quot;)
+    new_spec = t.spec().spec_id
+    assert old_spec == 0 and new_spec == 1
+    assert t.current_snapshot().snapshot_id == s2
+    evolved_schema = pa.schema(
+        [
+            pa.field(&quot;id&quot;, pa.int64(), nullable=False),
+            pa.field(&quot;topic&quot;, pa.string()),
+            pa.field(&quot;text&quot;, pa.string()),
+            pa.field(&quot;quality&quot;, pa.int32()),
+        ]
+    )
+    t.append(
+        pa.Table.from_pylist(
+            [{&quot;id&quot;: 6, &quot;topic&quot;: &quot;storage&quot;, &quot;text&quot;: &quot;immutable files&quot;, &quot;quality&quot;: 9}],
+            schema=evolved_schema,
+        )
+    )
+    s3 = t.current_snapshot().snapshot_id
+    current_rows = rows(t.scan())
+    assert current_rows == EXPECTED_CURRENT
+    files_current = file_records(t.scan())
+    assert {x[&quot;spec_id&quot;] for x in files_current} == {0, 1}
+    unchanged = {
+        name: hashlib.sha256((work / name).read_bytes()).hexdigest()
+        for name in original_files
+    }
+    assert unchanged == original_files
+    # Re-read genuine retained snapshots after all later commits.
+    past1 = rows(t.scan(snapshot_id=s1))
+    past2 = rows(t.scan(snapshot_id=s2))
+    assert past1 == EXPECTED_BASE and past2 == EXPECTED_SECOND
+    assert digest_rows(past1) == base_hash and digest_rows(current_rows) != base_hash
+    storage_rows = rows(t.scan(row_filter=EqualTo(&quot;topic&quot;, &quot;storage&quot;)))
+    assert storage_rows == [EXPECTED_CURRENT[i] for i in [0, 2, 5]]
+    # This file is a valid Parquet object but never committed to Iceberg metadata.
+    data_dir = path(t.location()) / &quot;data&quot;
+    data_dir.mkdir(exist_ok=True)
+    orphan = data_dir / &quot;uncommitted-example.parquet&quot;
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    &quot;id&quot;: 999,
+                    &quot;topic&quot;: &quot;storage&quot;,
+                    &quot;text&quot;: &quot;uncommitted poison&quot;,
+                    &quot;quality&quot;: 999,
+                }
+            ],
+            schema=evolved_schema,
+        ),
+        orphan,
+    )
+    assert pq.ParquetFile(orphan).metadata.num_rows == 1
+    naive = []
+    for file in sorted(data_dir.rglob(&quot;*.parquet&quot;)):
+        naive.extend(pq.ParquetFile(file).read(columns=[&quot;id&quot;]).column(&quot;id&quot;).to_pylist())
+    committed_ids = [r[&quot;id&quot;] for r in rows(t.scan())]
+    assert committed_ids == [1, 2, 3, 4, 5, 6]
+    assert sorted(naive) == [1, 2, 3, 4, 5, 6, 999]
+    assert relative(str(orphan)) not in {f[&quot;path&quot;] for f in file_records(t.scan())}
+    # Reopen SQLite catalog to check persisted pointer, not just an in-memory Table.
+    reloaded = catalog().load_table(&quot;lab.corpus&quot;)
+    assert reloaded.current_snapshot().snapshot_id == s3
+    assert rows(reloaded.scan()) == EXPECTED_CURRENT
+    metadata_path = path(t.metadata_location)
+    raw = json.loads(metadata_path.read_text())
+    assert raw[&quot;format-version&quot;] == 2 and raw[&quot;current-snapshot-id&quot;] == s3
+    assert (
+        raw[&quot;current-schema-id&quot;] == t.schema().schema_id and raw[&quot;default-spec-id&quot;] == 1
+    )
+    snaps = {x[&quot;snapshot-id&quot;]: x for x in raw[&quot;snapshots&quot;]}
+    assert set(snaps) == {s1, s2, s3}
+    assert snaps[s1].get(&quot;parent-snapshot-id&quot;) is None
+    assert snaps[s2][&quot;parent-snapshot-id&quot;] == s1
+    assert snaps[s3][&quot;parent-snapshot-id&quot;] == s2
+    expected_counts = {s1: 3, s2: 5, s3: 6}
+    snapshots = []
+    for label, sid in [(&quot;base&quot;, s1), (&quot;second_append&quot;, s2), (&quot;evolved_append&quot;, s3)]:
+        snap = snaps[sid]
+        files = file_records(t.scan(snapshot_id=sid))
+        assert sum(x[&quot;record_count&quot;] for x in files) == expected_counts[sid]
+        assert int(snap[&quot;summary&quot;][&quot;total-records&quot;]) == expected_counts[sid]
+        snapshots.append(
+            {
+                &quot;label&quot;: label,
+                &quot;snapshot_id&quot;: str(sid),
+                &quot;parent_snapshot_id&quot;: (
+                    str(snap[&quot;parent-snapshot-id&quot;])
+                    if snap.get(&quot;parent-snapshot-id&quot;)
+                    else None
+                ),
+                &quot;schema_id&quot;: snap[&quot;schema-id&quot;],
+                &quot;rows&quot;: expected_counts[sid],
+                &quot;manifest_list&quot;: relative(snap[&quot;manifest-list&quot;]),
+                &quot;files&quot;: files,
+                &quot;summary&quot;: snap[&quot;summary&quot;],
+            }
+        )
+    result = {
+        &quot;experiment&quot;: &quot;iceberg&quot;,
+        &quot;executed_at&quot;: datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        &quot;versions&quot;: {
+            &quot;pyiceberg&quot;: pyiceberg.__version__,
+            &quot;pyarrow&quot;: pa.__version__,
+            &quot;sqlalchemy&quot;: sqlalchemy.__version__,
+            &quot;sqlite&quot;: sqlite3.sqlite_version,
+        },
+        &quot;table_format_version&quot;: 2,
+        &quot;data_source&quot;: &quot;six enumerated synthetic records and one explicitly uncommitted synthetic counterexample; no personal data&quot;,
+        &quot;scope&quot;: &quot;single-process local SQLite catalog and filesystem; not a distributed catalog, cloud, SQL-engine interoperability, concurrency or AI-quality benchmark&quot;,
+        &quot;snapshots&quot;: snapshots,
+        &quot;schema_evolution&quot;: {
+            &quot;before_schema_id&quot;: before_schema_id,
+            &quot;after_schema_id&quot;: t.schema().schema_id,
+            &quot;before_fields&quot;: before_fields,
+            &quot;after_fields&quot;: after_fields,
+            &quot;data_snapshot_unchanged_during_schema_commit&quot;: True,
+            &quot;data_snapshot_id_before&quot;: str(s2),
+            &quot;data_snapshot_id_after&quot;: str(schema_snapshot_after),
+            &quot;current_projection_after_schema&quot;: current_after_schema,
+            &quot;explicit_snapshot_projection_after_schema&quot;: pinned_after_schema,
+            &quot;note&quot;: &quot;PyIceberg 0.10.0 scan() uses current table schema; scan(snapshot_id=...) uses the stored snapshot schema. A schema-only metadata commit does not itself create a new data snapshot.&quot;,
+        },
+        &quot;partition_evolution&quot;: {
+            &quot;old_spec_id&quot;: old_spec,
+            &quot;new_spec_id&quot;: new_spec,
+            &quot;current_file_spec_ids&quot;: sorted({x[&quot;spec_id&quot;] for x in files_current}),
+            &quot;files&quot;: files_current,
+            &quot;filtered_storage_rows&quot;: storage_rows,
+            &quot;filtered_plan_files&quot;: file_records(
+                t.scan(row_filter=EqualTo(&quot;topic&quot;, &quot;storage&quot;))
+            ),
+            &quot;note&quot;: &quot;Old spec-0 files remain candidates where partition metadata cannot reject them; a true row predicate is still applied. File plans are not physical I/O counters.&quot;,
+        },
+        &quot;time_travel&quot;: {
+            &quot;base_rows_after_later_commits&quot;: past1,
+            &quot;second_rows_after_later_commits&quot;: past2,
+            &quot;current_rows&quot;: current_rows,
+            &quot;base_logical_sha256_before&quot;: base_hash,
+            &quot;base_logical_sha256_after&quot;: digest_rows(past1),
+            &quot;current_logical_sha256&quot;: digest_rows(current_rows),
+            &quot;hash_definition&quot;: &quot;SHA256 of JSON rows sorted by id, object keys sorted, compact UTF-8, schema column names retained&quot;,
+        },
+        &quot;counterexample&quot;: {
+            &quot;valid_uncommitted_file&quot;: relative(str(orphan)),
+            &quot;uncommitted_row_id&quot;: 999,
+            &quot;committed_ids&quot;: committed_ids,
+            &quot;naive_directory_ids&quot;: sorted(naive),
+            &quot;uncommitted_file_excluded_by_table_scan&quot;: True,
+            &quot;note&quot;: &quot;The extra file is valid Parquet, but no committed Iceberg manifest references it. Directory globbing is not a committed table read. No file or snapshot is removed.&quot;,
+        },
+        &quot;metadata_validation&quot;: {
+            &quot;current_metadata_file&quot;: relative(t.metadata_location),
+            &quot;metadata_sha256&quot;: hashlib.sha256(metadata_path.read_bytes()).hexdigest(),
+            &quot;first_metadata_file&quot;: relative(metadata_s1),
+            &quot;current_snapshot_id&quot;: str(s3),
+            &quot;schema_count&quot;: len(raw[&quot;schemas&quot;]),
+            &quot;partition_spec_count&quot;: len(raw[&quot;partition-specs&quot;]),
+            &quot;catalog_reopened&quot;: True,
+            &quot;schemas&quot;: [
+                {&quot;schema_id&quot;: x[&quot;schema-id&quot;], &quot;fields&quot;: x[&quot;fields&quot;]}
+                for x in raw[&quot;schemas&quot;]
+            ],
+            &quot;partition_specs&quot;: raw[&quot;partition-specs&quot;],
+            &quot;original_data_file_hashes_before&quot;: original_files,
+            &quot;original_data_file_hashes_after&quot;: unchanged,
+            &quot;old_data_files_unchanged&quot;: True,
+            &quot;physical_file_schemas&quot;: [
+                {
+                    &quot;path&quot;: x[&quot;path&quot;],
+                    &quot;fields&quot;: [
+                        {
+                            &quot;name&quot;: f.name,
+                            &quot;field_id&quot;: (
+                                f.metadata.get(b&quot;PARQUET:field_id&quot;, b&quot;&quot;).decode()
+                                if f.metadata
+                                else None
+                            ),
+                        }
+                        for f in pq.ParquetFile(work / x[&quot;path&quot;]).schema_arrow
+                    ],
+                }
+                for x in files_current
+            ],
+        },
+        &quot;local_artifact_directory&quot;: str(work.relative_to(ROOT)),
+        &quot;all_oracles_passed&quot;: True,
+    }
+    target = Path(out or ROOT / &quot;results/iceberg.json&quot;)
+    target.parent.mkdir(exist_ok=True, parents=True)
+    target.write_text(json.dumps(result, indent=2, ensure_ascii=False))
+    print(
+        &quot;Iceberg: real snapshots 3/5/6 rows; field ID 2 retained; specs 0+1; old snapshots stable; valid uncommitted id=999 excluded&quot;,
+        flush=True,
+    )
+    return result
+
+
+if __name__ == &quot;__main__&quot;:
+    p = argparse.ArgumentParser()
+    p.add_argument(&quot;--out&quot;)
+    a = p.parse_args()
+    run(a.out)
+</pre></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

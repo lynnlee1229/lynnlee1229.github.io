@@ -1,0 +1,87 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Snapshots &amp; evolution · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/06-lakehouse/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/06-lakehouse/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/06-lakehouse/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/06-lakehouse">中文</a></nav></div></header><main id="main" class="wrap "><div class="chapter-layout"><aside class="sidebar" aria-label="Chapters"><a href="/distributed-data-lab/en/01-foundations/">01 Names, bytes & authority</a><a href="/distributed-data-lab/en/02-parquet/">02 Parquet physical layout</a><a href="/distributed-data-lab/en/03-hdfs/">03 HDFS blocks & recovery</a><a href="/distributed-data-lab/en/04-storage-engine/">04 WAL, LSM, MVCC & indexes</a><a href="/distributed-data-lab/en/05-transactions/">05 Cross-range transactions</a><a href="/distributed-data-lab/en/06-lakehouse/" aria-current="page">06 Snapshots & evolution</a></aside><article class="prose"><p class="eyebrow">Executed profile</p><h1>06 · Real table snapshots, evolution and time travel</h1>
+<h2>Goal and prerequisites</h2>
+<p>Complete 02 and 04–05. Explain why valid files need table membership metadata, then verify a real table's retained rowsets, field identity and mixed partition specifications. This chapter has an executed <strong>PyIceberg 0.10.0 / table-format v2</strong> profile, with a local SQLite catalog and filesystem. SQLite is a development catalog here, not a distributed transaction service.</p>
+<h2>Commit a set of files, not a directory listing</h2>
+<p>A file can be perfectly valid Parquet and still belong to no committed version of a table. Iceberg metadata identifies snapshots; manifests describe the files selected by each snapshot. A catalog identifies the current metadata pointer. Reading every file found below a directory bypasses that membership decision.</p>
+<p>Our negative control writes a valid Parquet file containing id=999 directly into the table's data directory, without committing it. PyArrow reads the file successfully. A naive union of all physically listed file IDs includes 999. A real Iceberg scan returns only ids 1–6 because no committed manifest references the extra file. The exercise leaves it in place and does not expire snapshots or delete files.</p>
+<h2>Run from zero</h2>
+<pre><code class="language-sh">pip install -r requirements-iceberg.txt
+python lab.py iceberg
+python scripts/validate_iceberg.py results/iceberg.json
+</code></pre>
+<p>No JVM, Docker, cloud account, API key or remote catalog is needed. All inputs are six enumerated synthetic records; a seventh record is the explicit uncommitted control. Each run creates its own build/iceberg directory. <code>experiments/iceberg_snapshots.py</code> contains separate writer batches and literal expected rowsets. The validator independently checks the reported contract. Read the complete saved report on the evidence page.</p>
+<h2>Predict before running</h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Prediction to check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Append three rows</td>
+<td>First data snapshot has exactly ids 1,2,3</td>
+</tr>
+<tr>
+<td>Append two rows</td>
+<td>Second snapshot has ids 1–5; first remains readable</td>
+</tr>
+<tr>
+<td>Rename category to topic; add optional quality</td>
+<td>Field ID 2 persists; old records yield null quality</td>
+</tr>
+<tr>
+<td>Add identity partitioning on topic</td>
+<td>Existing files retain spec 0; only new files use spec 1</td>
+</tr>
+<tr>
+<td>Append id=6</td>
+<td>Third data snapshot has six rows under the evolved schema</td>
+</tr>
+<tr>
+<td>Write valid id=999 outside the table commit</td>
+<td>Directory union includes it; Iceberg membership excludes it</td>
+</tr>
+</tbody>
+</table>
+<p>A rename updates a field's name while retaining its identity. It does not rewrite old Parquet bytes. The experiment reads physical Parquet field metadata: two old files still name the field <code>category</code>, the new file names it <code>topic</code>, and both use field ID 2. Current Iceberg projection resolves the renamed field correctly. SHA256 hashes verify that the old files did not change during the metadata operations.</p>
+<h2>A schema commit is not a data snapshot</h2>
+<p>The schema change writes a new table metadata version while keeping the second data snapshot ID unchanged. In this pinned PyIceberg reader, <code>scan()</code> projects the current table schema; <code>scan(snapshot_id=...)</code> selects the stored snapshot schema. Immediately after the schema-only commit, those calls can read the same data membership through different column names. The recorded rows and before/after IDs make this visible.</p>
+<p>This is an observed PyIceberg 0.10.0 API behavior, not a promise that every SQL engine applies the same time-travel schema policy. State the reader version and projection when comparing results.</p>
+<h2>Actual results and metadata checks</h2>
+<p>The three data snapshots contain <strong>3 / 5 / 6 rows</strong> with a verified parent chain. Historical scans after the later commits equal the literal earlier expected rowsets. Their canonical rowset hash stays unchanged. Latest has a different hash; hashes include column names, so the report defines normalization precisely.</p>
+<p>The final file plan includes partition spec IDs <strong>0 and 1</strong>. For <code>topic = 'storage'</code>, the old unpartitioned file with possible matching rows remains a candidate, while file statistics can reject another old file. Exact row filtering returns ids <strong>1,3,6</strong>. A plan lists candidate files; it is not an actual disk-I/O counter.</p>
+<p>A fresh catalog object reloads the SQLite pointer and reads the same final rows. The report also checks actual metadata JSON for format version, current schema/spec/snapshot, parent IDs and record counts. Public evidence contains an allowlist of these fields and relative synthetic file names; full metadata and the catalog remain local because raw locations can include machine paths.</p>
+<h2>A folder is not a table, and a table is not an engine</h2>
+<p>A snapshot reuses files; it does not copy the complete dataset on every commit. Retained snapshots can still reference old files, so deleting objects by apparent age can break reads. This experiment performs no destructive maintenance. It validates one local library/catalog/file combination, not catalog concurrency, crash atomicity, object-store failure behavior, delete-file interoperability or production capacity.</p>
+<p>HDFS is one storage route, and object storage is another. Iceberg is a table format, Parquet is a file format and the reader plans and evaluates the scan. This profile uses local files and never claims AWS behavior.</p>
+<h2>Hands-on task</h2>
+<p>Change only the last appended topic, predict the filtered rowset and inspect file spec IDs again. Then rename a second field and observe the current versus pinned projection before adding new data. Keep the old file hashes and literal expected rows; do not weaken assertions to accept an unexplained change. All of these are original Lab exercises, not university assignment solutions.</p>
+<h2>2026 reading extension: data lineage for retrieval</h2>
+<p>MIT's published Spring 2026 Lecture 17 covers embeddings, RAG and vector databases. Our connection is an engineering inference: a retrieval-index build should record its source snapshot, schema, preprocessing version and model version. This experiment proves stable data membership for a pinned snapshot and a moving latest view. It does not create embeddings, call an LLM or measure retrieval quality.</p>
+<h2>Self-check</h2>
+<p><strong>Did the schema-only update create a fourth data snapshot?</strong> No. <strong>Why can physical files still say category?</strong> Field identity permits a logical rename without rewriting them. <strong>Does a local SQLite catalog prove a distributed catalog is safe?</strong> No. <strong>Why is id=999 excluded?</strong> It is absent from committed manifests, not an invalid Parquet row. <strong>Can a new partition spec rewrite all old files automatically?</strong> This experiment shows the old spec survives unchanged.</p>
+<h2>Guided university reading and original exercise</h2>
+<ul>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec20.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 20 / 2026-04-28 · Cloud DB</a></li>
+<li><a href="https://py.iceberg.apache.org/api/">Apache Iceberg · Schema evolution; Partition evolution; Query the data · PyIceberg API: schema evolution, partition evolution and scans</a></li>
+<li><a href="https://py.iceberg.apache.org/configuration/#sql-catalog">Apache Iceberg · SQL Catalog; Development only · PyIceberg configuration: SQL Catalog / SQLite</a></li>
+<li><a href="https://iceberg.apache.org/spec/">Apache Iceberg · Snapshots; Schemas; Partition specs; File metadata · Iceberg Table Specification</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec17.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 17 / 2026-04-14 · Embeddings, RAG, and Vector DBs</a></li>
+</ul>
+<p>Create real snapshots, rename a field by identity, evolve a partition spec and compare a pinned read with a naive directory listing.</p>
+<pre><code class="language-sh">pip install -r requirements-iceberg.txt
+python lab.py iceberg
+</code></pre>
+<p>Snapshot rowsets 3/5/6; field ID 2 survives rename; file specs 0 and 1 coexist; old hashes persist; uncommitted id=999 stays outside the table.</p>
+<p>These are original Lab exercises, not the universities’ assignment solutions. Public reading access does not grant enrollment, credit or grading. See the searchable resource library for prerequisites and verification dates.</p>
+<h2>Original sources</h2>
+<ul>
+<li><a href="https://github.com/apache/iceberg-python/releases/tag/pyiceberg-0.10.0">PyIceberg 0.10.0 release</a></li>
+<li><a href="https://py.iceberg.apache.org/api/">PyIceberg API: schema, partition evolution and scans</a></li>
+<li><a href="https://py.iceberg.apache.org/configuration/#sql-catalog">SQL Catalog / SQLite development scope</a></li>
+<li><a href="https://iceberg.apache.org/spec/">Iceberg table specification</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec20.pdf">MIT Spring 2026 Lecture 20: Cloud DB</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec17.pdf">MIT Spring 2026 Lecture 17: Embeddings, RAG, and Vector DBs</a></li>
+</ul><div class="pager"><a href="/distributed-data-lab/en/05-transactions/">← Previous</a><a href="/distributed-data-lab/en/reproduce/">Run locally →</a></div></article></div></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

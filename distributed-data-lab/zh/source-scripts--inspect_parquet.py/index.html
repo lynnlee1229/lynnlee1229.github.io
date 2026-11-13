@@ -1,0 +1,15 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>scripts/inspect_parquet.py · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--inspect_parquet.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--inspect_parquet.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--inspect_parquet.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/source-scripts--inspect_parquet.py">English</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>scripts/inspect_parquet.py</h1><p><a href="/distributed-data-lab/zh/source/">← 代码目录</a></p><pre>#!/usr/bin/env python3
+&quot;&quot;&quot;Inspect locally; never upload a file.&quot;&quot;&quot;
+import argparse, json, sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiments.parquet_layout import metadata
+
+p = argparse.ArgumentParser()
+p.add_argument(&quot;file&quot;, type=Path)
+p.add_argument(&quot;--lower&quot;, type=int, default=32000)
+p.add_argument(&quot;--upper&quot;, type=int, default=33023)
+a = p.parse_args()
+print(json.dumps(metadata(a.file, a.lower, a.upper), indent=2, default=str))
+</pre></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

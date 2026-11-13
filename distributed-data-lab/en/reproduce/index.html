@@ -1,0 +1,51 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Reproduce from zero · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/reproduce/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/reproduce/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/reproduce/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce" aria-current="page">Run locally</a><a href="/distributed-data-lab/zh/reproduce">中文</a></nav></div></header><main id="main" class="wrap "><article class="prose"><h1>Reproduce from zero</h1>
+<h2>Goal and tested baseline</h2>
+<p>Run each profile independently, inspect the recorded assertions, and keep raw runtime logs local. No cloud service, API key, paid feature or Docker is needed. Tested host: macOS arm64, 16 GiB RAM. The three database nodes and four DataNodes are processes on one host, not separate physical machines.</p>
+<p>Python <strong>3.11</strong>, PyArrow <strong>20.0.0</strong>, JDK <strong>11</strong>, HDFS <strong>3.4.2</strong>, CockroachDB <strong>24.1.24</strong>, psycopg2-binary <strong>2.9.10</strong>. This is a pinned teaching baseline, not a recommendation to deploy an older database version in production. Original companion code is MIT; downloaded runtimes retain their upstream licenses and are not bundled in the ZIP.</p>
+<h2>Install</h2>
+<pre><code class="language-sh">git clone https://github.com/lynnlee1229/distributed-data-lab.git
+cd distributed-data-lab
+python3.11 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+</code></pre>
+<p>Install JDK 11 separately and set JAVA_HOME (macOS runner selects the installed JDK 11 automatically). Linux x86_64 and arm64, and macOS arm64 are supported download targets; only macOS arm64 is the saved local measurement environment. CI uses Linux x86_64 separately.</p>
+<pre><code class="language-sh">python lab.py parquet
+python scripts/bootstrap.py hdfs
+python lab.py hdfs
+python scripts/bootstrap.py database
+python lab.py database
+python -m unittest discover -s tests -v
+node tests/parquet.test.mjs
+python scripts/build_site.py
+python scripts/check_site.py
+python -m http.server 18916 --bind 127.0.0.1 --directory build/site
+</code></pre>
+<p>Open <code>http://127.0.0.1:18916/distributed-data-lab/en/</code>. Each runtime profile shuts down its owned processes in finally. <code>python lab.py all</code> runs profiles sequentially after both runtime downloads. <code>--smoke</code> reduces only the Parquet data and saves to build/smoke-parquet.json; baseline evidence is retained. Tests for the browser parser use generated build/parquet files, so run the regular Parquet profile first.</p>
+<h2>Resources, ports and ownership</h2>
+<p>Use a machine with at least 8 GiB total RAM and adequate idle memory; allow about 3 GiB free for a runtime profile, plus existing services. Leave at least 8 GiB free disk for downloads and temporary stores. Hadoop's official archive is about 1 GiB; extraction retains common/HDFS binaries and dependencies. Downloads resume where supported and verify upstream checksums. Stores and raw logs stay in ignored build/.</p>
+<p>The runner uses an atomic build/runtime.lock. On a machine shared with other labs, set <code>DDS_RESOURCE_LOCK</code> to your common resource-lock directory before invoking lab.py. An occupied lock is an explicit stop; inspect ownership and do not delete another live run's lock. Profiles have a ten-minute limit; the runner terminates only its newly created process group on interruption / timeout.</p>
+<p>HDFS binds RPC/UI to 127.0.0.1:18920/18921; DataNode data ports 19000–19003, HTTP 19100–19103, IPC 19200–19203. Database SQL uses 19300–19302, HTTP 19400–19402. The runner preflights all ports. All configurations are unauthenticated teaching configurations restricted to loopback; never expose or tunnel them. Crash reporting and diagnostic reporting are disabled for the database. There is no global firewall change.</p>
+<h2>Inspect and modify</h2>
+<ul>
+<li><code>results/parquet.json</code>: full logical equality, expected output, per-file metadata and every counted read span / measured repetition.</li>
+<li><code>results/hdfs.json</code>: block placement before/after failure, node states and checksum equality.</li>
+<li><code>results/database.json</code>: actual range placement, trace, executed plan, metrics and both transaction outcomes.</li>
+<li><code>scripts/inspect_parquet.py FILE</code>: inspect a local file with PyArrow; writes JSON to stdout only. The browser inspector reads just header/footer slices and never uploads a selected file.</li>
+</ul>
+<p>Change one variable at a time. Predict an invariant before timing. All baseline examples are synthetic. Do not commit your input files, credentials, database stores or raw logs. The site exporter uses an explicit file allowlist and publishes only sanitized results; it does not copy build/ wholesale.</p>
+<h2>Interpretation and failure handling</h2>
+<p>A bind error means another process owns a required port. A runtime-download error leaves a resumable .part file. A failed assertion leaves local logs under build/ and publishes no new success claim. If HDFS cannot reach RF=3, inspect available targets; do not weaken the assertion to call an under-replicated cluster “repaired”. If a database schedule does not produce 40001, inspect returned reads and transaction mode rather than injecting a fake error.</p>
+<p>The CI workflow runs Parquet and native integration profiles in separate jobs and uploads generated result artifacts. Its results are independent from the committed laptop baseline. Course chapters 01 and 04 remain reading / reasoning; 02, 03, 05 and 06 have executed profiles. There is no cloud, hotspot capacity or cross-machine benchmark.</p>
+<p>HDFS child environments remove inherited Hadoop configuration variables, verify JDK 11, and use per-node PID directories / identities. This is required even for foreground daemons because the upstream shell can use PID files.</p>
+<h2>Optional local Iceberg profile</h2>
+<pre><code class="language-sh">pip install -r requirements-iceberg.txt
+python lab.py iceberg
+python scripts/validate_iceberg.py results/iceberg.json
+python scripts/index_results.py
+python scripts/verify_resources.py
+</code></pre>
+<p>Fixed PyIceberg 0.10.0 and SQLAlchemy 2.0.44 use the same PyArrow 20.0.0 baseline. No JVM, Docker, cloud service, API key or network listener is required. Input is six enumerated synthetic rows plus a deliberately uncommitted valid Parquet row. The profile is tiny; it does not estimate capacity. <code>all</code> retains the original three-profile behavior; the optional profile is run separately.</p>
+<p>Every Iceberg run creates a unique build/iceberg directory, so rerunning never purges a previous table's history. The report's local_artifact_directory identifies its own catalog/warehouse. Raw metadata has local locations and stays ignored; only selected schema/spec/snapshot fields, file hashes, literal rowsets and relative synthetic references are exported. No snapshot expiration, table purge or file deletion is run. SQLite catalog behavior is development scope, not distributed-catalog safety.</p>
+<p>Check snapshots with 3/5/6 rows, field ID 2 before/after rename, mixed spec IDs 0/1, unchanged old file SHA256, the persisted catalog pointer and historical rowset hashes. The negative control must show id=999 in raw file enumeration but absent from Iceberg. A separate validator rejects corrupted evidence; the engine runner itself compares actual reads against literal rowset oracles.</p>
+<p>The resource inventory maps six original exercises to verified CMU/MIT lectures and official tutorials. <code>verify_resources.py</code> validates it offline; <code>--live</code> performs bounded public URL prefix reads. Reading public slides requires no course enrollment in our checks, but course registration, grades, credit and fees remain separate. Do not publish official course solutions. The 2026 retrieval-index extension is reading and a lineage discussion, not a model or RAG-quality experiment.</p></article></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

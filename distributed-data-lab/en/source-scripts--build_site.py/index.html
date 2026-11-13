@@ -1,0 +1,292 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>scripts/build_site.py · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--build_site.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--build_site.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--build_site.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/source-scripts--build_site.py">中文</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>scripts/build_site.py</h1><p><a href="/distributed-data-lab/en/source/">← Source index</a></p><pre>#!/usr/bin/env python3
+&quot;&quot;&quot;Allowlisted, bilingual static export. Never copies a runtime directory.&quot;&quot;&quot;
+import hashlib, html, json, shutil, zipfile
+from pathlib import Path
+import markdown
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / &quot;build/site/distributed-data-lab&quot;
+BASE = &quot;/distributed-data-lab/&quot;
+DOMAIN = &quot;https://lynnlee1229.github.io&quot;
+REPO = &quot;https://github.com/lynnlee1229/distributed-data-lab&quot;
+CHAPTERS = [
+    (
+        &quot;01-foundations&quot;,
+        &quot;Names, bytes &amp; authority&quot;,
+        &quot;名称、字节与元数据权威&quot;,
+        &quot;reading&quot;,
+        &quot;—&quot;,
+    ),
+    (&quot;02-parquet&quot;, &quot;Parquet physical layout&quot;, &quot;Parquet 物理布局&quot;, &quot;executed&quot;, &quot;01&quot;),
+    (&quot;03-hdfs&quot;, &quot;HDFS blocks &amp; recovery&quot;, &quot;HDFS 块与故障恢复&quot;, &quot;executed&quot;, &quot;01–02&quot;),
+    (
+        &quot;04-storage-engine&quot;,
+        &quot;WAL, LSM, MVCC &amp; indexes&quot;,
+        &quot;WAL、LSM、MVCC 与索引&quot;,
+        &quot;reading&quot;,
+        &quot;01–03&quot;,
+    ),
+    (
+        &quot;05-transactions&quot;,
+        &quot;Cross-range transactions&quot;,
+        &quot;跨范围分布式事务&quot;,
+        &quot;executed&quot;,
+        &quot;04&quot;,
+    ),
+    (
+        &quot;06-lakehouse&quot;,
+        &quot;Snapshots &amp; evolution&quot;,
+        &quot;表快照与分区演进&quot;,
+        &quot;executed&quot;,
+        &quot;02, 04–05&quot;,
+    ),
+]
+SOURCE_FILES = (
+    [
+        &quot;lab.py&quot;,
+        &quot;requirements.txt&quot;,
+        &quot;requirements-iceberg.txt&quot;,
+        &quot;data/resources.json&quot;,
+        &quot;README.md&quot;,
+        &quot;README.zh-CN.md&quot;,
+        &quot;LICENSE&quot;,
+        &quot;VALIDATION.md&quot;,
+        &quot;runtime-lock.json&quot;,
+        &quot;.gitignore&quot;,
+        &quot;.github/workflows/ci.yml&quot;,
+    ]
+    + sorted(
+        str(p.relative_to(ROOT))
+        for folder, ext in [
+            (&quot;scripts&quot;, &quot;*.py&quot;),
+            (&quot;experiments&quot;, &quot;*.py&quot;),
+            (&quot;tests&quot;, &quot;*.py&quot;),
+            (&quot;tests&quot;, &quot;*.mjs&quot;),
+            (&quot;docs&quot;, &quot;*.md&quot;),
+            (&quot;site&quot;, &quot;*.mjs&quot;),
+            (&quot;site&quot;, &quot;*.css&quot;),
+        ]
+        for p in (ROOT / folder).glob(ext)
+    )
+    + [
+        &quot;results/parquet.json&quot;,
+        &quot;results/hdfs.json&quot;,
+        &quot;results/database.json&quot;,
+        &quot;results/iceberg.json&quot;,
+        &quot;results/index.json&quot;,
+    ]
+)
+if OUT.exists():
+    shutil.rmtree(OUT)
+OUT.mkdir(parents=True)
+
+
+def t(lang, en, zh):
+    return zh if lang == &quot;zh&quot; else en
+
+
+def href(lang, name=&quot;&quot;):
+    return BASE + lang + &quot;/&quot; + name
+
+
+def page(lang, name, title, body, kind=&quot;&quot;):
+    other = &quot;en&quot; if lang == &quot;zh&quot; else &quot;zh&quot;
+    path = href(lang, name)
+    target = OUT / lang / name / &quot;index.html&quot; if name else OUT / lang / &quot;index.html&quot;
+    target.parent.mkdir(parents=True, exist_ok=True)
+    nav = [
+        (&quot;&quot;, t(lang, &quot;Course&quot;, &quot;课程&quot;)),
+        (&quot;inspector&quot;, t(lang, &quot;Parquet inspector&quot;, &quot;Parquet 检查器&quot;)),
+        (&quot;evidence&quot;, t(lang, &quot;Evidence&quot;, &quot;实测证据&quot;)),
+        (&quot;resources&quot;, t(lang, &quot;Readings&quot;, &quot;课程资源&quot;)),
+        (&quot;reproduce&quot;, t(lang, &quot;Run locally&quot;, &quot;本地复现&quot;)),
+    ]
+    navhtml = &quot;&quot;.join(
+        f&#x27;&lt;a href=&quot;{href(lang,n)}&quot;&#x27;
+        + (&#x27; aria-current=&quot;page&quot;&#x27; if n == name else &quot;&quot;)
+        + &quot;&gt;&quot;
+        + label
+        + &quot;&lt;/a&gt;&quot;
+        for n, label in nav
+    )
+    content = f&quot;&quot;&quot;&lt;!doctype html&gt;&lt;html lang=&quot;{lang}&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;&lt;title&gt;{html.escape(title)} · Distributed Data Systems Lab&lt;/title&gt;&lt;meta name=&quot;description&quot; content=&quot;{html.escape(t(lang,&#x27;Learn storage layout, replication and transactions through original guides and four real reproducible experiments.&#x27;,&#x27;用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。&#x27;))}&quot;&gt;&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;self&#x27;; script-src &#x27;self&#x27;; connect-src &#x27;self&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; img-src &#x27;self&#x27; data:; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;&lt;link rel=&quot;stylesheet&quot; href=&quot;{BASE}assets/site.css&quot;&gt;&lt;link rel=&quot;canonical&quot; href=&quot;{DOMAIN+path}{&#x27;/&#x27; if name else &#x27;&#x27;}&quot;&gt;&lt;link rel=&quot;alternate&quot; hreflang=&quot;{other}&quot; href=&quot;{DOMAIN+href(other,name)}{&#x27;/&#x27; if name else &#x27;&#x27;}&quot;&gt;&lt;link rel=&quot;alternate&quot; hreflang=&quot;{lang}&quot; href=&quot;{DOMAIN+path}{&#x27;/&#x27; if name else &#x27;&#x27;}&quot;&gt;&lt;script type=&quot;module&quot; src=&quot;{BASE}assets/site.mjs&quot;&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a class=&quot;skip&quot; href=&quot;#main&quot;&gt;{t(lang,&#x27;Skip to content&#x27;,&#x27;跳到正文&#x27;)}&lt;/a&gt;&lt;header&gt;&lt;div class=&quot;top&quot;&gt;&lt;a class=&quot;brand&quot; href=&quot;{href(lang)}&quot;&gt;Distributed Data Systems Lab&lt;small&gt;Lynn Lee / Engineering notebook&lt;/small&gt;&lt;/a&gt;&lt;nav aria-label=&quot;{t(lang,&#x27;Main navigation&#x27;,&#x27;主导航&#x27;)}&quot;&gt;{navhtml}&lt;a href=&quot;{href(other,name)}&quot;&gt;{t(lang,&#x27;中文&#x27;,&#x27;English&#x27;)}&lt;/a&gt;&lt;/nav&gt;&lt;/div&gt;&lt;/header&gt;&lt;main id=&quot;main&quot; class=&quot;wrap {kind}&quot;&gt;{body}&lt;/main&gt;&lt;footer&gt;{t(lang,&#x27;Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.&#x27;,&#x27;原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。&#x27;)}&lt;br&gt;&lt;a href=&quot;{REPO}&quot;&gt;{t(lang,&#x27;Audited companion source&#x27;,&#x27;经审计的实验配套源码&#x27;)}&lt;/a&gt; · &lt;a href=&quot;{BASE}downloads/distributed-data-lab.zip&quot;&gt;ZIP&lt;/a&gt; · &lt;a href=&quot;{BASE}public-files.json&quot;&gt;{t(lang,&#x27;Export checksums&#x27;,&#x27;导出校验和&#x27;)}&lt;/a&gt; · &lt;a href=&quot;/{&#x27;zh/&#x27; if lang==&#x27;zh&#x27; else &#x27;&#x27;}websites/&quot;&gt;{t(lang,&#x27;All learning labs&#x27;,&#x27;全部学习 Lab&#x27;)}&lt;/a&gt;&lt;/footer&gt;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;
+    target.write_text(content)
+
+
+def home(lang):
+    cards = &quot;&quot;
+    for slug, en, zh, status, prereq in CHAPTERS:
+        label = (
+            t(lang, &quot;Executed profile&quot;, &quot;真实实操&quot;)
+            if status == &quot;executed&quot;
+            else t(lang, &quot;Reading + reasoning&quot;, &quot;阅读与推理&quot;)
+        )
+        cards += f&#x27;&lt;article class=&quot;card&quot;&gt;&lt;span class=&quot;badge {&quot;read&quot; if status==&quot;reading&quot; else &quot;&quot;}&quot;&gt;{label}&lt;/span&gt;&lt;h3&gt;&lt;a href=&quot;{href(lang,slug)}/&quot;&gt;{slug[:2]} / {t(lang,en,zh)}&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;{t(lang,&quot;Prerequisites&quot;,&quot;前置&quot;)} {prereq}&lt;/p&gt;&lt;/article&gt;&#x27;
+    return f&quot;&quot;&quot;&lt;section class=&quot;hero&quot;&gt;&lt;div&gt;&lt;p class=&quot;eyebrow&quot;&gt;Storage / Layout / Commit / Read&lt;/p&gt;&lt;h1&gt;{t(lang,&#x27;Where bytes live.&lt;br&gt;How changes commit.&#x27;,&#x27;数据如何存放，&lt;br&gt;变更如何提交。&#x27;)}&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;{t(lang,&#x27;A foundation-first course in distributed databases and storage. Inspect Parquet, stop a real DataNode, and observe a transaction conflict across real database nodes.&#x27;,&#x27;从基础出发的分布式数据库与存储课程：检查 Parquet 布局，停止真实 DataNode，观察真正跨节点数据库的事务冲突。&#x27;)}&lt;/p&gt;&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;button&quot; href=&quot;{href(lang,&#x27;01-foundations&#x27;)}/&quot;&gt;{t(lang,&#x27;Start chapter 01 →&#x27;,&#x27;从第 01 章开始 →&#x27;)}&lt;/a&gt;&lt;a class=&quot;button secondary&quot; href=&quot;{href(lang,&#x27;inspector&#x27;)}/&quot;&gt;{t(lang,&#x27;Inspect a Parquet file&#x27;,&#x27;检查 Parquet 文件&#x27;)}&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;architecture&quot;&gt;&lt;h3&gt;{t(lang,&#x27;Two routes · distinct responsibilities&#x27;,&#x27;两条路线 · 不同职责&#x27;)}&lt;/h3&gt;&lt;div class=&quot;route&quot;&gt;&lt;strong&gt;{t(lang,&#x27;Analytical files&#x27;,&#x27;分析型文件&#x27;)}&lt;/strong&gt;&lt;span class=&quot;layer&quot;&gt;SQL engine&lt;/span&gt;&lt;span class=&quot;layer&quot;&gt;Iceberg (optional)&lt;/span&gt;&lt;span class=&quot;layer&quot;&gt;Parquet&lt;/span&gt;&lt;span class=&quot;layer&quot;&gt;Files / HDFS / Objects&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;route&quot;&gt;&lt;strong&gt;{t(lang,&#x27;Transactional key ranges&#x27;,&#x27;事务型键范围&#x27;)}&lt;/strong&gt;&lt;span class=&quot;layer&quot;&gt;SQL gateway&lt;/span&gt;&lt;span class=&quot;layer&quot;&gt;Transactions / MVCC&lt;/span&gt;&lt;span class=&quot;layer&quot;&gt;Replicated ranges&lt;/span&gt;&lt;span class=&quot;layer&quot;&gt;LSM engine&lt;/span&gt;&lt;/div&gt;&lt;p&gt;{t(lang,&#x27;Compatible roles, not one mandatory HDFS → Parquet → Iceberg → database pipeline.&#x27;,&#x27;按职责理解组合关系，不存在所有系统都走 HDFS → Parquet → Iceberg → 数据库的通用链路。&#x27;)}&lt;/p&gt;&lt;/div&gt;&lt;/section&gt;&lt;div class=&quot;stats&quot;&gt;&lt;div class=&quot;stat&quot;&gt;&lt;strong&gt;06&lt;/strong&gt;&lt;span&gt;{t(lang,&#x27;Bilingual chapters&#x27;,&#x27;双语课程章节&#x27;)}&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;stat&quot;&gt;&lt;strong&gt;04&lt;/strong&gt;&lt;span&gt;{t(lang,&#x27;Real executable profiles&#x27;,&#x27;真实可执行 Profile&#x27;)}&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;stat&quot;&gt;&lt;strong&gt;0&lt;/strong&gt;&lt;span&gt;{t(lang,&#x27;File uploads in inspector&#x27;,&#x27;检查器文件上传&#x27;)}&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;note&quot;&gt;{t(lang,&#x27;Coverage: chapters 02 / 03 / 05 / 06 have executed profiles. 01 / 04 remain reading and reasoning. Iceberg uses a local SQLite catalog, not a distributed/cloud catalog. All cluster nodes share one laptop.&#x27;,&#x27;覆盖范围：02 / 03 / 05 / 06 有真实实操，01 / 04 为阅读推理。Iceberg 使用本地 SQLite catalog，不是分布式或云目录。所有集群节点共用一台笔记本。&#x27;)}&lt;/div&gt;&lt;h2&gt;{t(lang,&#x27;Follow the concept dependencies&#x27;,&#x27;沿概念依赖学习&#x27;)}&lt;/h2&gt;&lt;div class=&quot;cards&quot;&gt;{cards}&lt;/div&gt;&lt;h2&gt;{t(lang,&#x27;Four experiments, inspectable evidence&#x27;,&#x27;四个实验，可检查的证据&#x27;)}&lt;/h2&gt;&lt;div class=&quot;cards&quot;&gt;&lt;article class=&quot;card&quot;&gt;&lt;span class=&quot;eyebrow&quot;&gt;01 / PARQUET&lt;/span&gt;&lt;h3&gt;{t(lang,&#x27;Equal rows. Different requests.&#x27;,&#x27;结果相同，读取请求不同。&#x27;)}&lt;/h3&gt;&lt;p&gt;{t(lang,&#x27;Five layouts, 45 measured queries. Separate footer candidates from real engine requests and timing.&#x27;,&#x27;五种布局、45 次正式查询。区分 Footer 候选范围与引擎实际请求、耗时。&#x27;)}&lt;/p&gt;&lt;a href=&quot;{href(lang,&#x27;evidence&#x27;)}/?profile=parquet&quot;&gt;{t(lang,&#x27;Inspect layout evidence →&#x27;,&#x27;检查布局证据 →&#x27;)}&lt;/a&gt;&lt;/article&gt;&lt;article class=&quot;card&quot;&gt;&lt;span class=&quot;eyebrow&quot;&gt;02 / HDFS&lt;/span&gt;&lt;h3&gt;{t(lang,&#x27;Readable and fully replicated?&#x27;,&#x27;可读，也恢复副本了吗？&#x27;)}&lt;/h3&gt;&lt;p&gt;{t(lang,&#x27;Four DataNodes, RF=3, thirteen blocks. Stop one node, verify reads, then prove repair on surviving targets.&#x27;,&#x27;四个 DataNode、RF=3、十三块。停一节点、验证读取，再检查幸存目标上的补副本。&#x27;)}&lt;/p&gt;&lt;a href=&quot;{href(lang,&#x27;evidence&#x27;)}/?profile=hdfs&quot;&gt;{t(lang,&#x27;Inspect recovery evidence →&#x27;,&#x27;检查恢复证据 →&#x27;)}&lt;/a&gt;&lt;/article&gt;&lt;article class=&quot;card&quot;&gt;&lt;span class=&quot;eyebrow&quot;&gt;03 / DATABASE&lt;/span&gt;&lt;h3&gt;{t(lang,&#x27;One rule. Two stale decisions.&#x27;,&#x27;一条规则，两次过期决策。&#x27;)}&lt;/h3&gt;&lt;p&gt;{t(lang,&#x27;Three actual nodes and distinct range leaseholders. Commit a transfer, then observe a real 40001 conflict.&#x27;,&#x27;三个真实节点，不同范围租约持有者。先提交转账，再观察真实 40001 冲突。&#x27;)}&lt;/p&gt;&lt;a href=&quot;{href(lang,&#x27;evidence&#x27;)}/?profile=database&quot;&gt;{t(lang,&#x27;Inspect transaction evidence →&#x27;,&#x27;检查事务证据 →&#x27;)}&lt;/a&gt;&lt;/article&gt;&lt;article class=&quot;card&quot;&gt;&lt;span class=&quot;eyebrow&quot;&gt;04 / ICEBERG&lt;/span&gt;&lt;h3&gt;{t(lang,&#x27;A file is not a committed table.&#x27;,&#x27;文件不等于已提交的表。&#x27;)}&lt;/h3&gt;&lt;p&gt;{t(lang,&#x27;Read real 3/5/6-row snapshots, preserve field identity, mix partition specs and exclude a valid uncommitted file.&#x27;,&#x27;读取真实 3/5/6 行快照，保留字段身份，混合分区规范，排除合法但未提交的文件。&#x27;)}&lt;/p&gt;&lt;a href=&quot;{href(lang,&#x27;evidence&#x27;)}/?profile=iceberg&quot;&gt;{t(lang,&#x27;Inspect snapshot evidence →&#x27;,&#x27;检查快照证据 →&#x27;)}&lt;/a&gt;&lt;/article&gt;&lt;/div&gt;&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;button secondary&quot; href=&quot;{href(lang,&#x27;resources&#x27;)}/&quot;&gt;{t(lang,&#x27;Study with verified CMU / MIT readings →&#x27;,&#x27;结合已核验的 CMU / MIT 课程学习 →&#x27;)}&lt;/a&gt;&lt;/div&gt;&lt;div class=&quot;note&quot;&gt;{t(lang,&#x27;Scope boundary: Streaming Lab follows data changes; Distributed Compute Lab studies execution. This course focuses on storage layout, commit, placement and reading.&#x27;,&#x27;课程边界：Streaming Lab 关注数据变更链路，Distributed Compute Lab 关注分布式执行；本课程聚焦布局、提交、存放与读取。&#x27;)}&lt;/div&gt;&quot;&quot;&quot;
+
+
+def inspector(lang):
+    return f&quot;&quot;&quot;&lt;p class=&quot;eyebrow&quot;&gt;Browser-local / Footer only&lt;/p&gt;&lt;h1&gt;{t(lang,&#x27;Read the layout.&lt;br&gt;Keep your file local.&#x27;,&#x27;检查物理布局，&lt;br&gt;文件留在本地。&#x27;)}&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;{t(lang,&#x27;Inspect schema, row groups, encodings, codecs and min/max. Only header/footer slices are read; no file is uploaded. No external scripts, analytics or WASM download.&#x27;,&#x27;查看 Schema、Row Group、编码、压缩与 min/max。只读取 Header/Footer 切片，不上传文件；无外部脚本、统计或 WASM 下载。&#x27;)}&lt;/p&gt;&lt;div class=&quot;note warning&quot;&gt;{t(lang,&#x27;This is metadata inspection, not SQL execution. The integer range selector marks candidate groups from raw physical INT32/INT64 bounds. It cannot measure actual engine scans. Standard unencrypted PAR1 files only; footer ≤16 MiB, bounded parser complexity. Decimals/timestamps need logical interpretation; unsupported types stay candidates.&#x27;,&#x27;这是元数据检查，不执行 SQL。整数范围选择器根据原始物理 INT32/INT64 界限标记候选组，不测量引擎实际扫描。只支持标准未加密 PAR1 文件，Footer ≤16 MiB，解析复杂度有上限。小数与时间需结合逻辑类型解释；不支持的类型保留为候选。&#x27;)}&lt;/div&gt;&lt;div class=&quot;controls&quot;&gt;&lt;label&gt;{t(lang,&#x27;Choose a local .parquet file&#x27;,&#x27;选择本地 .parquet 文件&#x27;)}&lt;input id=&quot;file&quot; type=&quot;file&quot; accept=&quot;.parquet,.pq&quot;&gt;&lt;/label&gt;&lt;button id=&quot;sample-sorted&quot;&gt;{t(lang,&#x27;Sorted synthetic sample&#x27;,&#x27;有序合成样本&#x27;)}&lt;/button&gt;&lt;button id=&quot;sample-shuffled&quot;&gt;{t(lang,&#x27;Shuffled synthetic sample&#x27;,&#x27;打乱合成样本&#x27;)}&lt;/button&gt;&lt;/div&gt;&lt;p id=&quot;filename&quot; class=&quot;muted&quot;&gt;{t(lang,&#x27;Choose your file or a synthetic sample to begin.&#x27;,&#x27;选择文件或合成样本开始。&#x27;)}&lt;/p&gt;&lt;div class=&quot;controls&quot;&gt;&lt;label&gt;{t(lang,&#x27;Filter column&#x27;,&#x27;过滤列&#x27;)}&lt;select id=&quot;column&quot;&gt;&lt;option&gt;id&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label&gt;{t(lang,&#x27;Lower bound (inclusive)&#x27;,&#x27;下界（含）&#x27;)}&lt;input id=&quot;lower&quot; type=&quot;number&quot; value=&quot;32000&quot; step=&quot;1&quot;&gt;&lt;/label&gt;&lt;label&gt;{t(lang,&#x27;Upper bound (inclusive)&#x27;,&#x27;上界（含）&#x27;)}&lt;input id=&quot;upper&quot; type=&quot;number&quot; value=&quot;33023&quot; step=&quot;1&quot;&gt;&lt;/label&gt;&lt;button id=&quot;apply&quot;&gt;{t(lang,&#x27;Estimate candidates&#x27;,&#x27;估算候选组&#x27;)}&lt;/button&gt;&lt;button id=&quot;export&quot; disabled&gt;{t(lang,&#x27;Export local report&#x27;,&#x27;导出本地报告&#x27;)}&lt;/button&gt;&lt;/div&gt;&lt;p id=&quot;status&quot; role=&quot;status&quot; aria-live=&quot;polite&quot; class=&quot;status&quot;&gt;&lt;/p&gt;&lt;p id=&quot;file-info&quot; class=&quot;muted&quot;&gt;&lt;/p&gt;&lt;div id=&quot;groups&quot; class=&quot;groups&quot; aria-label=&quot;Row group candidates&quot;&gt;&lt;/div&gt;&lt;div id=&quot;metadata&quot;&gt;&lt;/div&gt;&lt;div id=&quot;raw&quot;&gt;&lt;/div&gt;&lt;p class=&quot;source&quot;&gt;&lt;a href=&quot;{href(lang,&#x27;02-parquet&#x27;)}/&quot;&gt;{t(lang,&#x27;Learn how to interpret these numbers →&#x27;,&#x27;学习如何解释这些数字 →&#x27;)}&lt;/a&gt;&lt;/p&gt;&quot;&quot;&quot;
+
+
+def resource_page(lang):
+    inventory = json.loads((ROOT / &quot;data/resources.json&quot;).read_text())
+    course_cards = &quot;&quot;
+    for c in inventory[&quot;courses&quot;]:
+        course_cards += f&#x27;&lt;article class=&quot;card&quot;&gt;&lt;span class=&quot;badge&quot;&gt;{html.escape(c[&quot;school&quot;])}&lt;/span&gt;&lt;h3&gt;&lt;a href=&quot;{c[&quot;homepage&quot;]}&quot;&gt;{html.escape(c[&quot;course_number&quot;]+&quot; / &quot;+c[&quot;course_name&quot;])}&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;{c[&quot;term&quot;]} · {c[&quot;status&quot;]}&lt;/p&gt;&lt;p&gt;{html.escape(c[&quot;prerequisites&quot;][lang])}&lt;/p&gt;&lt;p&gt;{html.escape(c[&quot;access&quot;][lang])}&lt;/p&gt;&lt;details&gt;&lt;summary&gt;{t(lang,&quot;Reading and solution policy&quot;,&quot;阅读与解答政策&quot;)}&lt;/summary&gt;&lt;p&gt;{html.escape(c[&quot;solution_policy&quot;][lang])}&lt;/p&gt;&lt;a href=&quot;{c[&quot;prerequisite_source&quot;]}&quot;&gt;{t(lang,&quot;Official prerequisites / policy&quot;,&quot;官方先修与政策&quot;)}&lt;/a&gt;&lt;/details&gt;&lt;/article&gt;&#x27;
+    mapping = &quot;&quot;
+    by_id = {r[&quot;id&quot;]: r for r in inventory[&quot;resources&quot;]}
+    for u in inventory[&quot;unit_mappings&quot;]:
+        links = &quot; · &quot;.join(
+            f&#x27;&lt;a href=&quot;{by_id[i][&quot;url&quot;]}&quot;&gt;{html.escape(by_id[i][&quot;locator&quot;]+&quot; / &quot;+by_id[i][&quot;title&quot;])}&lt;/a&gt;&#x27;
+            for i in u[&quot;resources&quot;]
+        )
+        mapping += f&#x27;&lt;details&gt;&lt;summary&gt;{u[&quot;unit&quot;]} / {t(lang,&quot;Read → predict → run → explain&quot;,&quot;阅读 → 预测 → 运行 → 解释&quot;)}&lt;/summary&gt;&lt;p&gt;{links}&lt;/p&gt;&lt;p&gt;{html.escape(u[&quot;task&quot;][lang])}&lt;/p&gt;&lt;pre&gt;{html.escape(chr(10).join(u[&quot;exercise_commands&quot;]))}&lt;/pre&gt;&lt;p&gt;{html.escape(u[&quot;check&quot;][lang])}&lt;/p&gt;&lt;a href=&quot;{href(lang,u[&quot;slug&quot;])}/&quot;&gt;{t(lang,&quot;Open the complete unit →&quot;,&quot;打开完整单元 →&quot;)}&lt;/a&gt;&lt;/details&gt;&#x27;
+    course_options = &quot;&quot;.join(
+        f&#x27;&lt;option value=&quot;{c[&quot;id&quot;]}&quot;&gt;{html.escape(c[&quot;school&quot;]+&quot; &quot;+c[&quot;course_number&quot;])}&lt;/option&gt;&#x27;
+        for c in inventory[&quot;courses&quot;]
+    )
+    unit_options = &quot;&quot;.join(
+        f&#x27;&lt;option value=&quot;{i:02}&quot;&gt;{i:02}&lt;/option&gt;&#x27; for i in range(1, 7)
+    )
+    return f&#x27;&lt;p class=&quot;eyebrow&quot;&gt;Primary sources / Verified 2026-11-14&lt;/p&gt;&lt;h1&gt;{t(lang,&quot;Read with purpose.&lt;br&gt;Test the claims.&quot;,&quot;带着问题阅读，&lt;br&gt;用实验检验。&quot;)}&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;{t(lang,&quot;Two real university courses, specific lectures and original runnable exercises mapped to all six units. Use this as a study route, not a course enrollment or assignment-solution service.&quot;,&quot;两门真实大学课程、具体讲义与原创可运行练习，对应六个学习单元。这里提供学习路线，不提供课程注册或官方作业解答。&quot;)}&lt;/p&gt;&lt;div class=&quot;note&quot;&gt;{html.escape(inventory[&quot;policy&quot;][lang])}&lt;/div&gt;&lt;div class=&quot;grid2&quot;&gt;{course_cards}&lt;/div&gt;&lt;h2&gt;{t(lang,&quot;Six learning loops&quot;,&quot;六个学习闭环&quot;)}&lt;/h2&gt;{mapping}&lt;h2&gt;{t(lang,&quot;Search the source inventory&quot;,&quot;检索结构化资源清单&quot;)}&lt;/h2&gt;&lt;div class=&quot;controls&quot;&gt;&lt;label&gt;{t(lang,&quot;Search course, topic or lecture&quot;,&quot;搜索课程、主题或讲义&quot;)}&lt;input id=&quot;resource-search&quot; type=&quot;search&quot; placeholder=&quot;Parquet / MVCC / 快照 / 6.5830&quot;&gt;&lt;/label&gt;&lt;label&gt;{t(lang,&quot;Course / source&quot;,&quot;课程 / 来源&quot;)}&lt;select id=&quot;resource-course&quot;&gt;&lt;option value=&quot;&quot;&gt;{t(lang,&quot;All sources&quot;,&quot;全部来源&quot;)}&lt;/option&gt;{course_options}&lt;option value=&quot;official&quot;&gt;{t(lang,&quot;Official tutorials / papers&quot;,&quot;官方教程 / 论文&quot;)}&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label&gt;{t(lang,&quot;Learning unit&quot;,&quot;学习单元&quot;)}&lt;select id=&quot;resource-unit&quot;&gt;&lt;option value=&quot;&quot;&gt;{t(lang,&quot;All units&quot;,&quot;全部单元&quot;)}&lt;/option&gt;{unit_options}&lt;option value=&quot;AI-extension&quot;&gt;{t(lang,&quot;AI reading extension&quot;,&quot;AI 阅读拓展&quot;)}&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;/div&gt;&lt;p id=&quot;resource-status&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/p&gt;&lt;div id=&quot;resource-results&quot; class=&quot;grid2&quot;&gt;&lt;/div&gt;&lt;p&gt;&lt;a href=&quot;{BASE}resources.json&quot;&gt;{t(lang,&quot;Download the structured inventory JSON&quot;,&quot;下载结构化清单 JSON&quot;)}&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;{t(lang,&quot;2026: dataset lineage for retrieval&quot;,&quot;2026：检索的数据版本血缘&quot;)}&lt;/h2&gt;&lt;p&gt;{html.escape(inventory[&quot;ai_extension&quot;][&quot;connection&quot;][lang])}&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;https://dsg.csail.mit.edu/6.5830/lectures/lec17.pdf&quot;&gt;MIT Spring 2026 / Lecture 17 / Embeddings, RAG, and Vector DBs&lt;/a&gt;&lt;/p&gt;&lt;div class=&quot;note&quot;&gt;{t(lang,&quot;The GFS paper is a 2003 classic. MIT 2026 selected lectures are published PDFs, verified readable; no planned or speculative release is presented as completed. Tutorials may evolve; executed compatibility is recorded separately.&quot;,&quot;GFS 是 2003 年经典文献。所选 MIT 2026 讲义已有公开 PDF 并已核验可读，没有把计划或推测当成完成资料。教程可能更新，实际兼容版本另有记录。&quot;)}&lt;/div&gt;&#x27;
+
+
+for lang in [&quot;en&quot;, &quot;zh&quot;]:
+    page(lang, &quot;&quot;, t(lang, &quot;Course&quot;, &quot;课程&quot;), home(lang))
+    page(
+        lang,
+        &quot;inspector&quot;,
+        t(lang, &quot;Parquet inspector&quot;, &quot;Parquet 检查器&quot;),
+        inspector(lang),
+    )
+    ev = (
+        f&#x27;&lt;p class=&quot;eyebrow&quot;&gt;Recorded / Synthetic / Reproducible&lt;/p&gt;&lt;h1&gt;{t(lang,&quot;Inspect the evidence.&quot;,&quot;检查真实证据。&quot;)}&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;{t(lang,&quot;These are saved local runs, not live services or illustrative simulations. Read full results, code and limitations before comparing timings.&quot;,&quot;这里是保存的本地实测，不是在线运行的服务或原理模拟。比较耗时前，先检查完整结果、代码与边界。&quot;)}&lt;/p&gt;&lt;div class=&quot;note&quot;&gt;{t(lang,&quot;Versioned baseline: PyArrow 20.0.0 / HDFS 3.4.2 + JDK 11 / CockroachDB 24.1.24 / PyIceberg 0.10.0. All data is synthetic; all nodes share one host.&quot;,&quot;固定基线：PyArrow 20.0.0 / HDFS 3.4.2 + JDK 11 / CockroachDB 24.1.24 / PyIceberg 0.10.0。全部为合成数据，节点共用宿主机。&quot;)}&lt;/div&gt;&lt;div class=&quot;tabs&quot; aria-label=&quot;Experiment&quot;&gt;&lt;button data-report=&quot;parquet&quot; aria-pressed=&quot;true&quot;&gt;Parquet&lt;/button&gt;&lt;button data-report=&quot;hdfs&quot; aria-pressed=&quot;false&quot;&gt;HDFS&lt;/button&gt;&lt;button data-report=&quot;database&quot; aria-pressed=&quot;false&quot;&gt;{t(lang,&quot;Distributed database&quot;,&quot;分布式数据库&quot;)}&lt;/button&gt;&lt;button data-report=&quot;iceberg&quot; aria-pressed=&quot;false&quot;&gt;Iceberg&lt;/button&gt;&lt;/div&gt;&lt;div id=&quot;evidence-output&quot; aria-live=&quot;polite&quot;&gt;&lt;p&gt;{t(lang,&quot;Loading recorded results… JSON files remain available below if JavaScript is disabled.&quot;,&quot;加载保存的结果… 若关闭 JavaScript，可直接读取下方 JSON。&quot;)}&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&#x27;
+        + &quot; · &quot;.join(
+            f&#x27;&lt;a href=&quot;{BASE}results/{n}.json&quot;&gt;{n}.json&lt;/a&gt;&#x27;
+            for n in [&quot;parquet&quot;, &quot;hdfs&quot;, &quot;database&quot;, &quot;iceberg&quot;]
+        )
+        + f&#x27;&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;{href(lang,&quot;source&quot;)}/&quot;&gt;{t(lang,&quot;Browse the executable code →&quot;,&quot;浏览可执行代码 →&quot;)}&lt;/a&gt;&lt;/p&gt;&#x27;
+    )
+    page(lang, &quot;evidence&quot;, t(lang, &quot;Evidence&quot;, &quot;实测证据&quot;), ev)
+    page(
+        lang,
+        &quot;resources&quot;,
+        t(lang, &quot;Readings and exercises&quot;, &quot;课程资源与练习&quot;),
+        resource_page(lang),
+    )
+    for i, (slug, en, zh, status, pre) in enumerate(CHAPTERS):
+        sidebar = (
+            &#x27;&lt;aside class=&quot;sidebar&quot; aria-label=&quot;Chapters&quot;&gt;&#x27;
+            + &quot;&quot;.join(
+                f&#x27;&lt;a href=&quot;{href(lang,s)}/&quot;&#x27;
+                + (&#x27; aria-current=&quot;page&quot;&#x27; if s == slug else &quot;&quot;)
+                + f&quot;&gt;{s[:2]} {t(lang,e,z)}&lt;/a&gt;&quot;
+                for s, e, z, _, _ in CHAPTERS
+            )
+            + &quot;&lt;/aside&gt;&quot;
+        )
+        body = markdown.markdown(
+            (ROOT / f&quot;docs/{slug}.{lang}.md&quot;).read_text(),
+            extensions=[&quot;tables&quot;, &quot;fenced_code&quot;],
+        )
+        pager = (
+            &#x27;&lt;div class=&quot;pager&quot;&gt;&#x27;
+            + (
+                f&#x27;&lt;a href=&quot;{href(lang,CHAPTERS[i-1][0])}/&quot;&gt;← {t(lang,&quot;Previous&quot;,&quot;上一章&quot;)}&lt;/a&gt;&#x27;
+                if i
+                else &quot;&lt;span&gt;&lt;/span&gt;&quot;
+            )
+            + (
+                f&#x27;&lt;a href=&quot;{href(lang,CHAPTERS[i+1][0])}/&quot;&gt;{t(lang,&quot;Next&quot;,&quot;下一章&quot;)} →&lt;/a&gt;&#x27;
+                if i &lt; 5
+                else f&#x27;&lt;a href=&quot;{href(lang,&quot;reproduce&quot;)}/&quot;&gt;{t(lang,&quot;Run locally&quot;,&quot;本地复现&quot;)} →&lt;/a&gt;&#x27;
+            )
+            + &quot;&lt;/div&gt;&quot;
+        )
+        page(
+            lang,
+            slug,
+            t(lang, en, zh),
+            f&#x27;&lt;div class=&quot;chapter-layout&quot;&gt;{sidebar}&lt;article class=&quot;prose&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;{t(lang,&quot;Executed profile&quot; if status==&quot;executed&quot; else &quot;Reading / reasoning&quot;,&quot;真实实操&quot; if status==&quot;executed&quot; else &quot;阅读 / 推理&quot;)}&lt;/p&gt;{body}{pager}&lt;/article&gt;&lt;/div&gt;&#x27;,
+        )
+    page(
+        lang,
+        &quot;reproduce&quot;,
+        t(lang, &quot;Reproduce from zero&quot;, &quot;从零复现&quot;),
+        &#x27;&lt;article class=&quot;prose&quot;&gt;&#x27;
+        + markdown.markdown(
+            (ROOT / f&quot;docs/reproduce.{lang}.md&quot;).read_text(),
+            extensions=[&quot;tables&quot;, &quot;fenced_code&quot;],
+        )
+        + &quot;&lt;/article&gt;&quot;,
+    )
+    listing = &quot;&quot;
+    for file in SOURCE_FILES:
+        if file.startswith((&quot;experiments/&quot;, &quot;scripts/&quot;)) or file == &quot;lab.py&quot;:
+            name = file.replace(&quot;/&quot;, &quot;--&quot;)
+            listing += f&#x27;&lt;li&gt;&lt;a href=&quot;{href(lang,&quot;source-&quot;+name)}/&quot;&gt;{html.escape(file)}&lt;/a&gt;&lt;/li&gt;&#x27;
+            page(
+                lang,
+                &quot;source-&quot; + name,
+                file,
+                f&#x27;&lt;p class=&quot;eyebrow&quot;&gt;Executable companion source&lt;/p&gt;&lt;h1&gt;{html.escape(file)}&lt;/h1&gt;&lt;p&gt;&lt;a href=&quot;{href(lang,&quot;source&quot;)}/&quot;&gt;← {t(lang,&quot;Source index&quot;,&quot;代码目录&quot;)}&lt;/a&gt;&lt;/p&gt;&lt;pre&gt;{html.escape((ROOT/file).read_text())}&lt;/pre&gt;&#x27;,
+            )
+    page(
+        lang,
+        &quot;source&quot;,
+        t(lang, &quot;Executable source&quot;, &quot;可执行源码&quot;),
+        f&#x27;&lt;h1&gt;{t(lang,&quot;Read, change, reproduce.&quot;,&quot;阅读、修改、复现。&quot;)}&lt;/h1&gt;&lt;p&gt;{t(lang,&quot;Audited companion only. Runtime binaries, local environments and raw logs are excluded.&quot;,&quot;只包含经审计的配套代码，不包含运行时二进制、本地环境或原始日志。&quot;)}&lt;/p&gt;&lt;ul&gt;{listing}&lt;/ul&gt;&lt;a class=&quot;button&quot; href=&quot;{BASE}downloads/distributed-data-lab.zip&quot;&gt;{t(lang,&quot;Download companion ZIP&quot;,&quot;下载实验配套 ZIP&quot;)}&lt;/a&gt;&#x27;,
+    )
+(OUT / &quot;assets&quot;).mkdir()
+for file in [&quot;site.css&quot;, &quot;site.mjs&quot;, &quot;parquet.mjs&quot;, &quot;study.mjs&quot;]:
+    shutil.copy2(ROOT / &quot;site&quot; / file, OUT / &quot;assets&quot; / file)
+(OUT / &quot;samples&quot;).mkdir()
+for order in [&quot;sorted&quot;, &quot;shuffled&quot;]:
+    shutil.copy2(
+        ROOT / f&quot;build/parquet/{order}-4096-zstd.parquet&quot;,
+        OUT / f&quot;samples/{order}.parquet&quot;,
+    )
+(OUT / &quot;results&quot;).mkdir()
+for name in [&quot;parquet&quot;, &quot;hdfs&quot;, &quot;database&quot;, &quot;iceberg&quot;, &quot;index&quot;]:
+    shutil.copy2(ROOT / f&quot;results/{name}.json&quot;, OUT / f&quot;results/{name}.json&quot;)
+shutil.copy2(ROOT / &quot;data/resources.json&quot;, OUT / &quot;resources.json&quot;)
+(OUT / &quot;downloads&quot;).mkdir()
+with zipfile.ZipFile(
+    OUT / &quot;downloads/distributed-data-lab.zip&quot;, &quot;w&quot;, zipfile.ZIP_DEFLATED
+) as z:
+    for file in SOURCE_FILES:
+        if not (ROOT / file).is_file():
+            raise SystemExit(&quot;Missing allowlisted file &quot; + file)
+        z.write(ROOT / file, &quot;distributed-data-lab/&quot; + file)
+(OUT / &quot;index.html&quot;).write_text(
+    &#x27;&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0; url=en/&quot;&gt;&lt;title&gt;Distributed Data Systems Lab&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;a href=&quot;en/&quot;&gt;English&lt;/a&gt; · &lt;a href=&quot;zh/&quot;&gt;中文&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;&#x27;
+)
+urls = [
+    DOMAIN + BASE + str(p.relative_to(OUT)).replace(&quot;index.html&quot;, &quot;&quot;)
+    for p in OUT.rglob(&quot;index.html&quot;)
+]
+(OUT / &quot;sitemap.xml&quot;).write_text(
+    &#x27;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;urlset xmlns=&quot;http://www.sitemaps.org/schemas/sitemap/0.9&quot;&gt;&#x27;
+    + &quot;&quot;.join(&quot;&lt;url&gt;&lt;loc&gt;&quot; + html.escape(u) + &quot;&lt;/loc&gt;&lt;/url&gt;&quot; for u in urls)
+    + &quot;&lt;/urlset&gt;&quot;
+)
+files = {
+    str(p.relative_to(OUT)): {
+        &quot;bytes&quot;: p.stat().st_size,
+        &quot;sha256&quot;: hashlib.sha256(p.read_bytes()).hexdigest(),
+    }
+    for p in sorted(OUT.rglob(&quot;*&quot;))
+    if p.is_file()
+}
+(OUT / &quot;public-files.json&quot;).write_text(
+    json.dumps(
+        {
+            &quot;scope&quot;: &quot;allowlisted original companion, synthetic samples and sanitized measurements only&quot;,
+            &quot;files&quot;: files,
+        },
+        indent=2,
+    )
+)
+print(&quot;Exported&quot;, len(files) + 1, &quot;files to&quot;, OUT)
+</pre></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

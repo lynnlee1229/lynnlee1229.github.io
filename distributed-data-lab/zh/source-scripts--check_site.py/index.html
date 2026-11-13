@@ -1,0 +1,94 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>scripts/check_site.py · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--check_site.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--check_site.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--check_site.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/source-scripts--check_site.py">English</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>scripts/check_site.py</h1><p><a href="/distributed-data-lab/zh/source/">← 代码目录</a></p><pre>#!/usr/bin/env python3
+&quot;&quot;&quot;Check local links, public allowlist, ZIP isolation, translated pages and privacy markers.&quot;&quot;&quot;
+import hashlib, json, re, sys, zipfile
+from html.parser import HTMLParser
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+
+ROOT = Path(__file__).resolve().parents[1]
+SITE = ROOT / &quot;build/site&quot;
+OUT = SITE / &quot;distributed-data-lab&quot;
+errors = []
+
+
+class Links(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.urls = []
+        self.ids = set()
+        self.h1 = 0
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == &quot;h1&quot;:
+            self.h1 += 1
+        if &quot;id&quot; in a:
+            self.ids.add(a[&quot;id&quot;])
+        for attr in [&quot;href&quot;, &quot;src&quot;]:
+            if attr in a:
+                self.urls.append(a[attr])
+
+
+manifest = json.loads((OUT / &quot;public-files.json&quot;).read_text())[&quot;files&quot;]
+actual = {str(p.relative_to(OUT)) for p in OUT.rglob(&quot;*&quot;) if p.is_file()}
+assert actual == set(manifest) | {&quot;public-files.json&quot;}, &quot;Export manifest differs&quot;
+for name, record in manifest.items():
+    data = (OUT / name).read_bytes()
+    if hashlib.sha256(data).hexdigest() != record[&quot;sha256&quot;]:
+        errors.append(&quot;Hash &quot; + name)
+    if name.endswith((&quot;.html&quot;, &quot;.js&quot;, &quot;.mjs&quot;, &quot;.json&quot;, &quot;.css&quot;, &quot;.xml&quot;)):
+        text = data.decode()
+        if re.search(
+            r&quot;/(?:Users)/|/(?:home)/(?!runner)|sk-proj[-]|gh[pousr]_[A-Za-z0-9]{20}|BEGIN [A-Z ]*PRIVATE KEY|app\.notion\.com|\.(?:colima)/|\.(?:zshrc)&quot;,
+            text,
+        ):
+            errors.append(&quot;Privacy marker &quot; + name)
+    if name.endswith(&quot;.html&quot;):
+        parsed = Links()
+        parsed.feed(data.decode())
+        if name not in [&quot;index.html&quot;] and parsed.h1 != 1:
+            errors.append(&quot;Need exactly one h1 &quot; + name)
+        if name.startswith(&quot;en/&quot;):
+            other = OUT / (&quot;zh/&quot; + name[3:])
+            if not other.exists():
+                errors.append(&quot;Missing translation &quot; + name)
+        for url in parsed.urls:
+            p = urlsplit(url)
+            if p.scheme or p.netloc:
+                continue
+            if p.path in [&quot;/websites/&quot;, &quot;/zh/websites/&quot;]:
+                continue
+            target = (
+                SITE / unquote(p.path.lstrip(&quot;/&quot;))
+                if p.path.startswith(&quot;/&quot;)
+                else (OUT / name).parent / unquote(p.path)
+            )
+            if not p.path:
+                target = OUT / name
+            if target.is_dir():
+                target = target / &quot;index.html&quot;
+            if not target.exists():
+                errors.append(&quot;Broken link &quot; + name + &quot; -&gt; &quot; + url)
+            elif p.fragment and target.suffix == &quot;.html&quot;:
+                doc = Links()
+                doc.feed(target.read_text())
+                if p.fragment not in doc.ids:
+                    errors.append(&quot;Broken anchor &quot; + url)
+with zipfile.ZipFile(OUT / &quot;downloads/distributed-data-lab.zip&quot;) as z:
+    for name in z.namelist():
+        if any(part in [&quot;build&quot;, &quot;.venv&quot;, &quot;.git&quot;, &quot;.env&quot;] for part in Path(name).parts):
+            errors.append(&quot;Private runtime in ZIP &quot; + name)
+        if name.endswith((&quot;.py&quot;, &quot;.mjs&quot;, &quot;.md&quot;, &quot;.json&quot;, &quot;.yml&quot;)):
+            if re.search(
+                r&quot;/(?:Users)/|app\.notion\.com|sk-proj[-]|BEGIN [A-Z ]*PRIVATE KEY&quot;,
+                z.read(name).decode(),
+            ):
+                errors.append(&quot;Privacy marker in ZIP &quot; + name)
+if errors:
+    raise SystemExit(&quot;\n&quot;.join(errors))
+print(
+    &quot;PASS:&quot;,
+    len(manifest),
+    &quot;export files; links, translations, privacy markers, hashes and isolated companion ZIP&quot;,
+)
+</pre></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

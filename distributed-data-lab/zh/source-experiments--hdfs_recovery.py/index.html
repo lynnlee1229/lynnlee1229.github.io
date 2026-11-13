@@ -1,0 +1,327 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>experiments/hdfs_recovery.py · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-experiments--hdfs_recovery.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-experiments--hdfs_recovery.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-experiments--hdfs_recovery.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/source-experiments--hdfs_recovery.py">English</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>experiments/hdfs_recovery.py</h1><p><a href="/distributed-data-lab/zh/source/">← 代码目录</a></p><pre>&quot;&quot;&quot;Four real HDFS DataNodes, RF=3, one controlled stop and repair on spare targets.&quot;&quot;&quot;
+
+import hashlib, json, os, random, re, shutil, socket, subprocess, time, urllib.request
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PORTS = (
+    [18920, 18921]
+    + list(range(19000, 19004))
+    + list(range(19100, 19104))
+    + list(range(19200, 19204))
+)
+
+
+def run(out=None):
+    home = ROOT / &quot;build/vendor/hadoop-3.4.2&quot;
+    assert (home / &quot;bin/hdfs&quot;).exists(), &quot;Run bootstrap.py hdfs first&quot;
+    work = ROOT / &quot;build/hdfs&quot;
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+    procs = []
+    handles = []
+    for port in PORTS:
+        with socket.socket() as s:
+            s.bind((&quot;127.0.0.1&quot;, port))
+    java = os.environ.get(&quot;DDS_JAVA_HOME&quot;)
+    if not java and __import__(&quot;platform&quot;).system() == &quot;Darwin&quot;:
+        java = subprocess.check_output(
+            [&quot;/usr/libexec/java_home&quot;, &quot;-v&quot;, &quot;11&quot;], text=True
+        ).strip()
+    java = java or os.environ.get(&quot;JAVA_HOME&quot;)
+    assert java, &quot;Set JAVA_HOME to JDK 11&quot;
+    java_version = subprocess.check_output(
+        [str(Path(java) / &quot;bin/java&quot;), &quot;-version&quot;], stderr=subprocess.STDOUT, text=True
+    ).splitlines()[0]
+    assert re.search(r&quot;version \&quot;11[.]&quot;, java_version), (
+        &quot;This profile requires JDK 11: &quot; + java_version
+    )
+
+    def config(name, extra):
+        conf = work / name
+        conf.mkdir()
+        (conf / &quot;pids&quot;).mkdir()
+        props = {
+            &quot;fs.defaultFS&quot;: &quot;hdfs://127.0.0.1:18920&quot;,
+            &quot;hadoop.tmp.dir&quot;: str(work / &quot;tmp&quot;),
+            &quot;hadoop.security.authentication&quot;: &quot;simple&quot;,
+            &quot;dfs.namenode.rpc-address&quot;: &quot;127.0.0.1:18920&quot;,
+            &quot;dfs.namenode.http-address&quot;: &quot;127.0.0.1:18921&quot;,
+            &quot;dfs.namenode.name.dir&quot;: str(work / &quot;name&quot;),
+            &quot;dfs.replication&quot;: &quot;3&quot;,
+            &quot;dfs.blocksize&quot;: &quot;1048576&quot;,
+            &quot;dfs.heartbeat.interval&quot;: &quot;1&quot;,
+            &quot;dfs.namenode.heartbeat.recheck-interval&quot;: &quot;1000&quot;,
+            &quot;dfs.namenode.replication.interval&quot;: &quot;1&quot;,
+            &quot;dfs.namenode.safemode.min.datanodes&quot;: &quot;4&quot;,
+            &quot;dfs.permissions.enabled&quot;: &quot;false&quot;,
+            &quot;dfs.namenode.datanode.registration.ip-hostname-check&quot;: &quot;false&quot;,
+            **extra,
+        }
+        xml = (
+            &quot;&lt;configuration&gt;&quot;
+            + &quot;&quot;.join(
+                f&quot;&lt;property&gt;&lt;name&gt;{k}&lt;/name&gt;&lt;value&gt;{v}&lt;/value&gt;&lt;/property&gt;&quot;
+                for k, v in props.items()
+            )
+            + &quot;&lt;/configuration&gt;&quot;
+        )
+        for file in [&quot;core-site.xml&quot;, &quot;hdfs-site.xml&quot;]:
+            (conf / file).write_text(xml)
+        (conf / &quot;hadoop-env.sh&quot;).write_text(&quot;&quot;)
+        shutil.copy2(home / &quot;etc/hadoop/log4j.properties&quot;, conf / &quot;log4j.properties&quot;)
+        clean = {
+            k: v
+            for k, v in os.environ.items()
+            if not k.startswith((&quot;HADOOP_&quot;, &quot;HDFS_&quot;, &quot;YARN_&quot;, &quot;MAPRED_&quot;))
+            and k != &quot;CLASSPATH&quot;
+        }
+        return {
+            **clean,
+            &quot;HADOOP_YARN_HOME&quot;: str(home),
+            &quot;HADOOP_MAPRED_HOME&quot;: str(home),
+            &quot;HADOOP_COMMON_HOME&quot;: str(home),
+            &quot;HADOOP_HDFS_HOME&quot;: str(home),
+            &quot;JAVA_HOME&quot;: java,
+            &quot;HADOOP_HOME&quot;: str(home),
+            &quot;HADOOP_CONF_DIR&quot;: str(conf),
+            &quot;HADOOP_LOG_DIR&quot;: str(work / &quot;logs&quot;),
+            &quot;HADOOP_PID_DIR&quot;: str(conf / &quot;pids&quot;),
+            &quot;HADOOP_IDENT_STRING&quot;: &quot;dds-&quot; + name,
+            &quot;HADOOP_HEAPSIZE_MAX&quot;: &quot;256&quot;,
+            &quot;HADOOP_OPTS&quot;: &quot;-Djava.net.preferIPv4Stack=true -Duser.name=lab&quot;,
+        }
+
+    env = config(&quot;nnconf&quot;, {})
+
+    def cli(*args, timeout=60):
+        return subprocess.check_output(
+            [str(home / &quot;bin/hdfs&quot;), *args],
+            env=env,
+            stderr=subprocess.DEVNULL,
+            timeout=timeout,
+        )
+
+    def spawn(role, e):
+        h = open(work / (role + str(len(procs)) + &quot;.log&quot;), &quot;wb&quot;)
+        handles.append(h)
+        p = subprocess.Popen([str(home / &quot;bin/hdfs&quot;), role], env=e, stdout=h, stderr=h)
+        procs.append(p)
+        return p
+
+    def state():
+        with urllib.request.urlopen(
+            &quot;http://127.0.0.1:18921/jmx?qry=Hadoop:service=NameNode,name=FSNamesystem*&quot;,
+            timeout=3,
+        ) as r:
+            beans = json.load(r)[&quot;beans&quot;]
+        wanted = [
+            &quot;NumLiveDataNodes&quot;,
+            &quot;NumDeadDataNodes&quot;,
+            &quot;BlocksTotal&quot;,
+            &quot;UnderReplicatedBlocks&quot;,
+            &quot;MissingBlocks&quot;,
+            &quot;PendingReplicationBlocks&quot;,
+            &quot;PendingReconstructionBlocks&quot;,
+            &quot;LowRedundancyBlocks&quot;,
+        ]
+        return {k: b[k] for b in beans for k in wanted if k in b}
+
+    def wait(test, timeout=150):
+        end = time.monotonic() + timeout
+        last = None
+        while time.monotonic() &lt; end:
+            try:
+                last = test()
+                if last:
+                    return last
+            except (OSError, ValueError, subprocess.SubprocessError):
+                pass
+            time.sleep(1)
+        raise RuntimeError(&quot;Timed out waiting for HDFS: &quot; + str(last))
+
+    def fsck():
+        raw = cli(&quot;fsck&quot;, &quot;/lab/data.bin&quot;, &quot;-files&quot;, &quot;-blocks&quot;, &quot;-locations&quot;).decode()
+        raw = re.sub(r&quot;Connecting to namenode via .*\n&quot;, &quot;&quot;, raw)
+        raw = re.sub(
+            r&quot;FSCK started by .*? for path&quot;, &quot;FSCK started by lab for path&quot;, raw
+        )
+        blocks = []
+        for line in raw.splitlines():
+            if &quot;Live_repl=&quot; in line:
+                blocks.append(
+                    {
+                        &quot;block&quot;: re.search(r&quot;(blk_-?\d+_\d+)&quot;, line).group(1),
+                        &quot;live_replicas&quot;: int(
+                            re.search(r&quot;Live_repl=(\d+)&quot;, line).group(1)
+                        ),
+                        &quot;locations&quot;: re.findall(r&quot;127\.0\.0\.1:(1900[0-3])&quot;, line),
+                    }
+                )
+        return {&quot;blocks&quot;: blocks, &quot;text&quot;: raw}
+
+    try:
+        with open(work / &quot;format.log&quot;, &quot;wb&quot;) as f:
+            subprocess.run(
+                [
+                    str(home / &quot;bin/hdfs&quot;),
+                    &quot;namenode&quot;,
+                    &quot;-format&quot;,
+                    &quot;-force&quot;,
+                    &quot;-nonInteractive&quot;,
+                ],
+                env=env,
+                stdout=f,
+                stderr=f,
+                check=True,
+                timeout=60,
+            )
+        spawn(&quot;namenode&quot;, env)
+        wait(lambda: state())
+        dns = []
+        for i in range(4):
+            e = config(
+                &quot;dnconf&quot; + str(i),
+                {
+                    &quot;dfs.datanode.data.dir&quot;: str(work / f&quot;data{i}&quot;),
+                    &quot;dfs.datanode.address&quot;: f&quot;127.0.0.1:{19000+i}&quot;,
+                    &quot;dfs.datanode.http.address&quot;: f&quot;127.0.0.1:{19100+i}&quot;,
+                    &quot;dfs.datanode.ipc.address&quot;: f&quot;127.0.0.1:{19200+i}&quot;,
+                    &quot;dfs.datanode.hostname&quot;: &quot;127.0.0.1&quot;,
+                },
+            )
+            e[&quot;HADOOP_HEAPSIZE_MAX&quot;] = &quot;128&quot;
+            dns.append(spawn(&quot;datanode&quot;, e))
+
+        def ready():
+            if any(p.poll() is not None for p in procs):
+                raise RuntimeError(
+                    &quot;An owned HDFS process exited; inspect build/hdfs logs&quot;
+                )
+            return state().get(&quot;NumLiveDataNodes&quot;) == 4
+
+        wait(ready)
+        cli(&quot;dfsadmin&quot;, &quot;-safemode&quot;, &quot;wait&quot;)
+        data = random.Random(9162026).randbytes(12 * 1024 * 1024 + 173)
+        local = work / &quot;data.bin&quot;
+        local.write_bytes(data)
+        digest = hashlib.sha256(data).hexdigest()
+        cli(&quot;dfs&quot;, &quot;-mkdir&quot;, &quot;-p&quot;, &quot;/lab&quot;)
+        cli(&quot;dfs&quot;, &quot;-put&quot;, str(local), &quot;/lab/data.bin&quot;)
+        before = fsck()
+        assert len(before[&quot;blocks&quot;]) == 13 and all(
+            b[&quot;live_replicas&quot;] == 3 for b in before[&quot;blocks&quot;]
+        )
+        before_state = state()
+        victim = int(before[&quot;blocks&quot;][0][&quot;locations&quot;][0]) - 19000
+        start = time.monotonic()
+        dns[victim].terminate()
+        dns[victim].wait(timeout=15)
+        # Read while a real DataNode process is stopped. HDFS client retries surviving replicas.
+        read_after_stop = hashlib.sha256(
+            cli(&quot;dfs&quot;, &quot;-cat&quot;, &quot;/lab/data.bin&quot;, timeout=120)
+        ).hexdigest()
+        assert read_after_stop == digest
+        detected = wait(
+            lambda: (
+                s
+                if (s := state()).get(&quot;NumLiveDataNodes&quot;) == 3
+                and s.get(&quot;NumDeadDataNodes&quot;) == 1
+                else False
+            )
+        )
+        detected_ms = (time.monotonic() - start) * 1000
+
+        def repaired():
+            f = fsck()
+            return (
+                f
+                if len(f[&quot;blocks&quot;]) == 13
+                and all(
+                    b[&quot;live_replicas&quot;] == 3
+                    and str(19000 + victim) not in b[&quot;locations&quot;]
+                    for b in f[&quot;blocks&quot;]
+                )
+                else False
+            )
+
+        after = wait(repaired)
+        after_state = wait(
+            lambda: (
+                s
+                if (s := state()).get(&quot;NumLiveDataNodes&quot;) == 3
+                and s.get(&quot;UnderReplicatedBlocks&quot;, s.get(&quot;LowRedundancyBlocks&quot;, -1))
+                == 0
+                and s.get(
+                    &quot;PendingReplicationBlocks&quot;, s.get(&quot;PendingReconstructionBlocks&quot;, -1)
+                )
+                == 0
+                else False
+            )
+        )
+        after = fsck()
+        assert all(
+            b[&quot;live_replicas&quot;] == 3 and str(19000 + victim) not in b[&quot;locations&quot;]
+            for b in after[&quot;blocks&quot;]
+        )
+        repaired_ms = (time.monotonic() - start) * 1000
+        digest2 = hashlib.sha256(cli(&quot;dfs&quot;, &quot;-cat&quot;, &quot;/lab/data.bin&quot;)).hexdigest()
+        assert digest2 == digest
+        result = {
+            &quot;experiment&quot;: &quot;hdfs&quot;,
+            &quot;executed_at&quot;: __import__(&quot;datetime&quot;)
+            .datetime.now(__import__(&quot;datetime&quot;).timezone.utc)
+            .isoformat(),
+            &quot;version&quot;: &quot;3.4.2&quot;,
+            &quot;java_major&quot;: 11,
+            &quot;java_version&quot;: java_version,
+            &quot;seed&quot;: 9162026,
+            &quot;topology&quot;: {
+                &quot;namenodes&quot;: 1,
+                &quot;datanodes_before&quot;: 4,
+                &quot;datanodes_after&quot;: 3,
+                &quot;replication_factor&quot;: 3,
+                &quot;block_bytes&quot;: 1048576,
+                &quot;single_host&quot;: True,
+                &quot;bind&quot;: &quot;127.0.0.1&quot;,
+                &quot;heap_mib&quot;: {&quot;namenode&quot;: 256, &quot;each_datanode&quot;: 128},
+            },
+            &quot;data_bytes&quot;: len(data),
+            &quot;sha256&quot;: digest,
+            &quot;after_stop_sha256&quot;: read_after_stop,
+            &quot;after_repair_sha256&quot;: digest2,
+            &quot;victim_transfer_port&quot;: 19000 + victim,
+            &quot;death_detection_ms&quot;: detected_ms,
+            &quot;repair_observed_ms&quot;: repaired_ms,
+            &quot;before_state&quot;: before_state,
+            &quot;death_observed_state&quot;: detected,
+            &quot;after_state&quot;: after_state,
+            &quot;before&quot;: before,
+            &quot;after&quot;: after,
+            &quot;method&quot;: &quot;SIGTERM one owned DataNode process. Four independent data directories, RF=3. Three surviving nodes allow lost replicas to be placed on the surviving node that lacked each block. Polling may miss the brief under-replicated state. Detection time includes the post-stop read and polling; repair time is an observation bound, not exact scheduler latency. Heartbeats=1s, recheck=1000ms, replication check=1s for this lab only. No NameNode HA, racks, host-failure or production throughput test.&quot;,
+        }
+        Path(out or ROOT / &quot;results/hdfs.json&quot;).write_text(json.dumps(result, indent=2))
+        print(
+            &quot;HDFS: 13 blocks, RF=3, stopped DN&quot;,
+            victim,
+            &quot;read equality and replica restoration verified&quot;,
+            flush=True,
+        )
+    finally:
+        for p in reversed(procs):
+            if p.poll() is None:
+                p.terminate()
+        for p in reversed(procs):
+            try:
+                p.wait(timeout=20)
+            except subprocess.TimeoutExpired:
+                p.kill()
+                p.wait()
+        for h in handles:
+            h.close()
+
+
+if __name__ == &quot;__main__&quot;:
+    run()
+</pre></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

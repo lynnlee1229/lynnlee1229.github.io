@@ -1,0 +1,43 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>WAL、LSM、MVCC 与索引 · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/04-storage-engine/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/04-storage-engine/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/04-storage-engine/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/04-storage-engine">English</a></nav></div></header><main id="main" class="wrap "><div class="chapter-layout"><aside class="sidebar" aria-label="Chapters"><a href="/distributed-data-lab/zh/01-foundations/">01 名称、字节与元数据权威</a><a href="/distributed-data-lab/zh/02-parquet/">02 Parquet 物理布局</a><a href="/distributed-data-lab/zh/03-hdfs/">03 HDFS 块与故障恢复</a><a href="/distributed-data-lab/zh/04-storage-engine/" aria-current="page">04 WAL、LSM、MVCC 与索引</a><a href="/distributed-data-lab/zh/05-transactions/">05 跨范围分布式事务</a><a href="/distributed-data-lab/zh/06-lakehouse/">06 表快照与分区演进</a></aside><article class="prose"><p class="eyebrow">阅读 / 推理</p><h1>04 · WAL、LSM、MVCC 与索引代价</h1>
+<h2>目标与前置</h2>
+<p>完成 01–03，理解主键与事务。区分恢复、布局、版本可见性和分布式一致。本章是阅读与推理桥梁，不声称测量了 Compaction 或崩溃恢复。</p>
+<h2>四种机制，四个问题</h2>
+<p>预写日志在变更持久化应用到其他结构之前记录变化，可用于恢复，但保证取决于实际同步策略与故障模型。LSM 引擎先在内存收集写入，刷新有序表，再后台合并。把即时更新改成后台归并，会在写放大、读放大与空间放大之间取舍。“顺序写”不等于所有 LSM 工作负载都很便宜。</p>
+<p>MVCC 保留多个版本，让读者选择一致的可见性时点；旧版本需要保留与回收规则。快照保护视图，并不意味着所有并发“读后修改”都能安全提交，可串行化还需要额外冲突控制。</p>
+<p>复制协议解决不同节点副本的一致。Raft 日志与引擎 WAL 虽然都叫日志，职责并不相同。多数派接受命令，与事务决定所有参与者的更新，是不同协议层。它们也不等价于把文件写入 HDFS。</p>
+<h2>索引键也会成为放置键</h2>
+<p>主索引保存行的编码键值表示。二级索引引入额外键，通常位于有序键空间的其他位置，因此更新一行也可能跨越多个 Range。Range 是连续键区间，每个区间都可复制。Leaseholder 承担相应请求职责，其他副本维护范围。更多范围不等于无限独立容量：一个热键在某时刻仍只属于一个范围。</p>
+<p>下一实验使用真实 CockroachDB 24.1.24 基线，涉及 Pebble、MVCC 与复制范围。证据检查范围放置与事务结果，不检查 Pebble SSTable，也不证明 fsync 行为。</p>
+<h2>数据与代码</h2>
+<p>阅读 <code>experiments/distributed_transactions.py</code> 的 accounts 表。三个主键刻意落在 1000、2000 两个分界形成的不同区间。验证事务正确性只需三行，大数据反而会掩盖执行顺序。</p>
+<pre><code class="language-sql">CREATE TABLE accounts (
+  id INT PRIMARY KEY,
+  balance INT NOT NULL CHECK (balance &gt;= 0)
+);
+ALTER TABLE accounts SPLIT AT VALUES (1000), (2000);
+SHOW RANGES FROM TABLE accounts WITH DETAILS;
+</code></pre>
+<h2>动手任务与预期结果</h2>
+<p>画出主键与一个假设的 balance 二级索引条目，列出转账时会改变的键。区分“行在本地持久化”“范围复制了命令”“事务提交”“某个快照可见新版本”四句话；它们各需不同证据。这是纸面练习，实测结论只来自第 05 章。</p>
+<h2>自测</h2>
+<p><strong>MVCC 会消除写冲突吗？</strong> 不会。<strong>加二级索引没有写代价吗？</strong> 不是，可能增加键与协调工作。<strong>Compaction 能马上删除所有旧版本吗？</strong> 不能，活跃读者与保留规则可能仍需它们。<strong>单靠范围切分能解决单热键吗？</strong> 不能，该键流量仍然集中。</p>
+<h2>大学课程导读与原创练习</h2>
+<ul>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/05-storage2.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #05 · Database Storage II</a></li>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/20-multiversioning.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #20 · Multi-Version Concurrency Control</a></li>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/21-logging.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #21 · Database Logging</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec12.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 12 / 2026-03-19 · Optimistic Concurrency Control, Snapshot Isolation</a></li>
+</ul>
+<p>阅读已执行计划中的主索引路径与版本/冲突调度，另列出验证 WAL 持久性或 LSM 合并所需证据。</p>
+<pre><code class="language-sh">python scripts/bootstrap.py database
+python lab.py database
+</code></pre>
+<p>计划标明 accounts_pkey；可串行化冲突不是 WAL fsync 或 Compaction 测量，后两者仍属阅读。</p>
+<p>以上是原创 Lab 练习，不是大学课程作业答案。公开阅读不等于注册、学分或评分资格；可检索资源库列出先修与核验日期。</p>
+<h2>原始来源</h2>
+<ul>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/architecture/storage-layer">CockroachDB 存储层</a></li>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/architecture/replication-layer">CockroachDB 复制层</a></li>
+<li><a href="https://www.cockroachlabs.com/docs/v24.1/architecture/transaction-layer">CockroachDB 事务层</a></li>
+<li><a href="https://github.com/cockroachdb/pebble">Pebble 项目与文档</a></li>
+</ul><div class="pager"><a href="/distributed-data-lab/zh/03-hdfs/">← 上一章</a><a href="/distributed-data-lab/zh/05-transactions/">下一章 →</a></div></article></div></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

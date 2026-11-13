@@ -1,0 +1,63 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>lab.py · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-lab.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-lab.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-lab.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce">本地复现</a><a href="/distributed-data-lab/en/source-lab.py">English</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>lab.py</h1><p><a href="/distributed-data-lab/zh/source/">← 代码目录</a></p><pre>#!/usr/bin/env python3
+&quot;&quot;&quot;Sequential, bounded profiles. Shared machines may set DDS_RESOURCE_LOCK.&quot;&quot;&quot;
+import argparse, datetime, json, os, subprocess, sys, uuid, signal
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+p = argparse.ArgumentParser()
+p.add_argument(&quot;profile&quot;, choices=[&quot;parquet&quot;, &quot;hdfs&quot;, &quot;database&quot;, &quot;iceberg&quot;, &quot;all&quot;])
+p.add_argument(&quot;--smoke&quot;, action=&quot;store_true&quot;)
+a = p.parse_args()
+lock = Path(os.environ.get(&quot;DDS_RESOURCE_LOCK&quot;, ROOT / &quot;build/runtime.lock&quot;))
+lock.parent.mkdir(parents=True, exist_ok=True)
+nonce = uuid.uuid4().hex
+try:
+    lock.mkdir()
+except FileExistsError:
+    raise SystemExit(
+        &quot;Runtime lock occupied: &quot;
+        + str(lock)
+        + &quot;; inspect its owner, never delete another run’s lock.&quot;
+    )
+(lock / &quot;owner.json&quot;).write_text(
+    json.dumps(
+        {
+            &quot;lab&quot;: &quot;distributed-data-lab&quot;,
+            &quot;nonce&quot;: nonce,
+            &quot;acquired_at&quot;: datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        }
+    )
+)
+try:
+    for profile in (
+        [&quot;parquet&quot;, &quot;hdfs&quot;, &quot;database&quot;] if a.profile == &quot;all&quot; else [a.profile]
+    ):
+        script = {
+            &quot;parquet&quot;: &quot;parquet_layout.py&quot;,
+            &quot;hdfs&quot;: &quot;hdfs_recovery.py&quot;,
+            &quot;database&quot;: &quot;distributed_transactions.py&quot;,
+            &quot;iceberg&quot;: &quot;iceberg_snapshots.py&quot;,
+        }[profile]
+        args = [sys.executable, str(ROOT / &quot;experiments&quot; / script)]
+        if a.smoke and profile == &quot;parquet&quot;:
+            args += [&quot;--smoke&quot;, &quot;--out&quot;, str(ROOT / &quot;build/smoke-parquet.json&quot;)]
+        proc = subprocess.Popen(args, cwd=ROOT, start_new_session=True)
+        try:
+            code = proc.wait(timeout=600)
+            if code:
+                raise subprocess.CalledProcessError(code, args)
+        finally:
+            if proc.poll() is None:
+                os.killpg(proc.pid, signal.SIGTERM)
+                try:
+                    proc.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                    proc.wait()
+finally:
+    if (lock / &quot;owner.json&quot;).exists() and json.loads(
+        (lock / &quot;owner.json&quot;).read_text()
+    ).get(&quot;nonce&quot;) == nonce:
+        (lock / &quot;owner.json&quot;).unlink()
+        lock.rmdir()
+</pre></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

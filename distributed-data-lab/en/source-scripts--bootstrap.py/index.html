@@ -1,0 +1,98 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>scripts/bootstrap.py · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--bootstrap.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--bootstrap.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--bootstrap.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/source-scripts--bootstrap.py">中文</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>scripts/bootstrap.py</h1><p><a href="/distributed-data-lab/en/source/">← Source index</a></p><pre>#!/usr/bin/env python3
+&quot;&quot;&quot;Download upstream runtimes into ignored build/vendor; never run an install script.&quot;&quot;&quot;
+import argparse, hashlib, json, platform, tarfile, urllib.request, shutil
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+V = ROOT / &quot;build/vendor&quot;
+V.mkdir(parents=True, exist_ok=True)
+LOCK = json.loads((ROOT / &quot;runtime-lock.json&quot;).read_text())
+p = argparse.ArgumentParser()
+p.add_argument(&quot;profile&quot;, choices=[&quot;hdfs&quot;, &quot;database&quot;])
+a = p.parse_args()
+
+
+def get(url, path):
+    if not path.exists():
+        tmp = path.with_suffix(path.suffix + &quot;.part&quot;)
+        print(&quot;Downloading&quot;, url, flush=True)
+        offset = tmp.stat().st_size if tmp.exists() else 0
+        req = urllib.request.Request(
+            url, headers={&quot;Range&quot;: f&quot;bytes={offset}-&quot;} if offset else {}
+        )
+        with urllib.request.urlopen(req, timeout=60) as response:
+            mode = &quot;ab&quot; if offset and response.status == 206 else &quot;wb&quot;
+            with open(tmp, mode) as f:
+                shutil.copyfileobj(response, f, length=1024 * 1024)
+        tmp.rename(path)
+
+
+def extract(tar, keep):
+    with tarfile.open(tar) as t:
+        for m in t.getmembers():
+            parts = Path(m.name).parts
+            if m.name.startswith(&quot;/&quot;) or &quot;..&quot; in parts or m.issym() or m.islnk():
+                continue
+            if keep(m.name):
+                t.extract(m, V)
+
+
+if a.profile == &quot;hdfs&quot;:
+    ver = &quot;3.4.2&quot;
+    name = f&quot;hadoop-{ver}&quot;
+    url = f&quot;https://archive.apache.org/dist/hadoop/common/{name}/{name}.tar.gz&quot;
+    archive = V / (name + &quot;.tar.gz&quot;)
+    get(url, archive)
+    get(url + &quot;.sha512&quot;, V / (name + &quot;.sha512&quot;))
+    digest = hashlib.file_digest(open(archive, &quot;rb&quot;), &quot;sha512&quot;).hexdigest()
+    text = (V / (name + &quot;.sha512&quot;)).read_text()
+    assert digest.lower() in text.lower(), &quot;Upstream SHA512 mismatch&quot;
+    assert digest == LOCK[&quot;hdfs&quot;][&quot;sha512&quot;], &quot;Pinned SHA512 mismatch&quot;
+    if not (V / name / &quot;bin/hdfs&quot;).exists():
+        extract(
+            archive,
+            lambda n: any(
+                n.startswith(f&quot;{name}/{x}&quot;)
+                for x in [
+                    &quot;bin/&quot;,
+                    &quot;libexec/&quot;,
+                    &quot;etc/hadoop/&quot;,
+                    &quot;share/hadoop/common/&quot;,
+                    &quot;share/hadoop/hdfs/&quot;,
+                    &quot;LICENSE&quot;,
+                    &quot;NOTICE&quot;,
+                ]
+            ),
+        )
+else:
+    ver = &quot;24.1.24&quot;
+    system = platform.system()
+    arch = platform.machine()
+    if system not in (&quot;Darwin&quot;, &quot;Linux&quot;) or (system == &quot;Darwin&quot; and arch != &quot;arm64&quot;):
+        raise SystemExit(&quot;Supported: macOS arm64; Linux arm64/x86_64&quot;)
+    tag = (
+        &quot;darwin-11.0-arm64&quot;
+        if system == &quot;Darwin&quot; and arch == &quot;arm64&quot;
+        else &quot;linux-arm64&quot; if arch in (&quot;aarch64&quot;, &quot;arm64&quot;) else &quot;linux-amd64&quot;
+    )
+    name = f&quot;cockroach-v{ver}.{tag}&quot;
+    url = f&quot;https://binaries.cockroachdb.com/{name}.tgz&quot;
+    archive = V / (name + &quot;.tgz&quot;)
+    get(url, archive)
+    if not (V / name / &quot;cockroach&quot;).exists():
+        extract(archive, lambda n: True)
+    digest = hashlib.file_digest(open(archive, &quot;rb&quot;), &quot;sha256&quot;).hexdigest()
+    get(url + &quot;.sha256sum&quot;, V / (name + &quot;.sha256sum&quot;))
+    assert digest in (V / (name + &quot;.sha256sum&quot;)).read_text(), &quot;Upstream SHA256 mismatch&quot;
+    if tag in LOCK[&quot;database&quot;][&quot;sha256&quot;]:
+        assert digest == LOCK[&quot;database&quot;][&quot;sha256&quot;][tag], &quot;Pinned SHA256 mismatch&quot;
+record = {
+    &quot;profile&quot;: a.profile,
+    &quot;version&quot;: ver,
+    &quot;url&quot;: url,
+    &quot;archive_digest&quot;: digest,
+    &quot;digest_algorithm&quot;: &quot;sha512&quot; if a.profile == &quot;hdfs&quot; else &quot;sha256&quot;,
+}
+(V / (a.profile + &quot;-download.json&quot;)).write_text(json.dumps(record, indent=2))
+print(json.dumps(record), flush=True)
+</pre></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

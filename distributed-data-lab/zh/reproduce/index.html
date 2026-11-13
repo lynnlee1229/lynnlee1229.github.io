@@ -1,0 +1,50 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>从零复现 · Distributed Data Systems Lab</title><meta name="description" content="用原创课程与四类真实可复现实验，理解数据布局、副本与分布式事务。"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/zh/reproduce/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/reproduce/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/reproduce/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-data-lab/zh/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="主导航"><a href="/distributed-data-lab/zh/">课程</a><a href="/distributed-data-lab/zh/inspector">Parquet 检查器</a><a href="/distributed-data-lab/zh/evidence">实测证据</a><a href="/distributed-data-lab/zh/resources">课程资源</a><a href="/distributed-data-lab/zh/reproduce" aria-current="page">本地复现</a><a href="/distributed-data-lab/en/reproduce">English</a></nav></div></header><main id="main" class="wrap "><article class="prose"><h1>从零复现</h1>
+<h2>目标与实测基线</h2>
+<p>独立启动各 Profile，检查结果断言，并把原始日志留在本地。不需要云服务、API Key、付费特性或 Docker。已测环境为 macOS arm64、16 GiB 内存。三个数据库节点、四个 DataNode 都是同一宿主上的进程，不是多台物理机器。</p>
+<p>固定版本：Python <strong>3.11</strong>、PyArrow <strong>20.0.0</strong>、JDK <strong>11</strong>、HDFS <strong>3.4.2</strong>、CockroachDB <strong>24.1.24</strong>、psycopg2-binary <strong>2.9.10</strong>。这是教学基线，不建议把旧版数据库直接用于生产。配套原创代码采用 MIT；运行时保留上游许可，不打包进 ZIP。</p>
+<h2>安装与运行</h2>
+<pre><code class="language-sh">git clone https://github.com/lynnlee1229/distributed-data-lab.git
+cd distributed-data-lab
+python3.11 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+python lab.py parquet
+python scripts/bootstrap.py hdfs
+python lab.py hdfs
+python scripts/bootstrap.py database
+python lab.py database
+python -m unittest discover -s tests -v
+node tests/parquet.test.mjs
+python scripts/build_site.py
+python scripts/check_site.py
+python -m http.server 18916 --bind 127.0.0.1 --directory build/site
+</code></pre>
+<p>另行安装 JDK 11 并设置 JAVA_HOME；macOS 会自动选择已安装的 JDK 11。下载支持 Linux x86_64/arm64 与 macOS arm64；保存的本地测量来自 macOS arm64，CI 的 Linux 记录单列。</p>
+<p>打开 <code>http://127.0.0.1:18916/distributed-data-lab/zh/</code>。各 Profile 在 finally 中停止自己启动的进程。两种运行时下载完成后，<code>python lab.py all</code> 按顺序执行。<code>--smoke</code> 只缩小 Parquet 数据并写入 build/smoke-parquet.json，不覆盖正式基线。浏览器解析测试依赖 build/parquet 文件，需先运行普通 Parquet Profile。</p>
+<h2>资源、端口与归属</h2>
+<p>使用至少 8 GiB 总内存、留有足够空闲的机器；除既有服务外，为单个 Profile 留约 3 GiB 可用内存。磁盘至少留 8 GiB。Hadoop 官方压缩包约 1 GiB，只提取 common/HDFS 相关内容。下载支持服务端允许的断点续传并校验上游摘要。数据目录与原始日志只留在已忽略的 build/。</p>
+<p>运行器用原子目录 build/runtime.lock 互斥。多 Lab 共用机器时，把 <code>DDS_RESOURCE_LOCK</code> 设置为统一资源锁目录，再运行 lab.py。锁被占用就停止，检查所有者，不删除别人仍使用的锁。每个 Profile 限十分钟；中断或超时只终止本次新建的进程组。</p>
+<p>HDFS RPC/UI 绑定 127.0.0.1:18920/18921；DataNode 数据端口 19000–19003、HTTP 19100–19103、IPC 19200–19203。数据库 SQL 19300–19302、HTTP 19400–19402。启动前逐一检查端口。这里采用无认证教学配置，只限回环，不能暴露或转发到公网。数据库崩溃上报与诊断上报关闭，不修改全局防火墙。</p>
+<h2>检查与修改</h2>
+<ul>
+<li><code>results/parquet.json</code>：逻辑数据相同、预期输出、逐文件元数据、所有读取区间与正式重复测量。</li>
+<li><code>results/hdfs.json</code>：故障前后块位置、节点状态与摘要一致性。</li>
+<li><code>results/database.json</code>：真实范围放置、Trace、已执行计划、指标及双方事务结果。</li>
+<li><code>scripts/inspect_parquet.py FILE</code>：用 PyArrow 检查本地文件，只向 stdout 输出 JSON。浏览器检查器只读 Header/Footer 切片，不上传所选文件。</li>
+</ul>
+<p>一次只改一个变量，先写正确性不变量，再比较耗时。基线全部是合成数据。不要提交自己的输入文件、凭据、数据库数据目录或原始日志。站点导出按文件白名单执行，只发布经检查的结果，不会整体复制 build/。</p>
+<h2>结果边界与失败处理</h2>
+<p>绑定失败说明端口已被其他进程占用；下载失败保留可续传 .part 文件。断言失败把本地日志留在 build/，不发布新的成功结论。HDFS 无法达到 RF=3 时先检查可用目标，不能放宽断言把副本不足称为已恢复。数据库没出现 40001 时应检查返回给客户端的读取与事务模式，不人为注入错误冒充冲突。</p>
+<p>CI 在独立 Job 中运行 Parquet 与本机原生集成 Profile，上传生成结果，与已提交的笔记本基线分开。01、04 为阅读/推理；02、03、05、06 有真实实操。没有执行云服务、热点容量或跨机器扩展性基准。</p>
+<p>HDFS 子进程会清除继承的 Hadoop 配置变量、核验 JDK 11，并使用各节点独占的 PID 目录与标识；即使前台运行，上游 shell 也可能使用 PID 文件。</p>
+<h2>可选本地 Iceberg Profile</h2>
+<pre><code class="language-sh">pip install -r requirements-iceberg.txt
+python lab.py iceberg
+python scripts/validate_iceberg.py results/iceberg.json
+python scripts/index_results.py
+python scripts/verify_resources.py
+</code></pre>
+<p>固定 PyIceberg 0.10.0、SQLAlchemy 2.0.44，并复用 PyArrow 20.0.0。不需要 JVM、Docker、云、API Key 或监听端口。输入为六条列明的合成记录及一条故意不提交的合法 Parquet 行，不作容量估计。<code>all</code> 保留原三 Profile 行为，可选 Profile 单独启动。</p>
+<p>每次 Iceberg 运行创建独占 build/iceberg 目录，不清除旧表历史；报告 local_artifact_directory 指向本次 Catalog/数据目录。原始元数据含本机位置，只留在忽略目录；公开白名单只含 Schema/分区/快照字段、文件哈希、预期与实际行及合成相对引用。不执行快照过期、表清除或文件删除，SQLite 目录属于开发范围。</p>
+<p>核验 3/5/6 行快照、改名前后字段 ID 2、规范 0/1、旧文件 SHA256、重新打开目录后的指针及历史行集合哈希。反例必须让目录读取包含 999、Iceberg 排除 999。引擎运行器对比独立字面量 oracle，另外的验证器拒绝被改坏的证据。</p>
+<p>资源库把六个原创练习映射到已核验的 CMU/MIT 讲义与官方教程。<code>verify_resources.py</code> 离线检查结构，<code>--live</code> 有界读取官方 URL 开头。可公开阅读与课程注册、评分、学分、费用分开，不发布官方作业解答。2026 检索索引延伸是阅读与数据血缘讨论，不是模型或 RAG 质量实验。</p></article></main><footer>原创课程 · 合成数据 · v2 / 2026-11-14。仅单机观察，不作生产容量结论。<br><a href="https://github.com/lynnlee1229/distributed-data-lab">经审计的实验配套源码</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">导出校验和</a> · <a href="/zh/websites/">全部学习 Lab</a></footer></body></html>

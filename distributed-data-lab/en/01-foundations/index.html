@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Names, bytes &amp; authority · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/01-foundations/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/01-foundations/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/01-foundations/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/01-foundations">中文</a></nav></div></header><main id="main" class="wrap "><div class="chapter-layout"><aside class="sidebar" aria-label="Chapters"><a href="/distributed-data-lab/en/01-foundations/" aria-current="page">01 Names, bytes & authority</a><a href="/distributed-data-lab/en/02-parquet/">02 Parquet physical layout</a><a href="/distributed-data-lab/en/03-hdfs/">03 HDFS blocks & recovery</a><a href="/distributed-data-lab/en/04-storage-engine/">04 WAL, LSM, MVCC & indexes</a><a href="/distributed-data-lab/en/05-transactions/">05 Cross-range transactions</a><a href="/distributed-data-lab/en/06-lakehouse/">06 Snapshots & evolution</a></aside><article class="prose"><p class="eyebrow">Reading / reasoning</p><h1>01 · Names, bytes and authority</h1>
+<h2>Goal and prerequisites</h2>
+<p>Start here. Know what a byte and a directory are. After this chapter, place a system at its correct layer and explain who knows where data lives.</p>
+<h2>A name is not its content</h2>
+<p>A file exposes a byte sequence, a path and filesystem operations. A distributed filesystem divides that sequence into blocks and keeps a mapping from names to blocks to replicas. An object store exposes keys and whole objects through an API. An object's key can look like a directory, but that spelling does not promise filesystem rename semantics. Changing a key can require different operations from renaming a file.</p>
+<p>Metadata is data about data, but its authority matters. A Parquet footer describes one file's schema and layout. A NameNode maps a namespace and block locations. A table catalog can identify the committed table metadata. None of these can automatically substitute for the others.</p>
+<h2>Two routes, different contracts</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Analytical file route</th>
+<th>Transactional key route</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API / execution</td>
+<td>A SQL engine plans scans</td>
+<td>A SQL gateway plans reads and writes</td>
+</tr>
+<tr>
+<td>Logical organization</td>
+<td>Iceberg may track table snapshots</td>
+<td>Database indexes map rows to key ranges</td>
+</tr>
+<tr>
+<td>Local representation</td>
+<td>Parquet stores column chunks</td>
+<td>MVCC versions are held in an LSM engine</td>
+</tr>
+<tr>
+<td>Durability / placement</td>
+<td>Local files, HDFS or object storage</td>
+<td>Replicated ranges on database nodes</td>
+</tr>
+</tbody>
+</table>
+<p>These are examples of compatible roles, not a universal deployment diagram. Parquet can sit on a local disk without Iceberg. Iceberg can reference Parquet on an object store without HDFS. CockroachDB's normal transactional storage does not route through HDFS or Parquet. HDFS and S3 are storage systems; Parquet is a file format; Iceberg is a table format; an engine executes queries; a distributed database also owns transactional coordination and placement.</p>
+<h2>Data and code</h2>
+<p>All executable examples use synthetic bytes or seeded rows. Open <code>experiments/parquet_layout.py</code> and find the schema. Sketch four metadata records: file footer, block-location map, snapshot reference, primary-index key range. Give each a different identifier.</p>
+<h2>Hands-on task</h2>
+<p>For “find rows where id is between 32000 and 33023”, write the sequence of decisions: choose a committed table version if applicable; choose files; fetch footer; prune row groups; read required chunks; decode; apply the exact row predicate. Mark which decisions disappear for a standalone file.</p>
+<h2>Result and interpretation</h2>
+<p>The executable coverage begins in chapter 02. This chapter is a classification exercise, with no storage benchmark. A correct answer does not insert a catalog or HDFS into a standalone Parquet read. Footer statistics can eliminate impossible groups, but cannot establish table-level atomic commit.</p>
+<h2>Self-check</h2>
+<p><strong>Can a valid Parquet file represent a half-published table?</strong> Yes. Individual file validity does not identify the committed set of table files. <strong>Is a Row Group an HDFS block?</strong> No. One is a file-format grouping; the other is a storage allocation / replication unit. Their boundaries need not align.</p>
+<h2>Guided university reading and original exercise</h2>
+<ul>
+<li><a href="https://15445.courses.cs.cmu.edu/fall2025/slides/03-storage1.pdf">Carnegie Mellon University 15-445/645 · Fall 2025 · Lecture #03 · Database Storage I</a></li>
+<li><a href="https://dsg.csail.mit.edu/6.5830/lectures/lec4.pdf">Massachusetts Institute of Technology 6.5830/6.5831 · Spring 2026 · Lecture 4 / 2026-02-12 · Intro to DB Internals</a></li>
+<li><a href="https://parquet.apache.org/docs/file-format/metadata/">Apache Parquet · File metadata and page headers · Parquet metadata</a></li>
+</ul>
+<p>Inspect the real footer, identify what it knows about rows/chunks, then explain why it cannot tell you a replica count or table commit.</p>
+<pre><code class="language-sh">python lab.py parquet
+python scripts/inspect_parquet.py build/parquet/sorted-4096-zstd.parquet
+</code></pre>
+<p>Total row-group rows agree with 131072; schema has four columns; storage/table authority is a reasoning question, not inferred from row-group count.</p>
+<p>These are original Lab exercises, not the universities’ assignment solutions. Public reading access does not grant enrollment, credit or grading. See the searchable resource library for prerequisites and verification dates.</p>
+<h2>Original sources</h2>
+<ul>
+<li><a href="https://parquet.apache.org/docs/concepts/">Parquet concepts</a></li>
+<li><a href="https://hadoop.apache.org/docs/r3.4.2/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html">HDFS architecture, 3.4.2</a></li>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingObjects.html">S3 objects and keys</a></li>
+<li><a href="https://iceberg.apache.org/spec/">Iceberg specification</a></li>
+</ul><div class="pager"><span></span><a href="/distributed-data-lab/en/02-parquet/">Next →</a></div></article></div></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>

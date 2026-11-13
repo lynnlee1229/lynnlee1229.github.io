@@ -1,0 +1,303 @@
+{
+  "experiment": "hdfs",
+  "executed_at": "2026-11-13T17:48:45.450907+00:00",
+  "version": "3.4.2",
+  "java_major": 11,
+  "java_version": "openjdk version \"11.0.15\" 2022-04-19 LTS",
+  "seed": 9162026,
+  "topology": {
+    "namenodes": 1,
+    "datanodes_before": 4,
+    "datanodes_after": 3,
+    "replication_factor": 3,
+    "block_bytes": 1048576,
+    "single_host": true,
+    "bind": "127.0.0.1",
+    "heap_mib": {
+      "namenode": 256,
+      "each_datanode": 128
+    }
+  },
+  "data_bytes": 12583085,
+  "sha256": "9159dd550b27bbbaf7862f4c6632dbcbd738737b2f7dcdcb657bf1d2bd31e8d4",
+  "after_stop_sha256": "9159dd550b27bbbaf7862f4c6632dbcbd738737b2f7dcdcb657bf1d2bd31e8d4",
+  "after_repair_sha256": "9159dd550b27bbbaf7862f4c6632dbcbd738737b2f7dcdcb657bf1d2bd31e8d4",
+  "victim_transfer_port": 19002,
+  "death_detection_ms": 14218.960416008485,
+  "repair_observed_ms": 27715.16312501626,
+  "before_state": {
+    "NumLiveDataNodes": 4,
+    "NumDeadDataNodes": 0,
+    "BlocksTotal": 0,
+    "UnderReplicatedBlocks": 0,
+    "PendingReplicationBlocks": 0,
+    "PendingReconstructionBlocks": 0,
+    "LowRedundancyBlocks": 0,
+    "MissingBlocks": 0
+  },
+  "death_observed_state": {
+    "NumLiveDataNodes": 3,
+    "NumDeadDataNodes": 1,
+    "BlocksTotal": 13,
+    "UnderReplicatedBlocks": 2,
+    "PendingReplicationBlocks": 5,
+    "PendingReconstructionBlocks": 5,
+    "LowRedundancyBlocks": 2,
+    "MissingBlocks": 0
+  },
+  "after_state": {
+    "NumLiveDataNodes": 3,
+    "NumDeadDataNodes": 1,
+    "BlocksTotal": 13,
+    "UnderReplicatedBlocks": 0,
+    "PendingReplicationBlocks": 0,
+    "PendingReconstructionBlocks": 0,
+    "LowRedundancyBlocks": 0,
+    "MissingBlocks": 0
+  },
+  "before": {
+    "blocks": [
+      {
+        "block": "blk_1073741825_1001",
+        "live_replicas": 3,
+        "locations": [
+          "19002",
+          "19000",
+          "19003"
+        ]
+      },
+      {
+        "block": "blk_1073741826_1002",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19000",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741827_1003",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19002",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741828_1004",
+        "live_replicas": 3,
+        "locations": [
+          "19000",
+          "19001",
+          "19003"
+        ]
+      },
+      {
+        "block": "blk_1073741829_1005",
+        "live_replicas": 3,
+        "locations": [
+          "19002",
+          "19000",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741830_1006",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19000",
+          "19002"
+        ]
+      },
+      {
+        "block": "blk_1073741831_1007",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19002",
+          "19000"
+        ]
+      },
+      {
+        "block": "blk_1073741832_1008",
+        "live_replicas": 3,
+        "locations": [
+          "19000",
+          "19003",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741833_1009",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19003",
+          "19000"
+        ]
+      },
+      {
+        "block": "blk_1073741834_1010",
+        "live_replicas": 3,
+        "locations": [
+          "19002",
+          "19000",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741835_1011",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19000",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741836_1012",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19002",
+          "19000"
+        ]
+      },
+      {
+        "block": "blk_1073741837_1013",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19000",
+          "19001"
+        ]
+      }
+    ],
+    "text": "FSCK started by lab for path /lab/data.bin at Sat Nov 14 01:48:15 CST 2026\n\n/lab/data.bin 12583085 bytes, replicated: replication=3, 13 block(s):  OK\n0. BP-1698152079-127.0.0.1-1794592076742:blk_1073741825_1001 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19002,DS-ab1c256e-2a5b-42f0-9135-cd5c15954b57,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK]]\n1. BP-1698152079-127.0.0.1-1794592076742:blk_1073741826_1002 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n2. BP-1698152079-127.0.0.1-1794592076742:blk_1073741827_1003 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19002,DS-ab1c256e-2a5b-42f0-9135-cd5c15954b57,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n3. BP-1698152079-127.0.0.1-1794592076742:blk_1073741828_1004 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK]]\n4. BP-1698152079-127.0.0.1-1794592076742:blk_1073741829_1005 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19002,DS-ab1c256e-2a5b-42f0-9135-cd5c15954b57,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n5. BP-1698152079-127.0.0.1-1794592076742:blk_1073741830_1006 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19002,DS-ab1c256e-2a5b-42f0-9135-cd5c15954b57,DISK]]\n6. BP-1698152079-127.0.0.1-1794592076742:blk_1073741831_1007 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19002,DS-ab1c256e-2a5b-42f0-9135-cd5c15954b57,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK]]\n7. BP-1698152079-127.0.0.1-1794592076742:blk_1073741832_1008 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n8. BP-1698152079-127.0.0.1-1794592076742:blk_1073741833_1009 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK]]\n9. BP-1698152079-127.0.0.1-1794592076742:blk_1073741834_1010 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19002,DS-ab1c256e-2a5b-42f0-9135-cd5c15954b57,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n10. BP-1698152079-127.0.0.1-1794592076742:blk_1073741835_1011 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n11. BP-1698152079-127.0.0.1-1794592076742:blk_1073741836_1012 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19002,DS-ab1c256e-2a5b-42f0-9135-cd5c15954b57,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK]]\n12. BP-1698152079-127.0.0.1-1794592076742:blk_1073741837_1013 len=173 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n\n\nStatus: HEALTHY\n Number of data-nodes:\t4\n Number of racks:\t\t1\n Total dirs:\t\t\t0\n Total symlinks:\t\t0\n\nReplicated Blocks:\n Total size:\t12583085 B\n Total files:\t1\n Total blocks (validated):\t13 (avg. block size 967929 B)\n Minimally replicated blocks:\t13 (100.0 %)\n Over-replicated blocks:\t0 (0.0 %)\n Under-replicated blocks:\t0 (0.0 %)\n Mis-replicated blocks:\t\t0 (0.0 %)\n Default replication factor:\t3\n Average block replication:\t3.0\n Missing blocks:\t\t0\n Corrupt blocks:\t\t0\n Missing replicas:\t\t0 (0.0 %)\n Blocks queued for replication:\t0\n\nErasure Coded Block Groups:\n Total size:\t0 B\n Total files:\t0\n Total block groups (validated):\t0\n Minimally erasure-coded block groups:\t0\n Over-erasure-coded block groups:\t0\n Under-erasure-coded block groups:\t0\n Unsatisfactory placement block groups:\t0\n Average block group size:\t0.0\n Missing block groups:\t\t0\n Corrupt block groups:\t\t0\n Missing internal blocks:\t0\n Blocks queued for replication:\t0\nFSCK ended at Sat Nov 14 01:48:15 CST 2026 in 11 milliseconds\n\n\nThe filesystem under path '/lab/data.bin' is HEALTHY\n"
+  },
+  "after": {
+    "blocks": [
+      {
+        "block": "blk_1073741825_1001",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19000",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741826_1002",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19000",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741827_1003",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19001",
+          "19000"
+        ]
+      },
+      {
+        "block": "blk_1073741828_1004",
+        "live_replicas": 3,
+        "locations": [
+          "19000",
+          "19001",
+          "19003"
+        ]
+      },
+      {
+        "block": "blk_1073741829_1005",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19000",
+          "19003"
+        ]
+      },
+      {
+        "block": "blk_1073741830_1006",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19000",
+          "19003"
+        ]
+      },
+      {
+        "block": "blk_1073741831_1007",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19000",
+          "19003"
+        ]
+      },
+      {
+        "block": "blk_1073741832_1008",
+        "live_replicas": 3,
+        "locations": [
+          "19000",
+          "19003",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741833_1009",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19003",
+          "19000"
+        ]
+      },
+      {
+        "block": "blk_1073741834_1010",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19000",
+          "19003"
+        ]
+      },
+      {
+        "block": "blk_1073741835_1011",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19000",
+          "19001"
+        ]
+      },
+      {
+        "block": "blk_1073741836_1012",
+        "live_replicas": 3,
+        "locations": [
+          "19001",
+          "19000",
+          "19003"
+        ]
+      },
+      {
+        "block": "blk_1073741837_1013",
+        "live_replicas": 3,
+        "locations": [
+          "19003",
+          "19000",
+          "19001"
+        ]
+      }
+    ],
+    "text": "FSCK started by lab for path /lab/data.bin at Sat Nov 14 01:48:43 CST 2026\n\n/lab/data.bin 12583085 bytes, replicated: replication=3, 13 block(s):  OK\n0. BP-1698152079-127.0.0.1-1794592076742:blk_1073741825_1001 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n1. BP-1698152079-127.0.0.1-1794592076742:blk_1073741826_1002 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n2. BP-1698152079-127.0.0.1-1794592076742:blk_1073741827_1003 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK]]\n3. BP-1698152079-127.0.0.1-1794592076742:blk_1073741828_1004 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK]]\n4. BP-1698152079-127.0.0.1-1794592076742:blk_1073741829_1005 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK]]\n5. BP-1698152079-127.0.0.1-1794592076742:blk_1073741830_1006 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK]]\n6. BP-1698152079-127.0.0.1-1794592076742:blk_1073741831_1007 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK]]\n7. BP-1698152079-127.0.0.1-1794592076742:blk_1073741832_1008 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n8. BP-1698152079-127.0.0.1-1794592076742:blk_1073741833_1009 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK]]\n9. BP-1698152079-127.0.0.1-1794592076742:blk_1073741834_1010 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK]]\n10. BP-1698152079-127.0.0.1-1794592076742:blk_1073741835_1011 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n11. BP-1698152079-127.0.0.1-1794592076742:blk_1073741836_1012 len=1048576 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK]]\n12. BP-1698152079-127.0.0.1-1794592076742:blk_1073741837_1013 len=173 Live_repl=3  [DatanodeInfoWithStorage[127.0.0.1:19003,DS-8ed34e9e-4316-4933-bcd2-72cb71ac467d,DISK], DatanodeInfoWithStorage[127.0.0.1:19000,DS-057506e8-dc67-4aae-9ec0-1f1679a94950,DISK], DatanodeInfoWithStorage[127.0.0.1:19001,DS-cf3a7cd6-54fc-426c-b342-7af95851fc17,DISK]]\n\n\nStatus: HEALTHY\n Number of data-nodes:\t3\n Number of racks:\t\t1\n Total dirs:\t\t\t0\n Total symlinks:\t\t0\n\nReplicated Blocks:\n Total size:\t12583085 B\n Total files:\t1\n Total blocks (validated):\t13 (avg. block size 967929 B)\n Minimally replicated blocks:\t13 (100.0 %)\n Over-replicated blocks:\t0 (0.0 %)\n Under-replicated blocks:\t0 (0.0 %)\n Mis-replicated blocks:\t\t0 (0.0 %)\n Default replication factor:\t3\n Average block replication:\t3.0\n Missing blocks:\t\t0\n Corrupt blocks:\t\t0\n Missing replicas:\t\t0 (0.0 %)\n Blocks queued for replication:\t0\n\nErasure Coded Block Groups:\n Total size:\t0 B\n Total files:\t0\n Total block groups (validated):\t0\n Minimally erasure-coded block groups:\t0\n Over-erasure-coded block groups:\t0\n Under-erasure-coded block groups:\t0\n Unsatisfactory placement block groups:\t0\n Average block group size:\t0.0\n Missing block groups:\t\t0\n Corrupt block groups:\t\t0\n Missing internal blocks:\t0\n Blocks queued for replication:\t0\nFSCK ended at Sat Nov 14 01:48:43 CST 2026 in 10 milliseconds\n\n\nThe filesystem under path '/lab/data.bin' is HEALTHY\n"
+  },
+  "method": "SIGTERM one owned DataNode process. Four independent data directories, RF=3. Three surviving nodes allow lost replicas to be placed on the surviving node that lacked each block. Polling may miss the brief under-replicated state. Detection time includes the post-stop read and polling; repair time is an observation bound, not exact scheduler latency. Heartbeats=1s, recheck=1000ms, replication check=1s for this lab only. No NameNode HA, racks, host-failure or production throughput test."
+}

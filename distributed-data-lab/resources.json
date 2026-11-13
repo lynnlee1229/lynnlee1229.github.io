@@ -1,0 +1,634 @@
+{
+  "verified_on": "2026-11-14",
+  "courses": [
+    {
+      "id": "cmu-15445-fall2025",
+      "school": "Carnegie Mellon University",
+      "course_number": "15-445/645",
+      "course_name": "Intro to Database Systems",
+      "term": "Fall 2025",
+      "status": "published archive",
+      "homepage": "https://15445.courses.cs.cmu.edu/fall2025/",
+      "schedule": "https://15445.courses.cs.cmu.edu/fall2025/schedule.html",
+      "prerequisites": {
+        "en": "Programming/debugging in C++; course projects use C++20. This Lab uses Python rather than reproducing BusTub assignments.",
+        "zh": "需要熟悉 C++ 编程与调试，课程项目使用 C++20；本 Lab 用 Python 原创练习，不复制作业实现。"
+      },
+      "prerequisite_source": "https://15445.courses.cs.cmu.edu/fall2025/faq.html",
+      "access": {
+        "en": "Linked slides/notes are publicly readable. Formal campus enrollment, grading and any fees are separate and not arranged here. Public material access is not course credit.",
+        "zh": "链接的讲义/笔记可公开阅读；校内注册、评分与任何费用另行规定，本 Lab 不安排注册。可读材料不等于获得学分。"
+      },
+      "solution_policy": {
+        "en": "The official FAQ asks learners not to publish course project implementations. This companion contains separate original exercises only.",
+        "zh": "官方 FAQ 要求不要公开课程项目实现；本配套只提供独立原创小练习。"
+      },
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "mit-65830-spring2026",
+      "school": "Massachusetts Institute of Technology",
+      "course_number": "6.5830/6.5831",
+      "course_name": "Database Systems",
+      "term": "Spring 2026",
+      "status": "published 2026 materials",
+      "homepage": "https://dsg.csail.mit.edu/6.5830/",
+      "schedule": "https://dsg.csail.mit.edu/6.5830/sched.php",
+      "prerequisites": {
+        "en": "6.1210 (formerly 6.006) or equivalent algorithms; familiarity with computer systems such as 6.1800 (formerly 6.033). No prior database course required. Official labs use Go.",
+        "zh": "6.1210（原 6.006）或同等算法基础，熟悉 6.1800（原 6.033）等系统知识；不要求已有数据库课程，官方实验使用 Go。"
+      },
+      "prerequisite_source": "https://dsg.csail.mit.edu/6.5830/syllabus.php",
+      "access": {
+        "en": "The selected PDFs are public without login. Campus enrollment, grading, attendance and fees are separate; no registration or paid access is promised.",
+        "zh": "所选 PDF 无需登录即可公开阅读；校内注册、评分、出勤与费用独立管理，不承诺注册资格或付费服务。"
+      },
+      "solution_policy": {
+        "en": "The syllabus prohibits publishing lab/problem-set solutions. The linked course is a reading source; our synthetic experiments are not its solutions.",
+        "zh": "教学大纲禁止公开实验或习题解答；课程仅作阅读来源，本 Lab 的合成实验不是其作业答案。"
+      },
+      "verified_on": "2026-11-14"
+    }
+  ],
+  "resources": [
+    {
+      "id": "cmu03",
+      "kind": "university lecture",
+      "course_id": "cmu-15445-fall2025",
+      "locator": "Lecture #03",
+      "title": "Database Storage I",
+      "url": "https://15445.courses.cs.cmu.edu/fall2025/slides/03-storage1.pdf",
+      "topics": [
+        "storage",
+        "metadata",
+        "pages"
+      ],
+      "units": [
+        "01"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Use page/file responsibilities to separate format metadata from storage placement.",
+        "zh": "从页与文件的职责出发，区分格式元数据与存储放置。"
+      }
+    },
+    {
+      "id": "cmu05",
+      "kind": "university lecture",
+      "course_id": "cmu-15445-fall2025",
+      "locator": "Lecture #05",
+      "title": "Database Storage II",
+      "url": "https://15445.courses.cs.cmu.edu/fall2025/slides/05-storage2.pdf",
+      "topics": [
+        "storage",
+        "LSM"
+      ],
+      "units": [
+        "04"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Read the log-structured storage discussion before treating a database as an opaque SQL service.",
+        "zh": "先阅读日志结构存储，再理解 SQL 服务背后的持久化层。"
+      }
+    },
+    {
+      "id": "cmu06",
+      "kind": "university lecture",
+      "course_id": "cmu-15445-fall2025",
+      "locator": "Lecture #06",
+      "title": "Storage Models & Compression",
+      "url": "https://15445.courses.cs.cmu.edu/fall2025/slides/06-storage3.pdf",
+      "topics": [
+        "columnar",
+        "compression",
+        "Parquet"
+      ],
+      "units": [
+        "02"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Relate row/column storage and encodings to measured projection and layout changes.",
+        "zh": "把行列存储、编码与实测的列选择和布局变化联系起来。"
+      }
+    },
+    {
+      "id": "cmu20",
+      "kind": "university lecture",
+      "course_id": "cmu-15445-fall2025",
+      "locator": "Lecture #20",
+      "title": "Multi-Version Concurrency Control",
+      "url": "https://15445.courses.cs.cmu.edu/fall2025/slides/20-multiversioning.pdf",
+      "topics": [
+        "MVCC",
+        "transactions"
+      ],
+      "units": [
+        "04",
+        "05"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Distinguish version visibility from serializable commit permission.",
+        "zh": "区分版本可见性与可串行化提交许可。"
+      }
+    },
+    {
+      "id": "cmu21",
+      "kind": "university lecture",
+      "course_id": "cmu-15445-fall2025",
+      "locator": "Lecture #21",
+      "title": "Database Logging",
+      "url": "https://15445.courses.cs.cmu.edu/fall2025/slides/21-logging.pdf",
+      "topics": [
+        "WAL",
+        "recovery"
+      ],
+      "units": [
+        "04"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Connect the WAL reading to what the current transaction experiment does and does not prove about crash recovery.",
+        "zh": "用 WAL 阅读辨析当前事务实测能否证明崩溃恢复。"
+      }
+    },
+    {
+      "id": "cmu23",
+      "kind": "university lecture",
+      "course_id": "cmu-15445-fall2025",
+      "locator": "Lecture #23",
+      "title": "Distributed Database Systems I",
+      "url": "https://15445.courses.cs.cmu.edu/fall2025/slides/23-distributed1.pdf",
+      "topics": [
+        "partitioning",
+        "replication"
+      ],
+      "units": [
+        "03",
+        "05"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Compare partitioning and replication; do not equate extra copies with extra logical shards.",
+        "zh": "比较分区与复制，不把更多副本误当成更多逻辑分片。"
+      }
+    },
+    {
+      "id": "mit04",
+      "kind": "university lecture",
+      "course_id": "mit-65830-spring2026",
+      "locator": "Lecture 4 / 2026-02-12",
+      "title": "Intro to DB Internals",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec4.pdf",
+      "topics": [
+        "storage",
+        "metadata"
+      ],
+      "units": [
+        "01"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Use the database-internals introduction as context for the two storage routes.",
+        "zh": "为分析文件与事务键值两条存储路线建立内部结构背景。"
+      }
+    },
+    {
+      "id": "mit10",
+      "kind": "university lecture",
+      "course_id": "mit-65830-spring2026",
+      "locator": "Lecture 10 / 2026-03-10",
+      "title": "OLAP & Column Stores",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec10.pdf",
+      "topics": [
+        "columnar",
+        "OLAP",
+        "Parquet"
+      ],
+      "units": [
+        "02"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Explain why fewer selected columns can reduce work without claiming every small query will be faster.",
+        "zh": "解释少选列为何减少工作，而不是保证每个小查询更快。"
+      }
+    },
+    {
+      "id": "mit12",
+      "kind": "university lecture",
+      "course_id": "mit-65830-spring2026",
+      "locator": "Lecture 12 / 2026-03-19",
+      "title": "Optimistic Concurrency Control, Snapshot Isolation",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec12.pdf",
+      "topics": [
+        "MVCC",
+        "write skew",
+        "transactions"
+      ],
+      "units": [
+        "04",
+        "05"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Predict the stale-total counterexample before running the real serializable schedule.",
+        "zh": "先推演过期总额反例，再运行真实可串行化调度。"
+      }
+    },
+    {
+      "id": "mit15",
+      "kind": "university lecture",
+      "course_id": "mit-65830-spring2026",
+      "locator": "Lecture 15 / 2026-04-07",
+      "title": "Distributed Databases",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec15.pdf",
+      "topics": [
+        "partitioning",
+        "replication",
+        "placement"
+      ],
+      "units": [
+        "03",
+        "05"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "The lecture supplies distributed-architecture context; the HDFS-specific mechanism comes from its official design guide below.",
+        "zh": "讲义提供分布式架构背景；HDFS 具体机制另据下方官方设计文档。"
+      }
+    },
+    {
+      "id": "mit16",
+      "kind": "university lecture",
+      "course_id": "mit-65830-spring2026",
+      "locator": "Lecture 16 / 2026-04-09",
+      "title": "Distributed Transactions",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec16.pdf",
+      "topics": [
+        "atomic commit",
+        "transactions"
+      ],
+      "units": [
+        "05"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Separate atomic commit from concurrency control, and identify which properties the recorded run actually checks.",
+        "zh": "分开原子提交与并发控制，识别保存记录实际验证了哪些性质。"
+      }
+    },
+    {
+      "id": "mit20",
+      "kind": "university lecture",
+      "course_id": "mit-65830-spring2026",
+      "locator": "Lecture 20 / 2026-04-28",
+      "title": "Cloud DB",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec20.pdf",
+      "topics": [
+        "snapshots",
+        "storage disaggregation",
+        "lakehouse"
+      ],
+      "units": [
+        "06"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "The Snowflake storage/cloud-services sections motivate immutable files and versioned views. The Iceberg implementation is our separate extension, not a claim that this lecture teaches PyIceberg.",
+        "zh": "Snowflake 存储/云服务部分为不可变文件与版本视图提供背景；Iceberg 实现是本 Lab 的独立拓展，不声称该课教授 PyIceberg。"
+      }
+    },
+    {
+      "id": "mit17",
+      "kind": "university lecture",
+      "course_id": "mit-65830-spring2026",
+      "locator": "Lecture 17 / 2026-04-14",
+      "title": "Embeddings, RAG, and Vector DBs",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec17.pdf",
+      "topics": [
+        "AI",
+        "retrieval",
+        "lineage"
+      ],
+      "units": [
+        "06",
+        "AI-extension"
+      ],
+      "status": "published",
+      "verified_on": "2026-11-14",
+      "material_access": "public PDF; no login observed",
+      "connection": {
+        "en": "Published in 2026. Our learning extension asks how a retrieval index records its source snapshot and preprocessing/model versions. The experiment verifies dataset lineage only, not embeddings, RAG or model quality.",
+        "zh": "2026 年已发布。本 Lab 的延伸问题是检索索引如何记录源快照、预处理与模型版本；实验只验证数据版本血缘，不测量 Embedding、RAG 或模型质量。"
+      }
+    },
+    {
+      "id": "hdfs342",
+      "kind": "official project reading",
+      "provider": "Apache Hadoop",
+      "title": "HDFS Architecture 3.4.2",
+      "locator": "NameNode and DataNodes; Data Replication; Robustness",
+      "url": "https://hadoop.apache.org/docs/r3.4.2/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html",
+      "topics": [
+        "HDFS",
+        "blocks",
+        "replication"
+      ],
+      "units": [
+        "01",
+        "03"
+      ],
+      "status": "published",
+      "era": "version 3.4.2",
+      "course_id": null,
+      "verified_on": "2026-11-14",
+      "material_access": "public page; no login observed"
+    },
+    {
+      "id": "gfs2003",
+      "kind": "original paper",
+      "provider": "Google Research / SOSP 2003",
+      "title": "The Google File System",
+      "locator": "2003 classic; architecture and fault-tolerance sections",
+      "url": "https://research.google/pubs/the-google-file-system/",
+      "topics": [
+        "GFS",
+        "storage",
+        "replication"
+      ],
+      "units": [
+        "03"
+      ],
+      "status": "published",
+      "era": "2003 classic; not a description of current Google infrastructure or HDFS behavior",
+      "course_id": null,
+      "verified_on": "2026-11-14",
+      "material_access": "public page; no login observed"
+    },
+    {
+      "id": "iceberg-api",
+      "kind": "official project tutorial",
+      "provider": "Apache Iceberg",
+      "title": "PyIceberg API: schema evolution, partition evolution and scans",
+      "locator": "Schema evolution; Partition evolution; Query the data",
+      "url": "https://py.iceberg.apache.org/api/",
+      "topics": [
+        "Iceberg",
+        "snapshots",
+        "schema",
+        "partitioning"
+      ],
+      "units": [
+        "06"
+      ],
+      "status": "published",
+      "era": "Current public documentation; executed compatibility is specifically PyIceberg 0.10.0",
+      "course_id": null,
+      "verified_on": "2026-11-14",
+      "material_access": "public page; no login observed"
+    },
+    {
+      "id": "iceberg-local",
+      "kind": "official project tutorial",
+      "provider": "Apache Iceberg",
+      "title": "PyIceberg configuration: SQL Catalog / SQLite",
+      "locator": "SQL Catalog; Development only",
+      "url": "https://py.iceberg.apache.org/configuration/#sql-catalog",
+      "topics": [
+        "Iceberg",
+        "catalog",
+        "SQLite"
+      ],
+      "units": [
+        "06"
+      ],
+      "status": "published",
+      "era": "SQLite catalog is exploratory/development scope, not a distributed catalog",
+      "course_id": null,
+      "verified_on": "2026-11-14",
+      "material_access": "public page; no login observed"
+    },
+    {
+      "id": "iceberg-spec",
+      "kind": "official specification",
+      "provider": "Apache Iceberg",
+      "title": "Iceberg Table Specification",
+      "locator": "Snapshots; Schemas; Partition specs; File metadata",
+      "url": "https://iceberg.apache.org/spec/",
+      "topics": [
+        "Iceberg",
+        "metadata",
+        "field IDs",
+        "snapshots"
+      ],
+      "units": [
+        "01",
+        "06"
+      ],
+      "status": "published",
+      "era": "Experiment writes table-format v2; does not claim all v3 features",
+      "course_id": null,
+      "verified_on": "2026-11-14",
+      "material_access": "public page; no login observed"
+    },
+    {
+      "id": "parquet-format",
+      "kind": "official specification",
+      "provider": "Apache Parquet",
+      "title": "Parquet metadata",
+      "locator": "File metadata and page headers",
+      "url": "https://parquet.apache.org/docs/file-format/metadata/",
+      "topics": [
+        "Parquet",
+        "metadata",
+        "row groups"
+      ],
+      "units": [
+        "01",
+        "02"
+      ],
+      "status": "published",
+      "era": "Format reading; reader behavior separately measured with PyArrow 20.0.0",
+      "course_id": null,
+      "verified_on": "2026-11-14",
+      "material_access": "public page; no login observed"
+    }
+  ],
+  "unit_mappings": [
+    {
+      "unit": "01",
+      "slug": "01-foundations",
+      "resources": [
+        "cmu03",
+        "mit04",
+        "parquet-format"
+      ],
+      "exercise_commands": [
+        "python lab.py parquet",
+        "python scripts/inspect_parquet.py build/parquet/sorted-4096-zstd.parquet"
+      ],
+      "task": {
+        "en": "Inspect the real footer, identify what it knows about rows/chunks, then explain why it cannot tell you a replica count or table commit.",
+        "zh": "检查真实 Footer，找出行/列块信息，解释它为什么不知道副本数与表提交。"
+      },
+      "check": {
+        "en": "Total row-group rows agree with 131072; schema has four columns; storage/table authority is a reasoning question, not inferred from row-group count.",
+        "zh": "组行数合计为 131072、Schema 四列；存储/表权威是推理题，不能从组数推导副本数。"
+      },
+      "exercise_origin": "original companion exercise; not a university assignment solution"
+    },
+    {
+      "unit": "02",
+      "slug": "02-parquet",
+      "resources": [
+        "cmu06",
+        "mit10",
+        "parquet-format"
+      ],
+      "exercise_commands": [
+        "python lab.py parquet"
+      ],
+      "task": {
+        "en": "Predict candidate groups before comparing real read spans; change one predicate boundary in your own copy.",
+        "zh": "先预测候选组，再比较真实读取区间；在自己的副本中修改一个过滤边界。"
+      },
+      "check": {
+        "en": "All 45 queries return the same source-oracle rows; sorted 4096 layout retains 2/32 candidates while shuffled retains 32/32.",
+        "zh": "45 次查询均与源数据 oracle 相同；4096 有序布局候选 2/32，打乱为 32/32。"
+      },
+      "exercise_origin": "original companion exercise; not a university assignment solution"
+    },
+    {
+      "unit": "03",
+      "slug": "03-hdfs",
+      "resources": [
+        "mit15",
+        "cmu23",
+        "hdfs342",
+        "gfs2003"
+      ],
+      "exercise_commands": [
+        "python scripts/bootstrap.py hdfs",
+        "python lab.py hdfs"
+      ],
+      "task": {
+        "en": "Count blocks, stop one DataNode and verify reading and restored redundancy separately.",
+        "zh": "计算块数，停止一个 DataNode，分别验证可读与冗余恢复。"
+      },
+      "check": {
+        "en": "Thirteen blocks; RF=3 on four starting nodes; after one stops, three live replicas per block and zero pending/under-replicated counters.",
+        "zh": "十三块，四节点起步 RF=3；停一节点后每块三个活副本，待恢复/副本不足计数为零。"
+      },
+      "exercise_origin": "original companion exercise; not a university assignment solution"
+    },
+    {
+      "unit": "04",
+      "slug": "04-storage-engine",
+      "resources": [
+        "cmu05",
+        "cmu20",
+        "cmu21",
+        "mit12"
+      ],
+      "exercise_commands": [
+        "python scripts/bootstrap.py database",
+        "python lab.py database"
+      ],
+      "task": {
+        "en": "Read the primary-index path in the executed plan and the version/conflict schedule. Separately list what would be needed to test WAL durability or LSM compaction.",
+        "zh": "阅读已执行计划中的主索引路径与版本/冲突调度，另列出验证 WAL 持久性或 LSM 合并所需证据。"
+      },
+      "check": {
+        "en": "Plan identifies accounts_pkey; observed serializable conflict is not a WAL fsync or compaction measurement. Those remain reading-only.",
+        "zh": "计划标明 accounts_pkey；可串行化冲突不是 WAL fsync 或 Compaction 测量，后两者仍属阅读。"
+      },
+      "exercise_origin": "original companion exercise; not a university assignment solution"
+    },
+    {
+      "unit": "05",
+      "slug": "05-transactions",
+      "resources": [
+        "mit12",
+        "mit15",
+        "mit16",
+        "cmu20"
+      ],
+      "exercise_commands": [
+        "python scripts/bootstrap.py database",
+        "python lab.py database"
+      ],
+      "task": {
+        "en": "Run the transfer and stale-total write-skew schedule, then retry the entire business decision against the fresh total.",
+        "zh": "运行转账与过期总额 Write Skew，再基于新总额重试完整业务决策。"
+      },
+      "check": {
+        "en": "KV Put trace reaches distinct serving nodes; transfer total=300; one real 40001; final total=220; the second withdrawal is declined.",
+        "zh": "KV Put 到不同服务节点；转账总额 300，一条真实 40001，最终 220，第二次提款被拒绝。"
+      },
+      "exercise_origin": "original companion exercise; not a university assignment solution"
+    },
+    {
+      "unit": "06",
+      "slug": "06-lakehouse",
+      "resources": [
+        "mit20",
+        "iceberg-api",
+        "iceberg-local",
+        "iceberg-spec",
+        "mit17"
+      ],
+      "exercise_commands": [
+        "pip install -r requirements-iceberg.txt",
+        "python lab.py iceberg"
+      ],
+      "task": {
+        "en": "Create real snapshots, rename a field by identity, evolve a partition spec and compare a pinned read with a naive directory listing.",
+        "zh": "创建真实快照，按字段身份改名，演进分区规范，对照固定快照读取与目录遍历。"
+      },
+      "check": {
+        "en": "Snapshot rowsets 3/5/6; field ID 2 survives rename; file specs 0 and 1 coexist; old hashes persist; uncommitted id=999 stays outside the table.",
+        "zh": "快照行集合 3/5/6，字段 ID 2 改名后保留，文件规范 0/1 共存，旧哈希不变，未提交 id=999 不进入表。"
+      },
+      "exercise_origin": "original companion exercise; not a university assignment solution"
+    }
+  ],
+  "policy": {
+    "en": "Only link public source materials. Do not mirror course content or publish official assignment solutions. Public reading access is separate from enrollment, assessment and fees. Reading resources do not imply completed exercises.",
+    "zh": "只链接公开原始材料，不镜像教材或发布官方作业解答。可公开阅读与注册、评分、费用分开；列出阅读材料不等于完成实操。"
+  },
+  "ai_extension": {
+    "resource": "mit17",
+    "status": "published source + original reading extension; no AI-quality benchmark",
+    "connection": {
+      "en": "A retrieval/embedding build should record its corpus snapshot, schema, transform version and model version. The Iceberg experiment verifies a stable corpus rowset hash and changing latest pointer; it does not generate embeddings or assess RAG.",
+      "zh": "检索/向量构建应记录语料快照、Schema、变换版本与模型版本。Iceberg 实验验证固定语料行集合哈希与变化的 latest 指针，不生成向量、不评测 RAG。"
+    }
+  }
+}

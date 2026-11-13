@@ -1,0 +1,97 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>scripts/verify_resources.py · Distributed Data Systems Lab</title><meta name="description" content="Learn storage layout, replication and transactions through original guides and four real reproducible experiments."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"><link rel="stylesheet" href="/distributed-data-lab/assets/site.css"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--verify_resources.py/"><link rel="alternate" hreflang="zh" href="https://lynnlee1229.github.io/distributed-data-lab/zh/source-scripts--verify_resources.py/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/distributed-data-lab/en/source-scripts--verify_resources.py/"><script type="module" src="/distributed-data-lab/assets/site.mjs"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-data-lab/en/">Distributed Data Systems Lab<small>Lynn Lee / Engineering notebook</small></a><nav aria-label="Main navigation"><a href="/distributed-data-lab/en/">Course</a><a href="/distributed-data-lab/en/inspector">Parquet inspector</a><a href="/distributed-data-lab/en/evidence">Evidence</a><a href="/distributed-data-lab/en/resources">Readings</a><a href="/distributed-data-lab/en/reproduce">Run locally</a><a href="/distributed-data-lab/zh/source-scripts--verify_resources.py">中文</a></nav></div></header><main id="main" class="wrap "><p class="eyebrow">Executable companion source</p><h1>scripts/verify_resources.py</h1><p><a href="/distributed-data-lab/en/source/">← Source index</a></p><pre>#!/usr/bin/env python3
+&quot;&quot;&quot;Validate the searchable resource inventory; optional bounded live URL checks.&quot;&quot;&quot;
+import argparse, datetime, json, urllib.parse, urllib.request
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def validate(data):
+    courses = {c[&quot;id&quot;]: c for c in data[&quot;courses&quot;]}
+    resources = {r[&quot;id&quot;]: r for r in data[&quot;resources&quot;]}
+    assert 1 &lt;= len(courses) &lt;= 3 and len(resources) == len(data[&quot;resources&quot;])
+    for course in courses.values():
+        for k in [
+            &quot;school&quot;,
+            &quot;course_number&quot;,
+            &quot;course_name&quot;,
+            &quot;term&quot;,
+            &quot;prerequisites&quot;,
+            &quot;prerequisite_source&quot;,
+            &quot;access&quot;,
+            &quot;solution_policy&quot;,
+            &quot;verified_on&quot;,
+        ]:
+            assert course.get(k), k
+        datetime.date.fromisoformat(course[&quot;verified_on&quot;])
+    for r in resources.values():
+        assert r[&quot;status&quot;] == &quot;published&quot; and r[&quot;verified_on&quot;] and r[&quot;locator&quot;]
+        if r[&quot;course_id&quot;]:
+            assert r[&quot;course_id&quot;] in courses
+        u = urllib.parse.urlsplit(r[&quot;url&quot;])
+        assert u.scheme == &quot;https&quot; and u.hostname
+        assert u.hostname in {
+            &quot;15445.courses.cs.cmu.edu&quot;,
+            &quot;dsg.csail.mit.edu&quot;,
+            &quot;hadoop.apache.org&quot;,
+            &quot;research.google&quot;,
+            &quot;py.iceberg.apache.org&quot;,
+            &quot;iceberg.apache.org&quot;,
+            &quot;parquet.apache.org&quot;,
+        }
+    assert {u[&quot;unit&quot;] for u in data[&quot;unit_mappings&quot;]} == {
+        &quot;01&quot;,
+        &quot;02&quot;,
+        &quot;03&quot;,
+        &quot;04&quot;,
+        &quot;05&quot;,
+        &quot;06&quot;,
+    }
+    for unit in data[&quot;unit_mappings&quot;]:
+        assert (
+            unit[&quot;exercise_commands&quot;]
+            and unit[&quot;task&quot;][&quot;en&quot;]
+            and unit[&quot;task&quot;][&quot;zh&quot;]
+            and unit[&quot;check&quot;][&quot;en&quot;]
+            and unit[&quot;check&quot;][&quot;zh&quot;]
+        )
+        assert (
+            unit[&quot;exercise_origin&quot;]
+            == &quot;original companion exercise; not a university assignment solution&quot;
+        )
+        for id in unit[&quot;resources&quot;]:
+            assert id in resources
+    assert data[&quot;ai_extension&quot;][&quot;resource&quot;] in resources
+    return {
+        &quot;courses&quot;: len(courses),
+        &quot;resources&quot;: len(resources),
+        &quot;units&quot;: 6,
+        &quot;verified_on&quot;: data[&quot;verified_on&quot;],
+    }
+
+
+if __name__ == &quot;__main__&quot;:
+    p = argparse.ArgumentParser()
+    p.add_argument(&quot;--live&quot;, action=&quot;store_true&quot;)
+    a = p.parse_args()
+    d = json.loads((ROOT / &quot;data/resources.json&quot;).read_text())
+    result = validate(d)
+    if a.live:
+        checks = []
+        for r in d[&quot;resources&quot;]:
+            req = urllib.request.Request(
+                urllib.parse.urldefrag(r[&quot;url&quot;])[0],
+                headers={
+                    &quot;Range&quot;: &quot;bytes=0-2047&quot;,
+                    &quot;User-Agent&quot;: &quot;Distributed-Data-Lab-resource-verification/1.0&quot;,
+                },
+            )
+            with urllib.request.urlopen(req, timeout=30) as f:
+                prefix = f.read(2048)
+                assert f.status in (200, 206)
+            if r[&quot;url&quot;].endswith(&quot;.pdf&quot;):
+                assert prefix.startswith(b&quot;%PDF&quot;)
+            checks.append({&quot;id&quot;: r[&quot;id&quot;], &quot;url&quot;: r[&quot;url&quot;], &quot;readable&quot;: True})
+        result[&quot;live_checks&quot;] = checks
+    print(json.dumps(result, indent=2))
+</pre></main><footer>Original teaching material · Synthetic data · v2 / 2026-11-14. Single-host observations, no production capacity claims.<br><a href="https://github.com/lynnlee1229/distributed-data-lab">Audited companion source</a> · <a href="/distributed-data-lab/downloads/distributed-data-lab.zip">ZIP</a> · <a href="/distributed-data-lab/public-files.json">Export checksums</a> · <a href="/websites/">All learning labs</a></footer></body></html>
