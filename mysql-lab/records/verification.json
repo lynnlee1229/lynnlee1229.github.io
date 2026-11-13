@@ -1,0 +1,55 @@
+{
+  "format": "mysql-lab-verification/v1",
+  "verified_at": "2026-11-13T12:18:12.209919+00:00",
+  "result": "PASS",
+  "lifecycle": {
+    "unconfirmed_destroy_refused": true,
+    "explicit_scoped_destroy_executed": true,
+    "volume_absent_after_destroy": true,
+    "fresh_volume_created": true,
+    "same_volume_retained_after_stop_start": true,
+    "container_stopped_at_end": true,
+    "loopback_only_port_verified": true
+  },
+  "runs": {
+    "clean": {
+      "sha256": "2be19ea20cb42484f2e8c19cbddee0fdc947e3a589568852cdf4fef2b920ec5f",
+      "recorded_at": "2026-11-13T12:17:55.647612+00:00",
+      "semantic_assertions_passed": true,
+      "remaining_lab_locks": 0
+    },
+    "repeat": {
+      "sha256": "e4e4d9dc620784309e2920b3381cc5c0e0f96f0c29d0ba3272722d69bc4a9b93",
+      "recorded_at": "2026-11-13T12:18:07.049060+00:00",
+      "semantic_assertions_passed": true,
+      "remaining_lab_locks": 0
+    }
+  },
+  "dataset_hashes_match": true,
+  "query_result_hashes_match": true,
+  "data_scope": "Synthetic data only; no raw logs, environment files, credentials, hostnames or local paths included.",
+  "limits": "Timing samples are local warm-buffer observations, not production benchmarks. Deadlock victim identity is not fixed.",
+  "browser_acceptance": {
+    "engine": "Chrome",
+    "desktop_interactions_passed": true,
+    "record_switching": true,
+    "all_timeline_cases": true,
+    "query_plan_selection": true,
+    "deep_link_language_state": true,
+    "downloaded_json_exact_match": true,
+    "downloaded_csv_exact_samples": 28,
+    "mobile_css_width": 390,
+    "mobile_document_scroll_width": 390,
+    "missing_record_failure_and_recovery": true
+  },
+  "independent_ci": {
+    "result": "PASS",
+    "url": "https://github.com/lynnlee1229/mysql-lab/actions/runs/43424390010",
+    "tested_commit": "b5dd61cd3b9b3335e048b955cbfd6b2148dc2406",
+    "runtime": "Docker / Linux x86_64",
+    "mysql_version": "8.4.13",
+    "clean_and_repeat_semantics_passed": true,
+    "dataset_matches_local": true,
+    "scope": "Real fresh-volume and stop/start repeat; no timing equality claim across machines."
+  }
+}

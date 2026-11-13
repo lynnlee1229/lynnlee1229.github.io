@@ -1,0 +1,2412 @@
+{
+  "format": "mysql-lab-run/v1",
+  "recorded_at": "2026-11-13T12:18:07.049060+00:00",
+  "provenance": "Executed against a real isolated MySQL server, not a simulation. Public fields are allowlisted; raw InnoDB text remains local.",
+  "environment": {
+    "version": "8.4.13",
+    "arch": "aarch64",
+    "buffer_pool_bytes": 134217728,
+    "deadlock_detect": 1,
+    "performance_schema": 1,
+    "driver": "PyMySQL 1.1.2",
+    "python": "3.11.2",
+    "runtime": "Docker / Linux ARM64",
+    "image": "mysql:8.4.13@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902",
+    "mysql_memory_limit_mib": 1024,
+    "mysql_cpu_limit": 2
+  },
+  "schema_sql": "CREATE TABLE a (id INT PRIMARY KEY, value INT NOT NULL) ENGINE=InnoDB;\nCREATE TABLE b (id INT PRIMARY KEY, value INT NOT NULL) ENGINE=InnoDB;\nCREATE TABLE events (id INT PRIMARY KEY, tenant_id INT NOT NULL, status VARCHAR(12) NOT NULL,\ncreated_at DATE NOT NULL, amount_cents INT NOT NULL, payload VARCHAR(128) NOT NULL) ENGINE=InnoDB;",
+  "collector_sql": {
+    "locks": "SELECT THREAD_ID, OBJECT_NAME, INDEX_NAME, LOCK_TYPE, LOCK_MODE, LOCK_STATUS, LOCK_DATA\nFROM performance_schema.data_locks WHERE OBJECT_SCHEMA='mysql_lab'\nORDER BY OBJECT_NAME, THREAD_ID, LOCK_TYPE, LOCK_STATUS",
+    "waits": "SELECT r.THREAD_ID AS waiting_thread, b.THREAD_ID AS blocking_thread,\nr.OBJECT_NAME AS table_name, r.INDEX_NAME AS index_name, r.LOCK_MODE AS requested_mode,\nb.LOCK_MODE AS held_mode, r.LOCK_DATA AS lock_data\nFROM performance_schema.data_lock_waits w\nJOIN performance_schema.data_locks r ON r.ENGINE_LOCK_ID=w.REQUESTING_ENGINE_LOCK_ID\nJOIN performance_schema.data_locks b ON b.ENGINE_LOCK_ID=w.BLOCKING_ENGINE_LOCK_ID\nWHERE r.OBJECT_SCHEMA='mysql_lab' ORDER BY table_name, waiting_thread"
+  },
+  "deadlock": {
+    "outcomes": {
+      "B": {
+        "status": "rolled_back",
+        "errno": 1213
+      },
+      "A": {
+        "status": "committed"
+      }
+    },
+    "snapshot_before_cycle": {
+      "source": [
+        "performance_schema.data_locks",
+        "performance_schema.data_lock_waits"
+      ],
+      "locks": [
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": "PRIMARY",
+          "LOCK_TYPE": "RECORD",
+          "LOCK_MODE": "X,REC_NOT_GAP",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": "1",
+          "actor": "A"
+        },
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": null,
+          "LOCK_TYPE": "TABLE",
+          "LOCK_MODE": "IX",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": null,
+          "actor": "A"
+        },
+        {
+          "OBJECT_NAME": "b",
+          "INDEX_NAME": "PRIMARY",
+          "LOCK_TYPE": "RECORD",
+          "LOCK_MODE": "X,REC_NOT_GAP",
+          "LOCK_STATUS": "WAITING",
+          "LOCK_DATA": "1",
+          "actor": "A"
+        },
+        {
+          "OBJECT_NAME": "b",
+          "INDEX_NAME": null,
+          "LOCK_TYPE": "TABLE",
+          "LOCK_MODE": "IX",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": null,
+          "actor": "A"
+        },
+        {
+          "OBJECT_NAME": "b",
+          "INDEX_NAME": "PRIMARY",
+          "LOCK_TYPE": "RECORD",
+          "LOCK_MODE": "X,REC_NOT_GAP",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": "1",
+          "actor": "B"
+        },
+        {
+          "OBJECT_NAME": "b",
+          "INDEX_NAME": null,
+          "LOCK_TYPE": "TABLE",
+          "LOCK_MODE": "IX",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": null,
+          "actor": "B"
+        }
+      ],
+      "waits": [
+        {
+          "table_name": "b",
+          "index_name": "PRIMARY",
+          "requested_mode": "X,REC_NOT_GAP",
+          "held_mode": "X,REC_NOT_GAP",
+          "lock_data": "1",
+          "waiting_actor": "A",
+          "blocking_actor": "B"
+        }
+      ]
+    },
+    "deadlock_excerpt": [
+      "*** (1) TRANSACTION:",
+      "UPDATE b SET value=value+1 WHERE id=1",
+      "*** (1) HOLDS THE LOCK(S):",
+      "RECORD LOCKS space id 6 page no 4 n bits 72 index PRIMARY of table `mysql_lab`.`a` trx id 2373 lock_mode X locks rec but not gap",
+      "*** (1) WAITING FOR THIS LOCK TO BE GRANTED:",
+      "RECORD LOCKS space id 7 page no 4 n bits 72 index PRIMARY of table `mysql_lab`.`b` trx id 2373 lock_mode X locks rec but not gap waiting",
+      "*** (2) TRANSACTION:",
+      "UPDATE a SET value=value+1 WHERE id=1",
+      "*** (2) HOLDS THE LOCK(S):",
+      "RECORD LOCKS space id 7 page no 4 n bits 72 index PRIMARY of table `mysql_lab`.`b` trx id 2376 lock_mode X locks rec but not gap",
+      "*** (2) WAITING FOR THIS LOCK TO BE GRANTED:",
+      "RECORD LOCKS space id 6 page no 4 n bits 72 index PRIMARY of table `mysql_lab`.`a` trx id 2376 lock_mode X locks rec but not gap waiting",
+      "*** WE ROLL BACK TRANSACTION (2)"
+    ],
+    "final_values": {
+      "a": 101,
+      "b": 101
+    },
+    "timeline": [
+      {
+        "step": 1,
+        "elapsed_ms": 9.456,
+        "actor": "A",
+        "action": "submit",
+        "sql": "START TRANSACTION"
+      },
+      {
+        "step": 2,
+        "elapsed_ms": 9.899,
+        "actor": "A",
+        "action": "returned",
+        "sql": "START TRANSACTION",
+        "rows": []
+      },
+      {
+        "step": 3,
+        "elapsed_ms": 9.902,
+        "actor": "A",
+        "action": "submit",
+        "sql": "UPDATE a SET value=value+1 WHERE id=1"
+      },
+      {
+        "step": 4,
+        "elapsed_ms": 10.9,
+        "actor": "A",
+        "action": "returned",
+        "sql": "UPDATE a SET value=value+1 WHERE id=1",
+        "rows": []
+      },
+      {
+        "step": 5,
+        "elapsed_ms": 10.906,
+        "actor": "B",
+        "action": "submit",
+        "sql": "START TRANSACTION"
+      },
+      {
+        "step": 6,
+        "elapsed_ms": 11.794,
+        "actor": "B",
+        "action": "returned",
+        "sql": "START TRANSACTION",
+        "rows": []
+      },
+      {
+        "step": 7,
+        "elapsed_ms": 11.797,
+        "actor": "B",
+        "action": "submit",
+        "sql": "UPDATE b SET value=value+1 WHERE id=1"
+      },
+      {
+        "step": 8,
+        "elapsed_ms": 12.373,
+        "actor": "B",
+        "action": "returned",
+        "sql": "UPDATE b SET value=value+1 WHERE id=1",
+        "rows": []
+      },
+      {
+        "step": 9,
+        "elapsed_ms": 12.377,
+        "actor": "coordinator",
+        "action": "barrier: both first updates completed"
+      },
+      {
+        "step": 10,
+        "elapsed_ms": 12.492,
+        "actor": "A",
+        "action": "submit",
+        "sql": "UPDATE b SET value=value+1 WHERE id=1"
+      },
+      {
+        "step": 11,
+        "elapsed_ms": 40.937,
+        "actor": "observer",
+        "action": "barrier: observed lock wait",
+        "waiting": "A",
+        "blocking": "B"
+      },
+      {
+        "step": 12,
+        "elapsed_ms": 40.944,
+        "actor": "coordinator",
+        "action": "barrier: close cycle only after observed A→B wait"
+      },
+      {
+        "step": 13,
+        "elapsed_ms": 40.946,
+        "actor": "B",
+        "action": "submit",
+        "sql": "UPDATE a SET value=value+1 WHERE id=1"
+      },
+      {
+        "step": 14,
+        "elapsed_ms": 45.311,
+        "actor": "A",
+        "action": "returned",
+        "sql": "UPDATE b SET value=value+1 WHERE id=1",
+        "rows": []
+      },
+      {
+        "step": 15,
+        "elapsed_ms": 45.32,
+        "actor": "A",
+        "action": "submit",
+        "sql": "COMMIT"
+      },
+      {
+        "step": 16,
+        "elapsed_ms": 45.593,
+        "actor": "B",
+        "action": "mysql_error",
+        "sql": "UPDATE a SET value=value+1 WHERE id=1",
+        "errno": 1213
+      },
+      {
+        "step": 17,
+        "elapsed_ms": 45.599,
+        "actor": "B",
+        "action": "submit",
+        "sql": "ROLLBACK"
+      },
+      {
+        "step": 18,
+        "elapsed_ms": 46.238,
+        "actor": "B",
+        "action": "returned",
+        "sql": "ROLLBACK",
+        "rows": []
+      },
+      {
+        "step": 19,
+        "elapsed_ms": 46.917,
+        "actor": "A",
+        "action": "returned",
+        "sql": "COMMIT",
+        "rows": []
+      }
+    ],
+    "assertions_passed": true
+  },
+  "ordered_control": {
+    "outcomes": {
+      "A": "committed",
+      "B": "committed"
+    },
+    "snapshot": {
+      "source": [
+        "performance_schema.data_locks",
+        "performance_schema.data_lock_waits"
+      ],
+      "locks": [
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": "PRIMARY",
+          "LOCK_TYPE": "RECORD",
+          "LOCK_MODE": "X,REC_NOT_GAP",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": "1",
+          "actor": "A"
+        },
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": null,
+          "LOCK_TYPE": "TABLE",
+          "LOCK_MODE": "IX",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": null,
+          "actor": "A"
+        },
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": "PRIMARY",
+          "LOCK_TYPE": "RECORD",
+          "LOCK_MODE": "X,REC_NOT_GAP",
+          "LOCK_STATUS": "WAITING",
+          "LOCK_DATA": "1",
+          "actor": "B"
+        },
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": null,
+          "LOCK_TYPE": "TABLE",
+          "LOCK_MODE": "IX",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": null,
+          "actor": "B"
+        }
+      ],
+      "waits": [
+        {
+          "table_name": "a",
+          "index_name": "PRIMARY",
+          "requested_mode": "X,REC_NOT_GAP",
+          "held_mode": "X,REC_NOT_GAP",
+          "lock_data": "1",
+          "waiting_actor": "B",
+          "blocking_actor": "A"
+        }
+      ]
+    },
+    "final_values": {
+      "a": 102,
+      "b": 102
+    },
+    "timeline": [
+      {
+        "step": 1,
+        "elapsed_ms": 5.709,
+        "actor": "A",
+        "action": "submit",
+        "sql": "START TRANSACTION"
+      },
+      {
+        "step": 2,
+        "elapsed_ms": 6.091,
+        "actor": "A",
+        "action": "returned",
+        "sql": "START TRANSACTION",
+        "rows": []
+      },
+      {
+        "step": 3,
+        "elapsed_ms": 6.093,
+        "actor": "A",
+        "action": "submit",
+        "sql": "UPDATE a SET value=value+1 WHERE id=1"
+      },
+      {
+        "step": 4,
+        "elapsed_ms": 6.649,
+        "actor": "A",
+        "action": "returned",
+        "sql": "UPDATE a SET value=value+1 WHERE id=1",
+        "rows": []
+      },
+      {
+        "step": 5,
+        "elapsed_ms": 6.657,
+        "actor": "B",
+        "action": "submit",
+        "sql": "START TRANSACTION"
+      },
+      {
+        "step": 6,
+        "elapsed_ms": 7.008,
+        "actor": "B",
+        "action": "returned",
+        "sql": "START TRANSACTION",
+        "rows": []
+      },
+      {
+        "step": 7,
+        "elapsed_ms": 7.128,
+        "actor": "B",
+        "action": "submit",
+        "sql": "UPDATE a SET value=value+1 WHERE id=1"
+      },
+      {
+        "step": 8,
+        "elapsed_ms": 8.74,
+        "actor": "observer",
+        "action": "barrier: observed lock wait",
+        "waiting": "B",
+        "blocking": "A"
+      },
+      {
+        "step": 9,
+        "elapsed_ms": 8.742,
+        "actor": "A",
+        "action": "submit",
+        "sql": "UPDATE b SET value=value+1 WHERE id=1"
+      },
+      {
+        "step": 10,
+        "elapsed_ms": 9.36,
+        "actor": "A",
+        "action": "returned",
+        "sql": "UPDATE b SET value=value+1 WHERE id=1",
+        "rows": []
+      },
+      {
+        "step": 11,
+        "elapsed_ms": 9.365,
+        "actor": "A",
+        "action": "submit",
+        "sql": "COMMIT"
+      },
+      {
+        "step": 12,
+        "elapsed_ms": 10.841,
+        "actor": "A",
+        "action": "returned",
+        "sql": "COMMIT",
+        "rows": []
+      },
+      {
+        "step": 13,
+        "elapsed_ms": 10.906,
+        "actor": "B",
+        "action": "returned",
+        "sql": "UPDATE a SET value=value+1 WHERE id=1",
+        "rows": []
+      },
+      {
+        "step": 14,
+        "elapsed_ms": 10.909,
+        "actor": "B",
+        "action": "submit",
+        "sql": "UPDATE b SET value=value+1 WHERE id=1"
+      },
+      {
+        "step": 15,
+        "elapsed_ms": 11.669,
+        "actor": "B",
+        "action": "returned",
+        "sql": "UPDATE b SET value=value+1 WHERE id=1",
+        "rows": []
+      },
+      {
+        "step": 16,
+        "elapsed_ms": 11.674,
+        "actor": "B",
+        "action": "submit",
+        "sql": "COMMIT"
+      },
+      {
+        "step": 17,
+        "elapsed_ms": 13.571,
+        "actor": "B",
+        "action": "returned",
+        "sql": "COMMIT",
+        "rows": []
+      }
+    ],
+    "assertions_passed": true
+  },
+  "isolation": [
+    {
+      "level": "READ COMMITTED",
+      "ordinary_first": 100,
+      "ordinary_after_B_commit": 200,
+      "locking_read": 200,
+      "ordinary_after_locking_read": 200,
+      "final_after_release": 300,
+      "writer_wait_snapshot": {
+        "source": [
+          "performance_schema.data_locks",
+          "performance_schema.data_lock_waits"
+        ],
+        "locks": [
+          {
+            "OBJECT_NAME": "a",
+            "INDEX_NAME": "PRIMARY",
+            "LOCK_TYPE": "RECORD",
+            "LOCK_MODE": "X,REC_NOT_GAP",
+            "LOCK_STATUS": "GRANTED",
+            "LOCK_DATA": "1",
+            "actor": "A"
+          },
+          {
+            "OBJECT_NAME": "a",
+            "INDEX_NAME": null,
+            "LOCK_TYPE": "TABLE",
+            "LOCK_MODE": "IX",
+            "LOCK_STATUS": "GRANTED",
+            "LOCK_DATA": null,
+            "actor": "A"
+          },
+          {
+            "OBJECT_NAME": "a",
+            "INDEX_NAME": "PRIMARY",
+            "LOCK_TYPE": "RECORD",
+            "LOCK_MODE": "X,REC_NOT_GAP",
+            "LOCK_STATUS": "WAITING",
+            "LOCK_DATA": "1",
+            "actor": "B"
+          },
+          {
+            "OBJECT_NAME": "a",
+            "INDEX_NAME": null,
+            "LOCK_TYPE": "TABLE",
+            "LOCK_MODE": "IX",
+            "LOCK_STATUS": "GRANTED",
+            "LOCK_DATA": null,
+            "actor": "B"
+          }
+        ],
+        "waits": [
+          {
+            "table_name": "a",
+            "index_name": "PRIMARY",
+            "requested_mode": "X,REC_NOT_GAP",
+            "held_mode": "X,REC_NOT_GAP",
+            "lock_data": "1",
+            "waiting_actor": "B",
+            "blocking_actor": "A"
+          }
+        ]
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.509,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 7.105,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 7.109,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 7.617,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 7.621,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 8.072,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 8.074,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT value FROM a WHERE id=1"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 8.752,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT value FROM a WHERE id=1",
+          "rows": [
+            {
+              "value": 100
+            }
+          ]
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 8.756,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 9.306,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 9.311,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE a SET value=200 WHERE id=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 10.023,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE a SET value=200 WHERE id=1",
+          "rows": []
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 10.028,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 11.505,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 11.51,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT value FROM a WHERE id=1"
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 12.033,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT value FROM a WHERE id=1",
+          "rows": [
+            {
+              "value": 200
+            }
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 12.037,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT value FROM a WHERE id=1 FOR UPDATE"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 12.505,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT value FROM a WHERE id=1 FOR UPDATE",
+          "rows": [
+            {
+              "value": 200
+            }
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 12.507,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT value FROM a WHERE id=1"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 13.052,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT value FROM a WHERE id=1",
+          "rows": [
+            {
+              "value": 200
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 13.163,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 14.271,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 14.274,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE a SET value=300 WHERE id=1"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 41.154,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 25,
+          "elapsed_ms": 41.165,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 26,
+          "elapsed_ms": 41.76,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 27,
+          "elapsed_ms": 41.816,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE a SET value=300 WHERE id=1",
+          "rows": []
+        },
+        {
+          "step": 28,
+          "elapsed_ms": 41.819,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 29,
+          "elapsed_ms": 43.47,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ],
+      "assertions_passed": true
+    },
+    {
+      "level": "REPEATABLE READ",
+      "ordinary_first": 100,
+      "ordinary_after_B_commit": 100,
+      "locking_read": 200,
+      "ordinary_after_locking_read": 100,
+      "final_after_release": 300,
+      "writer_wait_snapshot": {
+        "source": [
+          "performance_schema.data_locks",
+          "performance_schema.data_lock_waits"
+        ],
+        "locks": [
+          {
+            "OBJECT_NAME": "a",
+            "INDEX_NAME": "PRIMARY",
+            "LOCK_TYPE": "RECORD",
+            "LOCK_MODE": "X,REC_NOT_GAP",
+            "LOCK_STATUS": "GRANTED",
+            "LOCK_DATA": "1",
+            "actor": "A"
+          },
+          {
+            "OBJECT_NAME": "a",
+            "INDEX_NAME": null,
+            "LOCK_TYPE": "TABLE",
+            "LOCK_MODE": "IX",
+            "LOCK_STATUS": "GRANTED",
+            "LOCK_DATA": null,
+            "actor": "A"
+          },
+          {
+            "OBJECT_NAME": "a",
+            "INDEX_NAME": "PRIMARY",
+            "LOCK_TYPE": "RECORD",
+            "LOCK_MODE": "X,REC_NOT_GAP",
+            "LOCK_STATUS": "WAITING",
+            "LOCK_DATA": "1",
+            "actor": "B"
+          },
+          {
+            "OBJECT_NAME": "a",
+            "INDEX_NAME": null,
+            "LOCK_TYPE": "TABLE",
+            "LOCK_MODE": "IX",
+            "LOCK_STATUS": "GRANTED",
+            "LOCK_DATA": null,
+            "actor": "B"
+          }
+        ],
+        "waits": [
+          {
+            "table_name": "a",
+            "index_name": "PRIMARY",
+            "requested_mode": "X,REC_NOT_GAP",
+            "held_mode": "X,REC_NOT_GAP",
+            "lock_data": "1",
+            "waiting_actor": "B",
+            "blocking_actor": "A"
+          }
+        ]
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.009,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 6.42,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 6.424,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 6.796,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 6.798,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 7.166,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 7.168,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT value FROM a WHERE id=1"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 7.629,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT value FROM a WHERE id=1",
+          "rows": [
+            {
+              "value": 100
+            }
+          ]
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 7.632,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 8.016,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 8.018,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE a SET value=200 WHERE id=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 8.56,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE a SET value=200 WHERE id=1",
+          "rows": []
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 8.562,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 12.072,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 12.078,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT value FROM a WHERE id=1"
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 13.169,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT value FROM a WHERE id=1",
+          "rows": [
+            {
+              "value": 100
+            }
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 13.188,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT value FROM a WHERE id=1 FOR UPDATE"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 14.128,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT value FROM a WHERE id=1 FOR UPDATE",
+          "rows": [
+            {
+              "value": 200
+            }
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 14.135,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT value FROM a WHERE id=1"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 14.737,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT value FROM a WHERE id=1",
+          "rows": [
+            {
+              "value": 100
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 14.841,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 15.475,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 15.479,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE a SET value=300 WHERE id=1"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 47.067,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 25,
+          "elapsed_ms": 47.074,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 26,
+          "elapsed_ms": 49.81,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 27,
+          "elapsed_ms": 49.934,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE a SET value=300 WHERE id=1",
+          "rows": []
+        },
+        {
+          "step": 28,
+          "elapsed_ms": 49.937,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 29,
+          "elapsed_ms": 53.397,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ],
+      "assertions_passed": true
+    }
+  ],
+  "errors": {
+    "syntax_error": 1064,
+    "lock_wait_timeout": 1205,
+    "connection_failure": 2003,
+    "timeout_snapshot": {
+      "source": [
+        "performance_schema.data_locks",
+        "performance_schema.data_lock_waits"
+      ],
+      "locks": [
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": "PRIMARY",
+          "LOCK_TYPE": "RECORD",
+          "LOCK_MODE": "X,REC_NOT_GAP",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": "1",
+          "actor": "A"
+        },
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": null,
+          "LOCK_TYPE": "TABLE",
+          "LOCK_MODE": "IX",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": null,
+          "actor": "A"
+        },
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": "PRIMARY",
+          "LOCK_TYPE": "RECORD",
+          "LOCK_MODE": "X,REC_NOT_GAP",
+          "LOCK_STATUS": "WAITING",
+          "LOCK_DATA": "1",
+          "actor": "B"
+        },
+        {
+          "OBJECT_NAME": "a",
+          "INDEX_NAME": null,
+          "LOCK_TYPE": "TABLE",
+          "LOCK_MODE": "IX",
+          "LOCK_STATUS": "GRANTED",
+          "LOCK_DATA": null,
+          "actor": "B"
+        }
+      ],
+      "waits": [
+        {
+          "table_name": "a",
+          "index_name": "PRIMARY",
+          "requested_mode": "X,REC_NOT_GAP",
+          "held_mode": "X,REC_NOT_GAP",
+          "lock_data": "1",
+          "waiting_actor": "B",
+          "blocking_actor": "A"
+        }
+      ]
+    },
+    "cleanup": "explicit rollback and all worker sessions closed",
+    "assertions_passed": true
+  },
+  "indexes": {
+    "seed": 20261113,
+    "row_count": 60000,
+    "dataset_sha256": "5230c270a21b616b1faed1070969386069ce34ac8bd001fe8af98edf665fe824",
+    "status_distribution": [
+      {
+        "status": "cancelled",
+        "n": 6049
+      },
+      {
+        "status": "new",
+        "n": 11984
+      },
+      {
+        "status": "paid",
+        "n": 41967
+      }
+    ],
+    "tenant_7_paid_rows": 608,
+    "index_ddl": "CREATE INDEX idx_tenant_status_date ON events(tenant_id,status,created_at)",
+    "cache_condition": "Warm process/buffer pool; one untimed execution per variant; no cache flush; sequential fixed variant order. Host client fetch included in seven wall-clock samples; EXPLAIN ANALYZE is a separate server execution.",
+    "warmups": 1,
+    "repeats": 7,
+    "variants": [
+      {
+        "id": "full_scan",
+        "sql": "SELECT id,created_at,amount_cents FROM events WHERE tenant_id=7 AND status='paid' AND created_at>='2026-10-01' AND created_at<'2026-11-01' ORDER BY created_at,id",
+        "explain_json": {
+          "query_block": {
+            "select_id": 1,
+            "cost_info": {
+              "query_cost": "6164.88"
+            },
+            "ordering_operation": {
+              "using_filesort": true,
+              "cost_info": {
+                "sort_cost": "66.24"
+              },
+              "table": {
+                "table_name": "events",
+                "access_type": "ALL",
+                "rows_examined_per_scan": 59624,
+                "rows_produced_per_join": 66,
+                "filtered": "0.11",
+                "cost_info": {
+                  "read_cost": "6092.03",
+                  "eval_cost": "6.62",
+                  "prefix_cost": "6098.65",
+                  "data_read_per_join": "37K"
+                },
+                "used_columns": [
+                  "id",
+                  "tenant_id",
+                  "status",
+                  "created_at",
+                  "amount_cents"
+                ],
+                "attached_condition": "((`mysql_lab`.`events`.`status` = 'paid') and (`mysql_lab`.`events`.`tenant_id` = 7) and (`mysql_lab`.`events`.`created_at` >= DATE'2026-10-01') and (`mysql_lab`.`events`.`created_at` < DATE'2026-11-01'))"
+              }
+            }
+          }
+        },
+        "explain_analyze": "-> Sort: `events`.created_at, `events`.id  (cost=6099 rows=59624) (actual time=16..16 rows=55 loops=1)\n    -> Filter: ((`events`.`status` = 'paid') and (`events`.tenant_id = 7) and (`events`.created_at >= DATE'2026-10-01') and (`events`.created_at < DATE'2026-11-01'))  (cost=6099 rows=59624) (actual time=0.231..15.9 rows=55 loops=1)\n        -> Table scan on events  (cost=6099 rows=59624) (actual time=0.201..10.6 rows=60000 loops=1)\n",
+        "timings_ms": [
+          13.591,
+          13.69,
+          13.76,
+          13.719,
+          13.352,
+          14.079,
+          13.813
+        ],
+        "distribution_ms": {
+          "min": 13.352,
+          "median": 13.719,
+          "p95_nearest_rank": 14.079,
+          "max": 14.079
+        },
+        "result_rows": 55,
+        "result_sha256": "145956ec1216f807cb1612395511175b3479549f323ca30d4a1e82a1c91f057b",
+        "rows": [
+          {
+            "id": 32268,
+            "created_at": "2026-10-02",
+            "amount_cents": 62794
+          },
+          {
+            "id": 34452,
+            "created_at": "2026-10-02",
+            "amount_cents": 13142
+          },
+          {
+            "id": 48530,
+            "created_at": "2026-10-03",
+            "amount_cents": 8789
+          },
+          {
+            "id": 52649,
+            "created_at": "2026-10-03",
+            "amount_cents": 36250
+          },
+          {
+            "id": 16722,
+            "created_at": "2026-10-04",
+            "amount_cents": 23861
+          },
+          {
+            "id": 51382,
+            "created_at": "2026-10-05",
+            "amount_cents": 39752
+          },
+          {
+            "id": 22407,
+            "created_at": "2026-10-06",
+            "amount_cents": 21978
+          },
+          {
+            "id": 40969,
+            "created_at": "2026-10-06",
+            "amount_cents": 72828
+          },
+          {
+            "id": 19171,
+            "created_at": "2026-10-08",
+            "amount_cents": 39927
+          },
+          {
+            "id": 57425,
+            "created_at": "2026-10-08",
+            "amount_cents": 17278
+          },
+          {
+            "id": 23847,
+            "created_at": "2026-10-09",
+            "amount_cents": 52268
+          },
+          {
+            "id": 29652,
+            "created_at": "2026-10-10",
+            "amount_cents": 20804
+          },
+          {
+            "id": 17720,
+            "created_at": "2026-10-11",
+            "amount_cents": 69919
+          },
+          {
+            "id": 3478,
+            "created_at": "2026-10-12",
+            "amount_cents": 69533
+          },
+          {
+            "id": 21702,
+            "created_at": "2026-10-12",
+            "amount_cents": 17322
+          },
+          {
+            "id": 24711,
+            "created_at": "2026-10-12",
+            "amount_cents": 80004
+          },
+          {
+            "id": 46281,
+            "created_at": "2026-10-13",
+            "amount_cents": 3983
+          },
+          {
+            "id": 700,
+            "created_at": "2026-10-15",
+            "amount_cents": 77941
+          },
+          {
+            "id": 48356,
+            "created_at": "2026-10-15",
+            "amount_cents": 69247
+          },
+          {
+            "id": 57077,
+            "created_at": "2026-10-16",
+            "amount_cents": 49996
+          },
+          {
+            "id": 4127,
+            "created_at": "2026-10-17",
+            "amount_cents": 98423
+          },
+          {
+            "id": 32752,
+            "created_at": "2026-10-17",
+            "amount_cents": 40638
+          },
+          {
+            "id": 14959,
+            "created_at": "2026-10-18",
+            "amount_cents": 28238
+          },
+          {
+            "id": 53976,
+            "created_at": "2026-10-18",
+            "amount_cents": 19207
+          },
+          {
+            "id": 4600,
+            "created_at": "2026-10-19",
+            "amount_cents": 4839
+          },
+          {
+            "id": 10950,
+            "created_at": "2026-10-19",
+            "amount_cents": 32883
+          },
+          {
+            "id": 43845,
+            "created_at": "2026-10-19",
+            "amount_cents": 82655
+          },
+          {
+            "id": 13847,
+            "created_at": "2026-10-20",
+            "amount_cents": 23738
+          },
+          {
+            "id": 14192,
+            "created_at": "2026-10-20",
+            "amount_cents": 47278
+          },
+          {
+            "id": 17371,
+            "created_at": "2026-10-20",
+            "amount_cents": 45353
+          },
+          {
+            "id": 27104,
+            "created_at": "2026-10-20",
+            "amount_cents": 94365
+          },
+          {
+            "id": 54372,
+            "created_at": "2026-10-20",
+            "amount_cents": 92325
+          },
+          {
+            "id": 5601,
+            "created_at": "2026-10-21",
+            "amount_cents": 93479
+          },
+          {
+            "id": 10856,
+            "created_at": "2026-10-21",
+            "amount_cents": 69502
+          },
+          {
+            "id": 39296,
+            "created_at": "2026-10-21",
+            "amount_cents": 89953
+          },
+          {
+            "id": 109,
+            "created_at": "2026-10-22",
+            "amount_cents": 10254
+          },
+          {
+            "id": 1140,
+            "created_at": "2026-10-22",
+            "amount_cents": 83529
+          },
+          {
+            "id": 34350,
+            "created_at": "2026-10-22",
+            "amount_cents": 68809
+          },
+          {
+            "id": 36368,
+            "created_at": "2026-10-22",
+            "amount_cents": 16834
+          },
+          {
+            "id": 52664,
+            "created_at": "2026-10-22",
+            "amount_cents": 37877
+          },
+          {
+            "id": 10843,
+            "created_at": "2026-10-23",
+            "amount_cents": 9121
+          },
+          {
+            "id": 39357,
+            "created_at": "2026-10-23",
+            "amount_cents": 51123
+          },
+          {
+            "id": 2704,
+            "created_at": "2026-10-24",
+            "amount_cents": 52699
+          },
+          {
+            "id": 9410,
+            "created_at": "2026-10-24",
+            "amount_cents": 87433
+          },
+          {
+            "id": 48438,
+            "created_at": "2026-10-24",
+            "amount_cents": 84379
+          },
+          {
+            "id": 1287,
+            "created_at": "2026-10-25",
+            "amount_cents": 65700
+          },
+          {
+            "id": 32048,
+            "created_at": "2026-10-25",
+            "amount_cents": 49619
+          },
+          {
+            "id": 27847,
+            "created_at": "2026-10-26",
+            "amount_cents": 66022
+          },
+          {
+            "id": 44542,
+            "created_at": "2026-10-26",
+            "amount_cents": 13959
+          },
+          {
+            "id": 32275,
+            "created_at": "2026-10-27",
+            "amount_cents": 41203
+          },
+          {
+            "id": 3723,
+            "created_at": "2026-10-28",
+            "amount_cents": 59128
+          },
+          {
+            "id": 24768,
+            "created_at": "2026-10-28",
+            "amount_cents": 31129
+          },
+          {
+            "id": 45032,
+            "created_at": "2026-10-28",
+            "amount_cents": 1683
+          },
+          {
+            "id": 11650,
+            "created_at": "2026-10-30",
+            "amount_cents": 32703
+          },
+          {
+            "id": 46823,
+            "created_at": "2026-10-31",
+            "amount_cents": 33090
+          }
+        ]
+      },
+      {
+        "id": "composite_noncover",
+        "sql": "SELECT id,created_at,amount_cents FROM events WHERE tenant_id=7 AND status='paid' AND created_at>='2026-10-01' AND created_at<'2026-11-01' ORDER BY created_at,id",
+        "explain_json": {
+          "query_block": {
+            "select_id": 1,
+            "cost_info": {
+              "query_cost": "25.01"
+            },
+            "ordering_operation": {
+              "using_filesort": false,
+              "table": {
+                "table_name": "events",
+                "access_type": "range",
+                "possible_keys": [
+                  "idx_tenant_status_date"
+                ],
+                "key": "idx_tenant_status_date",
+                "used_key_parts": [
+                  "tenant_id",
+                  "status",
+                  "created_at"
+                ],
+                "key_length": "57",
+                "rows_examined_per_scan": 55,
+                "rows_produced_per_join": 55,
+                "filtered": "100.00",
+                "index_condition": "((`mysql_lab`.`events`.`status` = 'paid') and (`mysql_lab`.`events`.`tenant_id` = 7) and (`mysql_lab`.`events`.`created_at` >= DATE'2026-10-01') and (`mysql_lab`.`events`.`created_at` < DATE'2026-11-01'))",
+                "cost_info": {
+                  "read_cost": "19.51",
+                  "eval_cost": "5.50",
+                  "prefix_cost": "25.01",
+                  "data_read_per_join": "31K"
+                },
+                "used_columns": [
+                  "id",
+                  "tenant_id",
+                  "status",
+                  "created_at",
+                  "amount_cents"
+                ]
+              }
+            }
+          }
+        },
+        "explain_analyze": "-> Index range scan on events using idx_tenant_status_date over (tenant_id = 7 AND status = 'paid' AND '2026-10-01' <= created_at < '2026-11-01'), with index condition: ((`events`.`status` = 'paid') and (`events`.tenant_id = 7) and (`events`.created_at >= DATE'2026-10-01') and (`events`.created_at < DATE'2026-11-01'))  (cost=25 rows=55) (actual time=0.111..0.116 rows=55 loops=1)\n",
+        "timings_ms": [
+          2.123,
+          1.185,
+          1.011,
+          1.16,
+          1.15,
+          0.828,
+          0.902
+        ],
+        "distribution_ms": {
+          "min": 0.828,
+          "median": 1.15,
+          "p95_nearest_rank": 2.123,
+          "max": 2.123
+        },
+        "result_rows": 55,
+        "result_sha256": "145956ec1216f807cb1612395511175b3479549f323ca30d4a1e82a1c91f057b",
+        "rows": [
+          {
+            "id": 32268,
+            "created_at": "2026-10-02",
+            "amount_cents": 62794
+          },
+          {
+            "id": 34452,
+            "created_at": "2026-10-02",
+            "amount_cents": 13142
+          },
+          {
+            "id": 48530,
+            "created_at": "2026-10-03",
+            "amount_cents": 8789
+          },
+          {
+            "id": 52649,
+            "created_at": "2026-10-03",
+            "amount_cents": 36250
+          },
+          {
+            "id": 16722,
+            "created_at": "2026-10-04",
+            "amount_cents": 23861
+          },
+          {
+            "id": 51382,
+            "created_at": "2026-10-05",
+            "amount_cents": 39752
+          },
+          {
+            "id": 22407,
+            "created_at": "2026-10-06",
+            "amount_cents": 21978
+          },
+          {
+            "id": 40969,
+            "created_at": "2026-10-06",
+            "amount_cents": 72828
+          },
+          {
+            "id": 19171,
+            "created_at": "2026-10-08",
+            "amount_cents": 39927
+          },
+          {
+            "id": 57425,
+            "created_at": "2026-10-08",
+            "amount_cents": 17278
+          },
+          {
+            "id": 23847,
+            "created_at": "2026-10-09",
+            "amount_cents": 52268
+          },
+          {
+            "id": 29652,
+            "created_at": "2026-10-10",
+            "amount_cents": 20804
+          },
+          {
+            "id": 17720,
+            "created_at": "2026-10-11",
+            "amount_cents": 69919
+          },
+          {
+            "id": 3478,
+            "created_at": "2026-10-12",
+            "amount_cents": 69533
+          },
+          {
+            "id": 21702,
+            "created_at": "2026-10-12",
+            "amount_cents": 17322
+          },
+          {
+            "id": 24711,
+            "created_at": "2026-10-12",
+            "amount_cents": 80004
+          },
+          {
+            "id": 46281,
+            "created_at": "2026-10-13",
+            "amount_cents": 3983
+          },
+          {
+            "id": 700,
+            "created_at": "2026-10-15",
+            "amount_cents": 77941
+          },
+          {
+            "id": 48356,
+            "created_at": "2026-10-15",
+            "amount_cents": 69247
+          },
+          {
+            "id": 57077,
+            "created_at": "2026-10-16",
+            "amount_cents": 49996
+          },
+          {
+            "id": 4127,
+            "created_at": "2026-10-17",
+            "amount_cents": 98423
+          },
+          {
+            "id": 32752,
+            "created_at": "2026-10-17",
+            "amount_cents": 40638
+          },
+          {
+            "id": 14959,
+            "created_at": "2026-10-18",
+            "amount_cents": 28238
+          },
+          {
+            "id": 53976,
+            "created_at": "2026-10-18",
+            "amount_cents": 19207
+          },
+          {
+            "id": 4600,
+            "created_at": "2026-10-19",
+            "amount_cents": 4839
+          },
+          {
+            "id": 10950,
+            "created_at": "2026-10-19",
+            "amount_cents": 32883
+          },
+          {
+            "id": 43845,
+            "created_at": "2026-10-19",
+            "amount_cents": 82655
+          },
+          {
+            "id": 13847,
+            "created_at": "2026-10-20",
+            "amount_cents": 23738
+          },
+          {
+            "id": 14192,
+            "created_at": "2026-10-20",
+            "amount_cents": 47278
+          },
+          {
+            "id": 17371,
+            "created_at": "2026-10-20",
+            "amount_cents": 45353
+          },
+          {
+            "id": 27104,
+            "created_at": "2026-10-20",
+            "amount_cents": 94365
+          },
+          {
+            "id": 54372,
+            "created_at": "2026-10-20",
+            "amount_cents": 92325
+          },
+          {
+            "id": 5601,
+            "created_at": "2026-10-21",
+            "amount_cents": 93479
+          },
+          {
+            "id": 10856,
+            "created_at": "2026-10-21",
+            "amount_cents": 69502
+          },
+          {
+            "id": 39296,
+            "created_at": "2026-10-21",
+            "amount_cents": 89953
+          },
+          {
+            "id": 109,
+            "created_at": "2026-10-22",
+            "amount_cents": 10254
+          },
+          {
+            "id": 1140,
+            "created_at": "2026-10-22",
+            "amount_cents": 83529
+          },
+          {
+            "id": 34350,
+            "created_at": "2026-10-22",
+            "amount_cents": 68809
+          },
+          {
+            "id": 36368,
+            "created_at": "2026-10-22",
+            "amount_cents": 16834
+          },
+          {
+            "id": 52664,
+            "created_at": "2026-10-22",
+            "amount_cents": 37877
+          },
+          {
+            "id": 10843,
+            "created_at": "2026-10-23",
+            "amount_cents": 9121
+          },
+          {
+            "id": 39357,
+            "created_at": "2026-10-23",
+            "amount_cents": 51123
+          },
+          {
+            "id": 2704,
+            "created_at": "2026-10-24",
+            "amount_cents": 52699
+          },
+          {
+            "id": 9410,
+            "created_at": "2026-10-24",
+            "amount_cents": 87433
+          },
+          {
+            "id": 48438,
+            "created_at": "2026-10-24",
+            "amount_cents": 84379
+          },
+          {
+            "id": 1287,
+            "created_at": "2026-10-25",
+            "amount_cents": 65700
+          },
+          {
+            "id": 32048,
+            "created_at": "2026-10-25",
+            "amount_cents": 49619
+          },
+          {
+            "id": 27847,
+            "created_at": "2026-10-26",
+            "amount_cents": 66022
+          },
+          {
+            "id": 44542,
+            "created_at": "2026-10-26",
+            "amount_cents": 13959
+          },
+          {
+            "id": 32275,
+            "created_at": "2026-10-27",
+            "amount_cents": 41203
+          },
+          {
+            "id": 3723,
+            "created_at": "2026-10-28",
+            "amount_cents": 59128
+          },
+          {
+            "id": 24768,
+            "created_at": "2026-10-28",
+            "amount_cents": 31129
+          },
+          {
+            "id": 45032,
+            "created_at": "2026-10-28",
+            "amount_cents": 1683
+          },
+          {
+            "id": 11650,
+            "created_at": "2026-10-30",
+            "amount_cents": 32703
+          },
+          {
+            "id": 46823,
+            "created_at": "2026-10-31",
+            "amount_cents": 33090
+          }
+        ]
+      },
+      {
+        "id": "composite_cover",
+        "sql": "SELECT id,created_at FROM events WHERE tenant_id=7 AND status='paid' AND created_at>='2026-10-01' AND created_at<'2026-11-01' ORDER BY created_at,id",
+        "explain_json": {
+          "query_block": {
+            "select_id": 1,
+            "cost_info": {
+              "query_cost": "12.41"
+            },
+            "ordering_operation": {
+              "using_filesort": false,
+              "table": {
+                "table_name": "events",
+                "access_type": "range",
+                "possible_keys": [
+                  "idx_tenant_status_date"
+                ],
+                "key": "idx_tenant_status_date",
+                "used_key_parts": [
+                  "tenant_id",
+                  "status",
+                  "created_at"
+                ],
+                "key_length": "57",
+                "rows_examined_per_scan": 55,
+                "rows_produced_per_join": 55,
+                "filtered": "100.00",
+                "using_index": true,
+                "cost_info": {
+                  "read_cost": "6.91",
+                  "eval_cost": "5.50",
+                  "prefix_cost": "12.41",
+                  "data_read_per_join": "31K"
+                },
+                "used_columns": [
+                  "id",
+                  "tenant_id",
+                  "status",
+                  "created_at"
+                ],
+                "attached_condition": "((`mysql_lab`.`events`.`status` = 'paid') and (`mysql_lab`.`events`.`tenant_id` = 7) and (`mysql_lab`.`events`.`created_at` >= DATE'2026-10-01') and (`mysql_lab`.`events`.`created_at` < DATE'2026-11-01'))"
+              }
+            }
+          }
+        },
+        "explain_analyze": "-> Filter: ((`events`.`status` = 'paid') and (`events`.tenant_id = 7) and (`events`.created_at >= DATE'2026-10-01') and (`events`.created_at < DATE'2026-11-01'))  (cost=12.4 rows=55) (actual time=0.0167..0.03 rows=55 loops=1)\n    -> Covering index range scan on events using idx_tenant_status_date over (tenant_id = 7 AND status = 'paid' AND '2026-10-01' <= created_at < '2026-11-01')  (cost=12.4 rows=55) (actual time=0.0147..0.0193 rows=55 loops=1)\n",
+        "timings_ms": [
+          0.771,
+          0.753,
+          0.941,
+          0.908,
+          0.775,
+          0.881,
+          0.77
+        ],
+        "distribution_ms": {
+          "min": 0.753,
+          "median": 0.775,
+          "p95_nearest_rank": 0.941,
+          "max": 0.941
+        },
+        "result_rows": 55,
+        "result_sha256": "2675b859b34f6497d5431a898d097c087d386544bb6aed7a31399a6291b7ae7e",
+        "rows": [
+          {
+            "id": 32268,
+            "created_at": "2026-10-02"
+          },
+          {
+            "id": 34452,
+            "created_at": "2026-10-02"
+          },
+          {
+            "id": 48530,
+            "created_at": "2026-10-03"
+          },
+          {
+            "id": 52649,
+            "created_at": "2026-10-03"
+          },
+          {
+            "id": 16722,
+            "created_at": "2026-10-04"
+          },
+          {
+            "id": 51382,
+            "created_at": "2026-10-05"
+          },
+          {
+            "id": 22407,
+            "created_at": "2026-10-06"
+          },
+          {
+            "id": 40969,
+            "created_at": "2026-10-06"
+          },
+          {
+            "id": 19171,
+            "created_at": "2026-10-08"
+          },
+          {
+            "id": 57425,
+            "created_at": "2026-10-08"
+          },
+          {
+            "id": 23847,
+            "created_at": "2026-10-09"
+          },
+          {
+            "id": 29652,
+            "created_at": "2026-10-10"
+          },
+          {
+            "id": 17720,
+            "created_at": "2026-10-11"
+          },
+          {
+            "id": 3478,
+            "created_at": "2026-10-12"
+          },
+          {
+            "id": 21702,
+            "created_at": "2026-10-12"
+          },
+          {
+            "id": 24711,
+            "created_at": "2026-10-12"
+          },
+          {
+            "id": 46281,
+            "created_at": "2026-10-13"
+          },
+          {
+            "id": 700,
+            "created_at": "2026-10-15"
+          },
+          {
+            "id": 48356,
+            "created_at": "2026-10-15"
+          },
+          {
+            "id": 57077,
+            "created_at": "2026-10-16"
+          },
+          {
+            "id": 4127,
+            "created_at": "2026-10-17"
+          },
+          {
+            "id": 32752,
+            "created_at": "2026-10-17"
+          },
+          {
+            "id": 14959,
+            "created_at": "2026-10-18"
+          },
+          {
+            "id": 53976,
+            "created_at": "2026-10-18"
+          },
+          {
+            "id": 4600,
+            "created_at": "2026-10-19"
+          },
+          {
+            "id": 10950,
+            "created_at": "2026-10-19"
+          },
+          {
+            "id": 43845,
+            "created_at": "2026-10-19"
+          },
+          {
+            "id": 13847,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 14192,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 17371,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 27104,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 54372,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 5601,
+            "created_at": "2026-10-21"
+          },
+          {
+            "id": 10856,
+            "created_at": "2026-10-21"
+          },
+          {
+            "id": 39296,
+            "created_at": "2026-10-21"
+          },
+          {
+            "id": 109,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 1140,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 34350,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 36368,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 52664,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 10843,
+            "created_at": "2026-10-23"
+          },
+          {
+            "id": 39357,
+            "created_at": "2026-10-23"
+          },
+          {
+            "id": 2704,
+            "created_at": "2026-10-24"
+          },
+          {
+            "id": 9410,
+            "created_at": "2026-10-24"
+          },
+          {
+            "id": 48438,
+            "created_at": "2026-10-24"
+          },
+          {
+            "id": 1287,
+            "created_at": "2026-10-25"
+          },
+          {
+            "id": 32048,
+            "created_at": "2026-10-25"
+          },
+          {
+            "id": 27847,
+            "created_at": "2026-10-26"
+          },
+          {
+            "id": 44542,
+            "created_at": "2026-10-26"
+          },
+          {
+            "id": 32275,
+            "created_at": "2026-10-27"
+          },
+          {
+            "id": 3723,
+            "created_at": "2026-10-28"
+          },
+          {
+            "id": 24768,
+            "created_at": "2026-10-28"
+          },
+          {
+            "id": 45032,
+            "created_at": "2026-10-28"
+          },
+          {
+            "id": 11650,
+            "created_at": "2026-10-30"
+          },
+          {
+            "id": 46823,
+            "created_at": "2026-10-31"
+          }
+        ]
+      },
+      {
+        "id": "expression_month",
+        "sql": "SELECT id,created_at FROM events WHERE tenant_id=7 AND status='paid' AND DATE_FORMAT(created_at,'%Y-%m')='2026-10' ORDER BY created_at,id",
+        "explain_json": {
+          "query_block": {
+            "select_id": 1,
+            "cost_info": {
+              "query_cost": "66.30"
+            },
+            "ordering_operation": {
+              "using_filesort": false,
+              "table": {
+                "table_name": "events",
+                "access_type": "ref",
+                "possible_keys": [
+                  "idx_tenant_status_date"
+                ],
+                "key": "idx_tenant_status_date",
+                "used_key_parts": [
+                  "tenant_id",
+                  "status"
+                ],
+                "key_length": "54",
+                "ref": [
+                  "const",
+                  "const"
+                ],
+                "rows_examined_per_scan": 608,
+                "rows_produced_per_join": 608,
+                "filtered": "100.00",
+                "using_index": true,
+                "cost_info": {
+                  "read_cost": "5.50",
+                  "eval_cost": "60.80",
+                  "prefix_cost": "66.30",
+                  "data_read_per_join": "346K"
+                },
+                "used_columns": [
+                  "id",
+                  "tenant_id",
+                  "status",
+                  "created_at"
+                ],
+                "attached_condition": "(date_format(`mysql_lab`.`events`.`created_at`,'%Y-%m') = '2026-10')"
+              }
+            }
+          }
+        },
+        "explain_analyze": "-> Filter: (date_format(`events`.created_at,'%Y-%m') = '2026-10')  (cost=66.3 rows=608) (actual time=0.202..0.251 rows=55 loops=1)\n    -> Covering index lookup on events using idx_tenant_status_date (tenant_id=7, status='paid')  (cost=66.3 rows=608) (actual time=0.0173..0.14 rows=608 loops=1)\n",
+        "timings_ms": [
+          1.034,
+          0.97,
+          0.909,
+          0.886,
+          3.714,
+          1.297,
+          1.103
+        ],
+        "distribution_ms": {
+          "min": 0.886,
+          "median": 1.034,
+          "p95_nearest_rank": 3.714,
+          "max": 3.714
+        },
+        "result_rows": 55,
+        "result_sha256": "2675b859b34f6497d5431a898d097c087d386544bb6aed7a31399a6291b7ae7e",
+        "rows": [
+          {
+            "id": 32268,
+            "created_at": "2026-10-02"
+          },
+          {
+            "id": 34452,
+            "created_at": "2026-10-02"
+          },
+          {
+            "id": 48530,
+            "created_at": "2026-10-03"
+          },
+          {
+            "id": 52649,
+            "created_at": "2026-10-03"
+          },
+          {
+            "id": 16722,
+            "created_at": "2026-10-04"
+          },
+          {
+            "id": 51382,
+            "created_at": "2026-10-05"
+          },
+          {
+            "id": 22407,
+            "created_at": "2026-10-06"
+          },
+          {
+            "id": 40969,
+            "created_at": "2026-10-06"
+          },
+          {
+            "id": 19171,
+            "created_at": "2026-10-08"
+          },
+          {
+            "id": 57425,
+            "created_at": "2026-10-08"
+          },
+          {
+            "id": 23847,
+            "created_at": "2026-10-09"
+          },
+          {
+            "id": 29652,
+            "created_at": "2026-10-10"
+          },
+          {
+            "id": 17720,
+            "created_at": "2026-10-11"
+          },
+          {
+            "id": 3478,
+            "created_at": "2026-10-12"
+          },
+          {
+            "id": 21702,
+            "created_at": "2026-10-12"
+          },
+          {
+            "id": 24711,
+            "created_at": "2026-10-12"
+          },
+          {
+            "id": 46281,
+            "created_at": "2026-10-13"
+          },
+          {
+            "id": 700,
+            "created_at": "2026-10-15"
+          },
+          {
+            "id": 48356,
+            "created_at": "2026-10-15"
+          },
+          {
+            "id": 57077,
+            "created_at": "2026-10-16"
+          },
+          {
+            "id": 4127,
+            "created_at": "2026-10-17"
+          },
+          {
+            "id": 32752,
+            "created_at": "2026-10-17"
+          },
+          {
+            "id": 14959,
+            "created_at": "2026-10-18"
+          },
+          {
+            "id": 53976,
+            "created_at": "2026-10-18"
+          },
+          {
+            "id": 4600,
+            "created_at": "2026-10-19"
+          },
+          {
+            "id": 10950,
+            "created_at": "2026-10-19"
+          },
+          {
+            "id": 43845,
+            "created_at": "2026-10-19"
+          },
+          {
+            "id": 13847,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 14192,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 17371,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 27104,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 54372,
+            "created_at": "2026-10-20"
+          },
+          {
+            "id": 5601,
+            "created_at": "2026-10-21"
+          },
+          {
+            "id": 10856,
+            "created_at": "2026-10-21"
+          },
+          {
+            "id": 39296,
+            "created_at": "2026-10-21"
+          },
+          {
+            "id": 109,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 1140,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 34350,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 36368,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 52664,
+            "created_at": "2026-10-22"
+          },
+          {
+            "id": 10843,
+            "created_at": "2026-10-23"
+          },
+          {
+            "id": 39357,
+            "created_at": "2026-10-23"
+          },
+          {
+            "id": 2704,
+            "created_at": "2026-10-24"
+          },
+          {
+            "id": 9410,
+            "created_at": "2026-10-24"
+          },
+          {
+            "id": 48438,
+            "created_at": "2026-10-24"
+          },
+          {
+            "id": 1287,
+            "created_at": "2026-10-25"
+          },
+          {
+            "id": 32048,
+            "created_at": "2026-10-25"
+          },
+          {
+            "id": 27847,
+            "created_at": "2026-10-26"
+          },
+          {
+            "id": 44542,
+            "created_at": "2026-10-26"
+          },
+          {
+            "id": 32275,
+            "created_at": "2026-10-27"
+          },
+          {
+            "id": 3723,
+            "created_at": "2026-10-28"
+          },
+          {
+            "id": 24768,
+            "created_at": "2026-10-28"
+          },
+          {
+            "id": 45032,
+            "created_at": "2026-10-28"
+          },
+          {
+            "id": 11650,
+            "created_at": "2026-10-30"
+          },
+          {
+            "id": 46823,
+            "created_at": "2026-10-31"
+          }
+        ]
+      }
+    ],
+    "assertions_passed": true
+  },
+  "cleanup": {
+    "remaining_lab_locks": 0,
+    "workers_joined": true,
+    "sessions_closed": true
+  },
+  "assertions_passed": true
+}

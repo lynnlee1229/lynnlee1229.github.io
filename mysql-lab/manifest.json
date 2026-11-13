@@ -1,0 +1,20 @@
+{
+  "format": "mysql-lab-static/v1",
+  "files": {
+    "index.html": "b6b2ee1a6b70a2a7c2ec2cf851ceca380be9826c5533658609464f7519c21f59",
+    "sitemap.xml": "f0a1e6167d85352506eb7e9d4f80e1e053865c4fac79b9a427dfd216d529f462",
+    "records/run-repeat.json": "e4e4d9dc620784309e2920b3381cc5c0e0f96f0c29d0ba3272722d69bc4a9b93",
+    "records/verification.json": "9391daf24cf63255249c6fb326d8dada56fcf5cce0126c4b121214c3dd39c4d7",
+    "records/run-clean.json": "2be19ea20cb42484f2e8c19cbddee0fdc947e3a589568852cdf4fef2b920ec5f",
+    "zh/index.html": "0d67668b73815c109882eed98110f25a2ae0793c48d4e8fa104710aad385cf29",
+    "zh/guide/index.html": "83b5c13540f2da413845667e9995f3ea45e985abc03cb03331dd4755f337bac4",
+    "zh/methods/index.html": "7946fd98658d4f47a09990b0ec8755bf70e28ae21666e26572b341c831a1c2df",
+    "en/index.html": "1fed254c1281fc73eaed060b7a933d60cc8ffa70323076cb6d741fda95cece99",
+    "en/guide/index.html": "01448aef3a37eba91a220982409469c9a1301ab2f2cd62d43c901e794db1971e",
+    "en/methods/index.html": "09e8ce4d0564805032bdeb617fe79f9c306097b443625891a7d8bc9f60b34e4f",
+    "assets/rick-avatar.jpeg": "737f7737a587a4a78b9ec71049af7373d835681f291fae80571b3f81eb6c0a26",
+    "assets/site.css": "73a8827d2a95dbcb1341eb237e48eb2910b01992463b6ad6152e050fb87ff064",
+    "assets/rick-favicon.ico": "32fc1f874b66ad469adf22e5da010202307ad5ed89f2c124962f48be163a7e1a",
+    "assets/site.js": "4cbe3744f6b72cbcae30a727f177f3429163c8b0b6a274165bdfb9c6d5db97aa"
+  }
+}

@@ -1,0 +1,349 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>See what the database actually did · MySQL Lab · Lynn Lee</title><meta name="description" content="Real MySQL deadlocks, read views and query plans, with saved evidence and a reproducible local kit."><meta name="theme-color" content="#19333b"><link rel="canonical" href="https://lynnlee1229.github.io/mysql-lab/en/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/mysql-lab/en/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/mysql-lab/zh/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/mysql-lab/en/"><link rel="icon" href="/mysql-lab/assets/rick-favicon.ico"><link rel="stylesheet" href="/mysql-lab/assets/site.css"><script defer src="/mysql-lab/assets/site.js"></script></head><body><a class="offscreen" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/"><img src="/mysql-lab/assets/rick-avatar.jpeg" width="38" height="38" alt=""><span>Lynn Lee<small>MYSQL / LEARNING LAB</small></span></a><nav aria-label="Main navigation"><a href="/mysql-lab/en/" aria-current="page">Workbench</a><a href="/mysql-lab/en/guide/">Run locally</a><a href="/mysql-lab/en/methods/">Methods & scope</a><a data-language href="/mysql-lab/zh/" lang="zh">中文</a></nav></div></header><main class="wrap" id="main"><div class="hero"><div><p class="eyebrow">01 / MYSQL 8.4.13 · INNODB</p><h1>See what the database<br>actually did.</h1><p class="lead">Two sessions. Real lock waits. A rolled-back transaction. Inspect saved evidence, then reproduce the experiment locally.</p><a class="button primary" href="/mysql-lab/en/guide/">Run the local Lab ↗</a></div><div class="diagram" aria-label="Experiment architecture"><div class="actors"><div class="actor"><strong>A</strong>session / transaction</div><div class="actor"><strong>B</strong>session / transaction</div></div><div class="engine">↓ SQL / InnoDB / a + b + events ↑</div><small>Observer → data_locks + data_lock_waits<br>Coordinator → explicit execution barriers<br>Website → saved JSON, no database connection</small></div></div>
+<div class="status" id="record-status" role="status">Saved real run, not a live server. <span class="record-time">2026-11-13T12:17:55.647612+00:00</span></div>
+<div class="toolbar"><label>Saved evidence<select id="record-select"><option value="clean">Clean volume run</option><option value="repeat">Repeat after stop / start</option></select></label><span class="spacer"></span><a class="button" id="download-json" href="/mysql-lab/records/run-clean.json" download="mysql-lab-run.json">Download run JSON</a><button id="export-csv">Export query samples CSV</button><button id="share">Copy deep link</button></div>
+<div class="jump"><a href="#deadlock">01 Locks & deadlock</a><a href="#isolation">02 Isolation & reads</a><a href="#indexes">03 Indexes & plans</a><a href="#evidence">Version & evidence</a></div>
+<div class="metrics"><div class="metric"><strong id="victim-count">1 / 2</strong><span>transactions rolled back by deadlock detection</span></div><div class="metric"><strong>100 → 200</strong><span>snapshot vs locking read under RR</span></div><div class="metric"><strong>60,000</strong><span>seeded synthetic rows · 7 samples per query</span></div></div>
+<section class="lab-section" id="deadlock"><div class="section-intro"><div><span class="section-number">EXPERIMENT 01</span><h2>A wait becomes a cycle.</h2></div><p class="muted">A updates a; B updates b. A requests b and waits. Only after the observer sees A → B in the real wait table does B request a. InnoDB chooses a victim. The consistent-order control still waits, but both transactions commit.</p></div>
+<div class="grid2"><div class="panel"><h3>Observed outcome</h3><div id="outcomes"><div class="table-scroll"><table><thead><tr><th scope="col">Case</th><th scope="col">A</th><th scope="col">B</th></tr></thead><tbody><tr><td>Cycle</td><td>committed</td><td>rolled_back</td></tr><tr><td>Same order</td><td>committed</td><td>committed</td></tr></tbody></table></div></div><p class="subtle">Victim identity is an observation, not a fixed API contract. Final values: cycle 101/101; ordered control 102/102.</p></div><div class="panel"><h3>Actual latest-deadlock excerpt</h3><pre id="deadlock-excerpt">*** (1) TRANSACTION:
+UPDATE b SET value=value+1 WHERE id=1
+*** (1) HOLDS THE LOCK(S):
+RECORD LOCKS space id 2 page no 4 n bits 72 index PRIMARY of table `mysql_lab`.`a` trx id 1828 lock_mode X locks rec but not gap
+*** (1) WAITING FOR THIS LOCK TO BE GRANTED:
+RECORD LOCKS space id 3 page no 4 n bits 72 index PRIMARY of table `mysql_lab`.`b` trx id 1828 lock_mode X locks rec but not gap waiting
+*** (2) TRANSACTION:
+UPDATE a SET value=value+1 WHERE id=1
+*** (2) HOLDS THE LOCK(S):
+RECORD LOCKS space id 3 page no 4 n bits 72 index PRIMARY of table `mysql_lab`.`b` trx id 1831 lock_mode X locks rec but not gap
+*** (2) WAITING FOR THIS LOCK TO BE GRANTED:
+RECORD LOCKS space id 2 page no 4 n bits 72 index PRIMARY of table `mysql_lab`.`a` trx id 1831 lock_mode X locks rec but not gap waiting
+*** WE ROLL BACK TRANSACTION (2)</pre><p class="subtle">Allowlisted excerpt of SHOW ENGINE INNODB STATUS. Raw connection and environment lines stay local.</p></div></div>
+<div class="toolbar" id="timeline"><label>Inspect recorded timeline<select id="case-select"><option value="deadlock">Opposite order / deadlock</option><option value="control">Same order / no cycle</option><option value="rc">READ COMMITTED</option><option value="rr">REPEATABLE READ</option></select></label></div>
+<div class="grid2"><div class="panel"><h3>Step through executed statements</h3><div class="stepper"><button id="previous" aria-label="Previous step">←</button><input id="step" type="range" min="1" max="19" value="19" aria-label="Timeline step"><button id="next" aria-label="Next step">→</button><output id="step-label"></output></div><ol class="timeline" id="timeline-list"><li>JavaScript enables step inspection; all original events are in the downloadable JSON.</li></ol></div><div class="panel"><h3>Captured lock wait</h3><div id="wait-edges"><div class="waiting">A → B / b / PRIMARY / X,REC_NOT_GAP</div></div><p class="subtle" id="snapshot-note">This snapshot precedes cycle closure. The detector resolves the complete cycle immediately; the deadlock excerpt supplies its evidence. Thread IDs are mapped to session A/B; memory-address lock IDs are excluded.</p><div id="lock-table"><div class="table-scroll"><table><thead><tr><th scope="col">Actor</th><th scope="col">Table</th><th scope="col">Type</th><th scope="col">Mode</th><th scope="col">Status</th></tr></thead><tbody><tr><td>A</td><td>a</td><td>RECORD</td><td>X,REC_NOT_GAP</td><td>GRANTED</td></tr><tr><td>A</td><td>a</td><td>TABLE</td><td>IX</td><td>GRANTED</td></tr><tr><td>A</td><td>b</td><td>RECORD</td><td>X,REC_NOT_GAP</td><td>WAITING</td></tr><tr><td>A</td><td>b</td><td>TABLE</td><td>IX</td><td>GRANTED</td></tr><tr><td>B</td><td>b</td><td>RECORD</td><td>X,REC_NOT_GAP</td><td>GRANTED</td></tr><tr><td>B</td><td>b</td><td>TABLE</td><td>IX</td><td>GRANTED</td></tr></tbody></table></div></div></div></div></section>
+<section class="lab-section" id="isolation"><div class="section-intro"><div><span class="section-number">EXPERIMENT 02</span><h2>One transaction. Two read rules.</h2></div><p class="muted">A establishes a plain-read snapshot at 100. B changes the row to 200 and commits. A repeats the plain read, then reads FOR UPDATE, then repeats the plain read again. A does not modify the row.</p></div><div id="isolation-table"><div class="table-scroll"><table><thead><tr><th scope="col">Isolation</th><th scope="col">First plain read</th><th scope="col">After B commits</th><th scope="col">FOR UPDATE</th><th scope="col">Plain read again</th></tr></thead><tbody><tr><td>READ COMMITTED</td><td>100</td><td>200</td><td>200</td><td>200</td></tr><tr><td>REPEATABLE READ</td><td>100</td><td>100</td><td>200</td><td>100</td></tr></tbody></table></div></div><p class="notice">Both locking reads observe 200 and block B’s later update to 300 until A commits. Under RR, the following plain read still sees the original 100. This exact-row experiment does not establish gap-lock, phantom, DML or SERIALIZABLE behavior.</p><pre><code>A: START TRANSACTION;
+A: SELECT value FROM a WHERE id=1;             -- 100
+B: UPDATE a SET value=200 WHERE id=1; COMMIT;
+A: SELECT value FROM a WHERE id=1;             -- RC: 200 / RR: 100
+A: SELECT value FROM a WHERE id=1 FOR UPDATE;  -- 200 in both
+A: SELECT value FROM a WHERE id=1;             -- RC: 200 / RR: 100
+B: UPDATE a SET value=300 WHERE id=1;          -- waits for A
+A: COMMIT;                                  -- B can finish</code></pre></section>
+<section class="lab-section" id="indexes"><div class="section-intro"><div><span class="section-number">EXPERIMENT 03</span><h2>A plan is a claim. Execute it.</h2></div><p class="muted">Fixed seed 20261113. Compare a full scan, a composite index, covering projection and a month-expression rewrite. Result hashes prove equivalence within each comparison; timing is machine-specific evidence.</p></div><div class="grid2"><div class="panel"><h3>Client wall time / median ms</h3><div id="timing-bars"></div><p class="subtle">One warm-up + seven measured fetches per variant. Warm shared buffer pool; no cache flush. Fixed sequential order, no randomized crossover. p95 is nearest-rank, with only seven samples.</p></div><div class="panel"><h3>Keep comparison boundaries clear</h3><p>All variants select the same 55 IDs and dates. full_scan and composite_noncover also return amount_cents; covering projection deliberately omits that field. composite_cover and expression_month have identical full results.</p><p class="subtle">Secondary InnoDB indexes contain the primary key. (tenant_id, status, created_at) therefore covers id and created_at, but not amount_cents. DATE_FORMAT requires filtering more candidate index rows than the half-open date range in this dataset.</p></div></div>
+<div class="toolbar"><label>Plan / actual execution / result<select id="variant-select"><option value="full_scan">full_scan</option><option value="composite_noncover">composite_noncover</option><option value="composite_cover">composite_cover</option><option value="expression_month">expression_month</option></select></label><span id="query-summary" class="subtle"></span></div><h3>SQL</h3><pre id="query-sql">SELECT id,created_at,amount_cents FROM events WHERE tenant_id=7 AND status=&#x27;paid&#x27; AND created_at&gt;=&#x27;2026-10-01&#x27; AND created_at&lt;&#x27;2026-11-01&#x27; ORDER BY created_at,id</pre><h3>EXPLAIN ANALYZE</h3><pre id="analyze-plan">-&gt; Sort: `events`.created_at, `events`.id  (cost=6099 rows=59624) (actual time=15.9..15.9 rows=55 loops=1)
+    -&gt; Filter: ((`events`.`status` = &#x27;paid&#x27;) and (`events`.tenant_id = 7) and (`events`.created_at &gt;= DATE&#x27;2026-10-01&#x27;) and (`events`.created_at &lt; DATE&#x27;2026-11-01&#x27;))  (cost=6099 rows=59624) (actual time=0.24..15.8 rows=55 loops=1)
+        -&gt; Table scan on events  (cost=6099 rows=59624) (actual time=0.212..10.6 rows=60000 loops=1)
+</pre><details><summary>EXPLAIN FORMAT=JSON</summary><pre id="json-plan">{
+  &quot;query_block&quot;: {
+    &quot;select_id&quot;: 1,
+    &quot;cost_info&quot;: {
+      &quot;query_cost&quot;: &quot;6164.88&quot;
+    },
+    &quot;ordering_operation&quot;: {
+      &quot;using_filesort&quot;: true,
+      &quot;cost_info&quot;: {
+        &quot;sort_cost&quot;: &quot;66.24&quot;
+      },
+      &quot;table&quot;: {
+        &quot;table_name&quot;: &quot;events&quot;,
+        &quot;access_type&quot;: &quot;ALL&quot;,
+        &quot;rows_examined_per_scan&quot;: 59624,
+        &quot;rows_produced_per_join&quot;: 66,
+        &quot;filtered&quot;: &quot;0.11&quot;,
+        &quot;cost_info&quot;: {
+          &quot;read_cost&quot;: &quot;6092.03&quot;,
+          &quot;eval_cost&quot;: &quot;6.62&quot;,
+          &quot;prefix_cost&quot;: &quot;6098.65&quot;,
+          &quot;data_read_per_join&quot;: &quot;37K&quot;
+        },
+        &quot;used_columns&quot;: [
+          &quot;id&quot;,
+          &quot;tenant_id&quot;,
+          &quot;status&quot;,
+          &quot;created_at&quot;,
+          &quot;amount_cents&quot;
+        ],
+        &quot;attached_condition&quot;: &quot;((`mysql_lab`.`events`.`status` = &#x27;paid&#x27;) and (`mysql_lab`.`events`.`tenant_id` = 7) and (`mysql_lab`.`events`.`created_at` &gt;= DATE&#x27;2026-10-01&#x27;) and (`mysql_lab`.`events`.`created_at` &lt; DATE&#x27;2026-11-01&#x27;))&quot;
+      }
+    }
+  }
+}</pre></details><details><summary>Seven measured samples and full returned rows</summary><pre id="query-rows">[
+  {
+    &quot;id&quot;: 32268,
+    &quot;created_at&quot;: &quot;2026-10-02&quot;,
+    &quot;amount_cents&quot;: 62794
+  },
+  {
+    &quot;id&quot;: 34452,
+    &quot;created_at&quot;: &quot;2026-10-02&quot;,
+    &quot;amount_cents&quot;: 13142
+  },
+  {
+    &quot;id&quot;: 48530,
+    &quot;created_at&quot;: &quot;2026-10-03&quot;,
+    &quot;amount_cents&quot;: 8789
+  },
+  {
+    &quot;id&quot;: 52649,
+    &quot;created_at&quot;: &quot;2026-10-03&quot;,
+    &quot;amount_cents&quot;: 36250
+  },
+  {
+    &quot;id&quot;: 16722,
+    &quot;created_at&quot;: &quot;2026-10-04&quot;,
+    &quot;amount_cents&quot;: 23861
+  },
+  {
+    &quot;id&quot;: 51382,
+    &quot;created_at&quot;: &quot;2026-10-05&quot;,
+    &quot;amount_cents&quot;: 39752
+  },
+  {
+    &quot;id&quot;: 22407,
+    &quot;created_at&quot;: &quot;2026-10-06&quot;,
+    &quot;amount_cents&quot;: 21978
+  },
+  {
+    &quot;id&quot;: 40969,
+    &quot;created_at&quot;: &quot;2026-10-06&quot;,
+    &quot;amount_cents&quot;: 72828
+  },
+  {
+    &quot;id&quot;: 19171,
+    &quot;created_at&quot;: &quot;2026-10-08&quot;,
+    &quot;amount_cents&quot;: 39927
+  },
+  {
+    &quot;id&quot;: 57425,
+    &quot;created_at&quot;: &quot;2026-10-08&quot;,
+    &quot;amount_cents&quot;: 17278
+  },
+  {
+    &quot;id&quot;: 23847,
+    &quot;created_at&quot;: &quot;2026-10-09&quot;,
+    &quot;amount_cents&quot;: 52268
+  },
+  {
+    &quot;id&quot;: 29652,
+    &quot;created_at&quot;: &quot;2026-10-10&quot;,
+    &quot;amount_cents&quot;: 20804
+  },
+  {
+    &quot;id&quot;: 17720,
+    &quot;created_at&quot;: &quot;2026-10-11&quot;,
+    &quot;amount_cents&quot;: 69919
+  },
+  {
+    &quot;id&quot;: 3478,
+    &quot;created_at&quot;: &quot;2026-10-12&quot;,
+    &quot;amount_cents&quot;: 69533
+  },
+  {
+    &quot;id&quot;: 21702,
+    &quot;created_at&quot;: &quot;2026-10-12&quot;,
+    &quot;amount_cents&quot;: 17322
+  },
+  {
+    &quot;id&quot;: 24711,
+    &quot;created_at&quot;: &quot;2026-10-12&quot;,
+    &quot;amount_cents&quot;: 80004
+  },
+  {
+    &quot;id&quot;: 46281,
+    &quot;created_at&quot;: &quot;2026-10-13&quot;,
+    &quot;amount_cents&quot;: 3983
+  },
+  {
+    &quot;id&quot;: 700,
+    &quot;created_at&quot;: &quot;2026-10-15&quot;,
+    &quot;amount_cents&quot;: 77941
+  },
+  {
+    &quot;id&quot;: 48356,
+    &quot;created_at&quot;: &quot;2026-10-15&quot;,
+    &quot;amount_cents&quot;: 69247
+  },
+  {
+    &quot;id&quot;: 57077,
+    &quot;created_at&quot;: &quot;2026-10-16&quot;,
+    &quot;amount_cents&quot;: 49996
+  },
+  {
+    &quot;id&quot;: 4127,
+    &quot;created_at&quot;: &quot;2026-10-17&quot;,
+    &quot;amount_cents&quot;: 98423
+  },
+  {
+    &quot;id&quot;: 32752,
+    &quot;created_at&quot;: &quot;2026-10-17&quot;,
+    &quot;amount_cents&quot;: 40638
+  },
+  {
+    &quot;id&quot;: 14959,
+    &quot;created_at&quot;: &quot;2026-10-18&quot;,
+    &quot;amount_cents&quot;: 28238
+  },
+  {
+    &quot;id&quot;: 53976,
+    &quot;created_at&quot;: &quot;2026-10-18&quot;,
+    &quot;amount_cents&quot;: 19207
+  },
+  {
+    &quot;id&quot;: 4600,
+    &quot;created_at&quot;: &quot;2026-10-19&quot;,
+    &quot;amount_cents&quot;: 4839
+  },
+  {
+    &quot;id&quot;: 10950,
+    &quot;created_at&quot;: &quot;2026-10-19&quot;,
+    &quot;amount_cents&quot;: 32883
+  },
+  {
+    &quot;id&quot;: 43845,
+    &quot;created_at&quot;: &quot;2026-10-19&quot;,
+    &quot;amount_cents&quot;: 82655
+  },
+  {
+    &quot;id&quot;: 13847,
+    &quot;created_at&quot;: &quot;2026-10-20&quot;,
+    &quot;amount_cents&quot;: 23738
+  },
+  {
+    &quot;id&quot;: 14192,
+    &quot;created_at&quot;: &quot;2026-10-20&quot;,
+    &quot;amount_cents&quot;: 47278
+  },
+  {
+    &quot;id&quot;: 17371,
+    &quot;created_at&quot;: &quot;2026-10-20&quot;,
+    &quot;amount_cents&quot;: 45353
+  },
+  {
+    &quot;id&quot;: 27104,
+    &quot;created_at&quot;: &quot;2026-10-20&quot;,
+    &quot;amount_cents&quot;: 94365
+  },
+  {
+    &quot;id&quot;: 54372,
+    &quot;created_at&quot;: &quot;2026-10-20&quot;,
+    &quot;amount_cents&quot;: 92325
+  },
+  {
+    &quot;id&quot;: 5601,
+    &quot;created_at&quot;: &quot;2026-10-21&quot;,
+    &quot;amount_cents&quot;: 93479
+  },
+  {
+    &quot;id&quot;: 10856,
+    &quot;created_at&quot;: &quot;2026-10-21&quot;,
+    &quot;amount_cents&quot;: 69502
+  },
+  {
+    &quot;id&quot;: 39296,
+    &quot;created_at&quot;: &quot;2026-10-21&quot;,
+    &quot;amount_cents&quot;: 89953
+  },
+  {
+    &quot;id&quot;: 109,
+    &quot;created_at&quot;: &quot;2026-10-22&quot;,
+    &quot;amount_cents&quot;: 10254
+  },
+  {
+    &quot;id&quot;: 1140,
+    &quot;created_at&quot;: &quot;2026-10-22&quot;,
+    &quot;amount_cents&quot;: 83529
+  },
+  {
+    &quot;id&quot;: 34350,
+    &quot;created_at&quot;: &quot;2026-10-22&quot;,
+    &quot;amount_cents&quot;: 68809
+  },
+  {
+    &quot;id&quot;: 36368,
+    &quot;created_at&quot;: &quot;2026-10-22&quot;,
+    &quot;amount_cents&quot;: 16834
+  },
+  {
+    &quot;id&quot;: 52664,
+    &quot;created_at&quot;: &quot;2026-10-22&quot;,
+    &quot;amount_cents&quot;: 37877
+  },
+  {
+    &quot;id&quot;: 10843,
+    &quot;created_at&quot;: &quot;2026-10-23&quot;,
+    &quot;amount_cents&quot;: 9121
+  },
+  {
+    &quot;id&quot;: 39357,
+    &quot;created_at&quot;: &quot;2026-10-23&quot;,
+    &quot;amount_cents&quot;: 51123
+  },
+  {
+    &quot;id&quot;: 2704,
+    &quot;created_at&quot;: &quot;2026-10-24&quot;,
+    &quot;amount_cents&quot;: 52699
+  },
+  {
+    &quot;id&quot;: 9410,
+    &quot;created_at&quot;: &quot;2026-10-24&quot;,
+    &quot;amount_cents&quot;: 87433
+  },
+  {
+    &quot;id&quot;: 48438,
+    &quot;created_at&quot;: &quot;2026-10-24&quot;,
+    &quot;amount_cents&quot;: 84379
+  },
+  {
+    &quot;id&quot;: 1287,
+    &quot;created_at&quot;: &quot;2026-10-25&quot;,
+    &quot;amount_cents&quot;: 65700
+  },
+  {
+    &quot;id&quot;: 32048,
+    &quot;created_at&quot;: &quot;2026-10-25&quot;,
+    &quot;amount_cents&quot;: 49619
+  },
+  {
+    &quot;id&quot;: 27847,
+    &quot;created_at&quot;: &quot;2026-10-26&quot;,
+    &quot;amount_cents&quot;: 66022
+  },
+  {
+    &quot;id&quot;: 44542,
+    &quot;created_at&quot;: &quot;2026-10-26&quot;,
+    &quot;amount_cents&quot;: 13959
+  },
+  {
+    &quot;id&quot;: 32275,
+    &quot;created_at&quot;: &quot;2026-10-27&quot;,
+    &quot;amount_cents&quot;: 41203
+  },
+  {
+    &quot;id&quot;: 3723,
+    &quot;created_at&quot;: &quot;2026-10-28&quot;,
+    &quot;amount_cents&quot;: 59128
+  },
+  {
+    &quot;id&quot;: 24768,
+    &quot;created_at&quot;: &quot;2026-10-28&quot;,
+    &quot;amount_cents&quot;: 31129
+  },
+  {
+    &quot;id&quot;: 45032,
+    &quot;created_at&quot;: &quot;2026-10-28&quot;,
+    &quot;amount_cents&quot;: 1683
+  },
+  {
+    &quot;id&quot;: 11650,
+    &quot;created_at&quot;: &quot;2026-10-30&quot;,
+    &quot;amount_cents&quot;: 32703
+  },
+  {
+    &quot;id&quot;: 46823,
+    &quot;created_at&quot;: &quot;2026-10-31&quot;,
+    &quot;amount_cents&quot;: 33090
+  }
+]</pre></details><details><summary>Schema and index DDL</summary><pre><code>CREATE TABLE a (id INT PRIMARY KEY, value INT NOT NULL) ENGINE=InnoDB;
+CREATE TABLE b (id INT PRIMARY KEY, value INT NOT NULL) ENGINE=InnoDB;
+CREATE TABLE events (id INT PRIMARY KEY, tenant_id INT NOT NULL, status VARCHAR(12) NOT NULL,
+created_at DATE NOT NULL, amount_cents INT NOT NULL, payload VARCHAR(128) NOT NULL) ENGINE=InnoDB;
+CREATE INDEX idx_tenant_status_date ON events(tenant_id,status,created_at);</code></pre></details></section>
+<section class="lab-section" id="evidence"><span class="section-number">PROVENANCE / LIMITS</span><h2>Evidence you can inspect and rerun.</h2><div class="grid2"><div class="panel"><h3>Executed failure paths</h3><p>Bad SQL → 1064. Real blocked update → lock wait timeout 1205. Reserved non-listening loopback port → connection error 2003. Explicit rollback, joined workers and zero remaining Lab locks are asserted.</p><a href="/mysql-lab/records/verification.json">Lifecycle & verification record ↗</a></div><div class="panel"><h3>Version and experiment limits</h3><p id="environment-summary">MySQL 8.4.13 · Docker / Linux ARM64 · 2 CPU / 1 GiB container limit · 128 MiB buffer pool.</p><p class="subtle">Synthetic data only. No remote database, model calls or uploaded records. Website controls inspect saved executions; they do not execute SQL.</p><a href="/mysql-lab/en/methods/">Read methods, scope and official references →</a></div></div><noscript><p class="notice">The original evidence and guides are readable without JavaScript. Enable JavaScript for timeline and plan selection.</p></noscript></section></main><footer><div class="wrap"><span>Lynn Lee · MySQL Lab 1.0 · Synthetic data. Measured records.</span><span><a href="/websites/">All tools & Labs</a> · <a href="https://github.com/lynnlee1229/mysql-lab">GitHub / MIT</a> · <a href="/mysql-lab/sitemap.xml">Sitemap</a></span></div></footer></body></html>
