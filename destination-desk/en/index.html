@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Destination Desk · Local essentials</title><meta name="description" content="Useful local links for work, housing, transit and settling in. Twelve destinations, with sources and check dates.">
+<meta name="theme-color" content="#173e36">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23173e36'/%3E%3Cpath d='M18 16h14c24 0 24 32 0 32H18Z' fill='none' stroke='%23f6f3e9' stroke-width='6'/%3E%3Ccircle cx='30' cy='32' r='4' fill='%23e69d62'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/style.css"><script type="module" src="../assets/app.js"></script>
+<link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/destination-desk/zh/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/destination-desk/en/">
+</head>
+<body>
+<a href="#main" class="skip" id="skip">跳至内容 / Skip to content</a>
+<header class="site-header"><a class="brand" href="../zh/" aria-label="Destination Desk"><span class="brand-mark" aria-hidden="true">D<span>↗</span></span><span>Destination Desk<small id="brand-sub">目的地生活入口</small></span></a><nav aria-label="Site" class="header-actions"><a id="home-link" href="/zh/websites/#tools">Lynn 的工具</a><a id="method-link" href="#method">来源与维护</a><a id="lang-link" lang="en" href="../en/">EN</a></nav></header>
+<main id="main">
+<section class="intro"><div><p class="eyebrow" id="eyebrow">YOUR NEXT CHAPTER STARTS HERE</p><h1 id="headline">A new place. The right starting points.</h1><p id="intro-copy" class="intro-copy">找工作、找住处，或只是先好好落脚。把一个地方真正用得上的入口，放在一起。</p></div><div class="desk-note"><span class="note-stamp" aria-hidden="true">↗</span><p id="desk-note">少一点到处搜索，<br>多一点心里有数。</p><div id="edition">12 个目的地 · 首版精选</div></div></section>
+<div class="workspace">
+<aside class="destinations" aria-labelledby="destination-label"><div class="aside-title"><span class="step">01</span><h2 id="destination-label">选一个目的地</h2></div><label class="country-search-label" for="country-search" id="country-search-label">查找国家</label><input id="country-search" type="search" placeholder="国家 / Country" autocomplete="off"><div id="country-list" class="country-list"></div><p id="country-empty" hidden></p><p class="coverage-note" id="coverage-note">首发 12 个目的地。按区域排列，非排名。</p></aside>
+<div class="content">
+<section class="country-heading" aria-labelledby="country-title"><div><p id="region" class="eyebrow"></p><h2 id="country-title">美国 <span>United States</span></h2><p id="country-note"></p></div><div id="country-code" class="country-code" aria-hidden="true">US<span>DESTINATION / 01</span></div></section>
+<section class="purpose-section" aria-labelledby="purpose-label"><div class="purpose-label"><span class="step">02</span><h2 id="purpose-label">这次，你想做什么？</h2></div><div class="purposes" id="purposes"></div><p id="purpose-note" class="purpose-note"></p></section>
+<section id="quick-section" aria-labelledby="quick-heading"><div class="section-heading"><div><p class="eyebrow" id="quick-kicker">START HERE</p><h2 id="quick-heading">先收好这几个入口</h2></div><span class="text-note" id="quick-sub">按你的目的精选</span></div><div id="quick-grid" class="quick-grid"></div></section>
+<section class="directory" aria-labelledby="directory-heading"><div class="section-heading"><div><p class="eyebrow" id="directory-kicker">YOUR LOCAL DIRECTORY</p><h2 id="directory-heading">目的地入口簿</h2></div><button id="share" type="button" class="share-btn">分享当前视图 ↗</button></div><div class="search-row"><div class="search-wrap"><label id="platform-search-label" for="platform-search">搜索平台或用途</label><input id="platform-search" type="search" placeholder="搜平台、用途、城市…" maxlength="160" autocomplete="off"></div><div class="scope-wrap"><label for="search-scope" id="scope-label">搜索范围</label><select id="search-scope"><option value="country">当前目的地</option><option value="all">全部目的地</option></select></div></div><div id="filters" class="filters" role="group" aria-label="分类"></div><div class="results-bar"><p id="result-count" role="status" aria-live="polite">Preparing your destination desk…</p><button id="saved-filter" aria-pressed="false" type="button">☆ 只看收藏 <span>0</span></button></div><p id="saved-note" class="saved-note">收藏只保存在本机浏览器，不会同步或上传。分享链接不包含收藏内容。</p><div id="results" aria-busy="true"></div><div id="empty" class="empty" hidden><span aria-hidden="true">⌕</span><h3 id="empty-title"></h3><p id="empty-copy"></p><button id="clear-filters" type="button"></button></div></section>
+</div></div>
+<section id="method" class="method" aria-labelledby="method-heading"><div><p class="eyebrow">HOW THIS DESK WORKS</p><h2 id="method-heading">入口有出处，使用有边界。</h2><p id="method-intro"></p><p id="date-note" class="text-note"></p></div><div id="method-details"></div></section>
+<noscript><p>Enable JavaScript for filters and bookmarks. You can start with the US government service directory. <a href="https://www.usa.gov/">USAGov ↗</a></p></noscript>
+</main>
+<footer><a class="footer-brand" href="../zh/">Destination Desk ↗</a><p id="footer-copy"></p><a href="#main" id="back-top">回到顶部 ↑</a></footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<dialog id="share-dialog"><form method="dialog"><h2 id="share-dialog-title">分享链接</h2><p id="share-help"></p><label for="share-url" id="share-url-label">链接</label><input id="share-url" readonly><button id="close-dialog" value="close">关闭</button><button id="copy-link" type="button">复制链接 / Copy link</button></form></dialog>
+</body></html>
