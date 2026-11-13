@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "export": "authored-asset-allowlist",
+  "files": {
+    "404.html": "5ab6c5fd94a54ed97665c6ffb346fd872bb9d21b3660221f0177bb4c6ef385c8",
+    "assets/app.mjs": "5a35915800ea59172c30a888f307f8b393a2e6cd9a5e7d95631282e3b7ed5b7c",
+    "assets/cases.mjs": "2f3c3c293d57843bbcd1f84289c11636f0f1077e8747e755a660c452819bd900",
+    "assets/engine.mjs": "436cf5795bdd302b1baadb9fbbb3c312c1e9219c28d265d273ec7dff69be52a5",
+    "assets/style.css": "5cddac5dceed9e4cff8659c8bf1916ebd3e63ae5c21e7f9bd530166b9890c130",
+    "en/index.html": "a21de7ce4249ef44a129ede03f0a3c17bac0a33d7a7f85d3e0a03dbb50947fa3",
+    "en/methods/index.html": "5889185fc7b9da1eb89623c91b688e204b2c642504ebab7f193ce54b936f1abb",
+    "index.html": "447545a9bae8656063d632f06a3d063fb83fd3dafe0bc604176945f2ee5d66b6",
+    "zh/index.html": "30f9e7b5650fb8adea57193f8d4dd83cf05c9d7f8bdeccc66ec39f368ca68423",
+    "zh/methods/index.html": "7af9fc912e469f36db5bedc97d4ff84fe744eae32909d37bfd77a249d8ba4f46"
+  }
+}
