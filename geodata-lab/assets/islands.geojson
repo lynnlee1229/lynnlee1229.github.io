@@ -1,0 +1,271 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "archipelago",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                6,
+                0
+              ],
+              [
+                6,
+                6
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              [
+                1,
+                1
+              ],
+              [
+                5,
+                1
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                1,
+                1
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                8,
+                0
+              ],
+              [
+                10,
+                0
+              ],
+              [
+                10,
+                2
+              ],
+              [
+                8,
+                2
+              ],
+              [
+                8,
+                0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                2,
+                2
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                3,
+                3
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                2,
+                2
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "overlap-zone",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.5,
+              0.5
+            ],
+            [
+              9.5,
+              0.5
+            ],
+            [
+              9.5,
+              1.5
+            ],
+            [
+              8.5,
+              1.5
+            ],
+            [
+              8.5,
+              0.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "shell",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "hole",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "hole-edge",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "island",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5,
+          2.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "east",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9,
+          1
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gap",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7,
+          1
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "outside",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11,
+          1
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "shell-edge",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0,
+          3
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "east-vertex",
+      "properties": {
+        "source": "synthetic-lab"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8,
+          0
+        ]
+      }
+    }
+  ]
+}

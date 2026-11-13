@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-11-14",
+  "language": "en + original bilingual Lab descriptions",
+  "selection": {
+    "en": "Two published Helsinki course editions directly support geometry, CRS, spatial joins and reproducible programming. These are historical open materials, not a claim about 2026 enrollment.",
+    "zh": "选择两套已发布的赫尔辛基课程材料，分别支撑几何、CRS、空间关联与可复现编程；这是历史公开版本，不代表 2026 年招生安排。"
+  },
+  "courses": [
+    {
+      "id": "autogis-2024",
+      "institution": "University of Helsinki · Department of Geosciences and Geography · Digital Geography Lab",
+      "courseCodes": [
+        "GEOG-329-2"
+      ],
+      "name": "Automating GIS processes (AutoGIS)",
+      "edition": "2024.0",
+      "semester": "Autumn 2024 · teaching period II (archived edition)",
+      "status": "Published; archive says last updated 2025-08-12",
+      "prerequisites": "Basic Python (for example GEOG-329-1); GEOG-G301 Introduction to advanced geoinformatics recommended by the course.",
+      "publicMaterials": "Lessons, recorded videos and linked exercise instructions are openly readable. This Lab links readings; it does not reproduce or solve their assignments.",
+      "registrationAndFees": "Reading the public pages requires no registration or payment. University credits, grading, Discord and CSC Noppe access are separate institutional services; Finnish university student eligibility and enrollment apply. No current tuition/credit-fee claim is made.",
+      "url": "https://autogis-site.readthedocs.io/en/2024.0/",
+      "evidenceUrls": [
+        "https://autogis-site.readthedocs.io/en/2024.0/",
+        "https://autogis-site.readthedocs.io/en/2024.0/course-info/general-information.html"
+      ],
+      "verifiedOn": "2026-11-14",
+      "caveat": "The archive contains an unresolved starting_date template. Use its 2024 general information, not that template, for term identification."
+    },
+    {
+      "id": "geopython-2025",
+      "institution": "University of Helsinki · Department of Geosciences and Geography",
+      "courseCodes": [
+        "GEOG-329-1",
+        "GEOK3001"
+      ],
+      "name": "Geo-Python",
+      "edition": "2025.0",
+      "semester": "Autumn 2025 · teaching period I (archived edition)",
+      "status": "Published; archive says last updated 2026-08-27",
+      "prerequisites": "No previous programming experience required.",
+      "publicMaterials": "Tutorials, lesson pages, selected videos and exercise instructions are openly readable.",
+      "registrationAndFees": "Self-study reading is free and needs no registration. Helsinki students sign up under one course code for credit; grading and institutional cloud/chat access are separate. No current 2026 registration or fee availability is asserted.",
+      "url": "https://geo-python-site.readthedocs.io/en/2025.0/",
+      "evidenceUrls": [
+        "https://geo-python-site.readthedocs.io/en/2025.0/",
+        "https://geo-python-site.readthedocs.io/en/2025.0/course-info/course-info.html"
+      ],
+      "verifiedOn": "2026-11-14",
+      "caveat": "The 2025.0 homepage retains some 2023 schedule text; the general-info page explicitly names the 2025 teaching team. The archive version is pinned; this Lab does not infer a 2026 timetable."
+    }
+  ],
+  "primaryReferences": [
+    {
+      "id": "rfc7946",
+      "title": "RFC 7946 · The GeoJSON Format",
+      "year": 2016,
+      "url": "https://www.rfc-editor.org/rfc/rfc7946",
+      "locator": "§3.1.1 Position, §3.1.7 MultiPolygon, §3.1.9 Antimeridian Cutting, §4 Coordinate Reference System",
+      "role": "Coordinate contract and explicit regional rejection; 2016 standard, not a new 2026 method."
+    },
+    {
+      "id": "shapely-206",
+      "title": "Shapely 2.0.6 · covers / contains / validation",
+      "year": 2024,
+      "url": "https://shapely.readthedocs.io/en/2.0.6/reference/shapely.covers.html",
+      "locator": "covers(A, Point) versus contains(A, Point)",
+      "role": "Independent GEOS predicate semantics. Pinned historical release; not presented as the latest version."
+    },
+    {
+      "id": "proj-geod",
+      "title": "pyproj · Geod API",
+      "url": "https://pyproj4.github.io/pyproj/stable/api/geod.html",
+      "locator": "Geod.inv and ellps=WGS84",
+      "role": "Independent spherical and ellipsoidal distance comparison; the experiment pins pyproj 3.6.1 while the stable documentation may describe a newer release."
+    }
+  ],
+  "units": [
+    {
+      "id": "coordinates",
+      "number": 1,
+      "title": {
+        "en": "Coordinate contract before computation",
+        "zh": "先核对坐标约定"
+      },
+      "reading": {
+        "courseId": "autogis-2024",
+        "title": "Lesson 2 · Map projections",
+        "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-2/map-projections.html",
+        "locator": "Handling coordinate reference systems in Geopandas"
+      },
+      "originalExercise": true,
+      "prediction": {
+        "en": "Which of projected meters, plausible axis swaps and antimeridian coordinates can range validation detect?",
+        "zh": "米制投影、看似合理的经纬度颠倒、跨日期线输入，范围校验分别能发现什么？"
+      },
+      "action": {
+        "en": "Run U1. Inspect seven rejected inputs and the two accepted but semantically different [24,60] / [60,24] points. The private PROJ exercise converts EPSG:3067 to EPSG:4326 and checks a meter roundtrip.",
+        "zh": "运行 U1，检查七种拒绝输入与仍可通过范围校验的 [24,60]、[60,24]。私有 PROJ 练习将 EPSG:3067 转为 EPSG:4326，并核对米制往返结果。"
+      },
+      "perturbation": {
+        "en": "In the workbench, import islands.geojson, add crs to a Feature, and analyze; then remove crs and swap a Point axis order. Relabeling cannot replace reprojection.",
+        "zh": "在工作台导入 islands.geojson，给 Feature 加 crs 后分析；移除 crs，再交换一个点的轴序。改标签不能代替重投影。"
+      },
+      "expected": {
+        "en": "CRS members and dateline extents are rejected. A plausible swap is accepted: metadata review remains necessary.",
+        "zh": "CRS 成员与跨日期线范围被拒绝；合理数值的轴序颠倒仍可能通过，必须核查元数据。"
+      },
+      "command": "node labs/geo/run-exercise.mjs coordinates",
+      "browserEntry": "/geodata-lab/en/guide/#unit-coordinates"
+    },
+    {
+      "id": "boundary",
+      "number": 2,
+      "title": {
+        "en": "Shells, holes and predicate choice",
+        "zh": "外环、孔洞与边界谓词"
+      },
+      "reading": {
+        "courseId": "autogis-2024",
+        "title": "Lesson 3 · Point-in-polygon queries",
+        "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-3/point-in-polygon-queries.html",
+        "locator": "How to check if point is inside a polygon? / shapely geometries"
+      },
+      "originalExercise": true,
+      "prediction": {
+        "en": "Is [1,3] on a hole edge inside, outside or on the boundary? What changes with covers versus contains?",
+        "zh": "[1,3] 位于孔洞边缘，它在内部、外部还是边界？covers 与 contains 会怎样不同？"
+      },
+      "action": {
+        "en": "Run U2, then probe [-1e-11,3] and [1e-11,3]. Read the separately recorded GEOS counterexample.",
+        "zh": "运行 U2，再检查 [-1e-11,3] 与 [1e-11,3]，对照单独记录的 GEOS 反例。"
+      },
+      "perturbation": {
+        "en": "Open the islands workbench. Set probe [1,3], toggle boundary membership, then move to [4,4]. The location label and membership are different concepts.",
+        "zh": "打开群岛工作台，设点 [1,3] 并切换边界开关，再移到 [4,4]；区分几何位置与是否计入命中。"
+      },
+      "expected": {
+        "en": "Hole edge is boundary; hole interior is outside. Both 1e-11 probes fall into the Lab tolerance band while GEOS distinguishes their sides.",
+        "zh": "孔洞边缘为边界，孔洞内部为外部；两个 1e-11 探针都落入 Lab 容差带，GEOS 则区分内外。"
+      },
+      "command": "node labs/geo/run-exercise.mjs boundary",
+      "browserEntry": "/geodata-lab/en/guide/#unit-boundary"
+    },
+    {
+      "id": "multipart",
+      "number": 3,
+      "title": {
+        "en": "Disconnected regions with one identity",
+        "zh": "一个 ID 的多个分量"
+      },
+      "reading": {
+        "courseId": "autogis-2024",
+        "title": "Lesson 1 · Shapely and geometry objects",
+        "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-1/geometry-objects.html",
+        "locator": "Multipolygons; Validity of geometries"
+      },
+      "originalExercise": true,
+      "prediction": {
+        "en": "Does the island [2,2]–[3,3] inside another component’s hole belong to the same feature? Is a gap covered by its envelope a member?",
+        "zh": "另一个分量孔洞里的 [2,2]–[3,3] 小岛能否属于同一要素？包围盒内的间隙是否命中？"
+      },
+      "action": {
+        "en": "Run U3. The original archipelago has three strictly disjoint components and a hole. Contrast overlapping, nested, edge-touching and point-touching components.",
+        "zh": "运行 U3。原创群岛包含三个严格分离分量和一个孔洞；对比重叠、嵌套、共边与点接触的分量。"
+      },
+      "perturbation": {
+        "en": "Change the detached component from [8,0]–[10,2] to [5,0]–[7,2]. Analyze and explain the rejection before inspecting the saved validation rows.",
+        "zh": "将独立分量从 [8,0]–[10,2] 改为 [5,0]–[7,2]，运行并解释拒绝原因，再看保存的校验结果。"
+      },
+      "expected": {
+        "en": "The island in a hole is accepted. Overlap is rejected. Point-touching is valid in GEOS but intentionally outside this stricter Lab subset.",
+        "zh": "孔洞中的小岛可以接受；重叠被拒绝；点接触虽可在 GEOS 中有效，但本 Lab 明确不支持。"
+      },
+      "command": "node labs/geo/run-exercise.mjs multipart",
+      "browserEntry": "/geodata-lab/en/guide/#unit-multipart"
+    },
+    {
+      "id": "join",
+      "number": 4,
+      "title": {
+        "en": "A spatial join is a relation",
+        "zh": "空间关联是一组关系"
+      },
+      "reading": {
+        "courseId": "autogis-2024",
+        "title": "Lesson 3 · Spatial join",
+        "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-3/spatial-join.html",
+        "locator": "Load input data; Join input layers (related official Exercise 3 is linked in the course navigation)"
+      },
+      "originalExercise": true,
+      "prediction": {
+        "en": "Nine points, two region IDs and four polygon components: how many pairs should remain with and without boundaries?",
+        "zh": "九个点、两个区域 ID、四个面分量：包含与排除边界时各有多少关联对？"
+      },
+      "action": {
+        "en": "Run U4. Compare all region IDs for east, inspect empty lab_matches for hole, and verify the original input remains unchanged.",
+        "zh": "运行 U4，检查 east 的全部区域 ID、hole 的空 lab_matches，以及原始输入未被修改。"
+      },
+      "perturbation": {
+        "en": "Use the islands input in Spatial join, export both boundary settings, and move east from [9,1] to [10.5,1]. Identify precisely which pairs disappear.",
+        "zh": "在群岛输入上运行空间关联，分别导出两种边界设置；再把 east 从 [9,1] 移到 [10.5,1]，逐项解释消失的关联。"
+      },
+      "expected": {
+        "en": "Inclusive: 7 pairs / 6 points; strict: 4 pairs / 3 points. Moving east removes both of its pairs.",
+        "zh": "包含边界：7 对、6 点；排除边界：4 对、3 点；移动 east 会移除它的两条关联。"
+      },
+      "command": "node labs/geo/run-exercise.mjs join",
+      "browserEntry": "/geodata-lab/en/guide/#unit-join"
+    },
+    {
+      "id": "prefilter",
+      "number": 5,
+      "title": {
+        "en": "Prove the filter preserves answers",
+        "zh": "证明预过滤保留正确结果"
+      },
+      "reading": {
+        "courseId": "autogis-2024",
+        "title": "Lesson 1 · Convex hull and envelope",
+        "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-1/geometry-objects.html#convex-hull-and-envelope",
+        "locator": "Envelope is a bounding rectangle; combine with Lesson 3 spatial join"
+      },
+      "originalExercise": true,
+      "prediction": {
+        "en": "Which points fool an envelope-only implementation, and which does a first-component implementation miss?",
+        "zh": "仅用包围盒会误收哪些点？仅检查第一分量会漏掉哪些点？"
+      },
+      "action": {
+        "en": "Run U5. Compare the real full scan with the real prefilter, then inspect two deliberately wrong algorithm controls.",
+        "zh": "运行 U5，比较真实全扫描与预过滤，再观察两个故意错误的算法对照。"
+      },
+      "perturbation": {
+        "en": "Move gap to [8.25,1]. It now belongs to archipelago even though it still does not belong to overlap-zone. Recompute rather than relying on the old point ID.",
+        "zh": "将 gap 移到 [8.25,1]；它现在命中 archipelago，仍不命中 overlap-zone。按新坐标重算，不依赖旧 ID。"
+      },
+      "expected": {
+        "en": "Scan and prefilter agree. Envelope-only falsely includes hole and gap. First-component-only misses island, east and the east vertex.",
+        "zh": "扫描与预过滤一致；仅包围盒误收 hole、gap；仅第一分量漏掉 island、east 及东侧顶点。"
+      },
+      "command": "node labs/geo/run-exercise.mjs prefilter",
+      "browserEntry": "/geodata-lab/en/guide/#unit-prefilter"
+    },
+    {
+      "id": "trajectory",
+      "number": 6,
+      "title": {
+        "en": "Units, time and approximation error",
+        "zh": "单位、时间与近似误差"
+      },
+      "reading": {
+        "courseId": "geopython-2025",
+        "title": "Lesson 6 · Processing data with pandas II; Debugging your Python code",
+        "url": "https://geo-python-site.readthedocs.io/en/2025.0/notebooks/L6/advanced-data-processing-with-pandas.html",
+        "locator": "Parsing dates; supplement with notebooks/L6/debugging.html → Test your code with known outputs"
+      },
+      "originalExercise": true,
+      "prediction": {
+        "en": "For one longitude degree at 0° and 60° latitude, are degree distance, spherical meters and WGS84 ellipsoidal meters interchangeable?",
+        "zh": "赤道与北纬 60° 的经度一度，角度距离、球面米数和 WGS84 椭球米数是否可互换？"
+      },
+      "action": {
+        "en": "Run U6. A five-point synthetic minute-spaced track has one isolated spike. The independent PROJ run compares the same two distance pairs against a sphere and WGS84.",
+        "zh": "运行 U6。五点、逐分钟的合成轨迹含一个孤立跳点；独立 PROJ 运行对同样两对坐标分别进行球面与 WGS84 计算。"
+      },
+      "perturbation": {
+        "en": "In the original sample, change the speed threshold to 1 km/h and inspect candidates before exporting. A stricter threshold need not remove more isolated points.",
+        "zh": "在原始示例将速度阈值改为 1 km/h，导出前检查候选；更低阈值不保证孤立跳点候选更多。"
+      },
+      "expected": {
+        "en": "The original exercise flags two segments and index 2, retaining four points. Spherical and ellipsoidal distances differ; the saved values quantify only these two pairs.",
+        "zh": "原创练习标记两条线段与第 2 点，保留四点；球面和椭球距离不同，保存值只量化这两对坐标。"
+      },
+      "command": "node labs/geo/run-exercise.mjs trajectory",
+      "browserEntry": "/geodata-lab/en/guide/#unit-trajectory"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import {validateCollection, geometryPoints, bounds, polygonLocation, spatialJoin, annotateJoin, trajectory, benchmarkData} from './engine.mjs';
+import {validateCollection, geometryPoints, geometryPolygons, bounds, areaLocation, spatialJoin, annotateJoin, trajectory, benchmarkData} from './engine.mjs';
 import {$, h, t, table, metric, badge, download, readJsonFile, showError, showStatus} from '/learning-lab-assets/shared.mjs';
 
 let fc = null, mode = 'fence', exported = null, sampleText = '', overlay = null, probe = null, transform = null;
@@ -30,8 +30,8 @@ function draw() {
   const xy = p => [w / 2 + (p[0] - centerX) * cos * scale, ht / 2 - (p[1] - centerY) * scale];
   transform = {inverse: (x, y) => [centerX + (x - w / 2) / scale / cos, centerY - (y - ht / 2) / scale]};
   function path(points) { points.forEach((p, i) => { const q = xy(p); i ? ctx.lineTo(...q) : ctx.moveTo(...q); }); }
-  for (const f of fc.features.filter(f => f.geometry.type === 'Polygon')) {
-    ctx.beginPath(); for (const ring of f.geometry.coordinates) { path(ring); ctx.closePath(); }
+  for (const f of fc.features) for (const rings of geometryPolygons(f.geometry)) {
+    ctx.beginPath(); for (const ring of rings) { path(ring); ctx.closePath(); }
     ctx.fillStyle = '#2071631c'; ctx.fill('evenodd'); ctx.strokeStyle = '#397e70'; ctx.lineWidth = 1.5; ctx.stroke();
   }
   for (const f of fc.features.filter(f => f.geometry.type === 'LineString')) {
@@ -55,8 +55,8 @@ function draw() {
 function setMetrics(...values) { $('metrics').replaceChildren(...values); }
 
 function geofence() {
-  const polygons = fc.features.map((f, i) => ({f, id: featureId(f, i)})).filter(x => x.f.geometry.type === 'Polygon');
-  if (!polygons.length) throw new Error(t('Add a Polygon to test a geofence.', '围栏实验需要 Polygon 要素。'));
+  const polygons = fc.features.map((f, i) => ({f, id: featureId(f, i)})).filter(x => geometryPolygons(x.f.geometry).length);
+  if (!polygons.length) throw new Error(t('Add a Polygon or MultiPolygon to test a geofence.', '围栏实验需要 Polygon 或 MultiPolygon 要素。'));
   const selected = $('polygon').value;
   $('polygon').replaceChildren(...polygons.map(x => h('option', {value: x.id}, x.id)));
   if (polygons.some(x => x.id === selected)) $('polygon').value = selected;
@@ -66,7 +66,7 @@ function geofence() {
   if (!lon.trim() || !lat.trim() || !probe.every(Number.isFinite) || Math.abs(probe[0]) > 180 || Math.abs(probe[1]) > 90) throw new Error(t('Enter valid WGS84 longitude and latitude.', '请输入有效的 WGS84 经度和纬度。'));
   const b = bounds(fc.features.flatMap(f => geometryPoints(f.geometry)));
   if (Math.max(b[2], probe[0]) - Math.min(b[0], probe[0]) > 30 || Math.max(b[3], probe[1]) - Math.min(b[1], probe[1]) > 30) throw new Error(t('Probe must remain within a 30° regional extent.', '测试点与数据须位于 30° 范围内。'));
-  const location = polygonLocation(probe, polygon.f.geometry.coordinates);
+  const location = areaLocation(probe, polygon.f.geometry);
   const accepted = location === 'inside' || $('boundary').checked && location === 'boundary';
   setMetrics(metric(t('Location', '位置关系'), locationName(location), t('Boundary is reported explicitly', '边界单独报告')),
     metric(t('Membership', '是否命中'), accepted ? t('Yes', '是') : t('No', '否'), $('boundary').checked ? t('Include boundary', '包含边界') : t('Exclude boundary', '排除边界')),
@@ -81,7 +81,7 @@ function join() {
   const result = spatialJoin(fc, $('boundary').checked, true);
   const unique = new Set(result.matches.map(m => m.pointId)).size;
   setMetrics(metric(t('Matched points', '命中点数'), `${unique} / ${result.points}`, t('A point can match multiple polygons', '一个点可能命中多个区域')),
-    metric(t('Match pairs', '关联对数'), result.matches.length, `${result.polygons} ${t('polygons', '个区域')}`),
+    metric(t('Match pairs', '关联对数'), result.matches.length, `${result.polygons} ${t('regions', '个区域')} · ${result.polygonComponents} ${t('components', '个分量')}`),
     metric(t('Exact tests', '精确判断'), `${result.exactTests} / ${result.possiblePairs}`, t('Bounding boxes reject impossible pairs', '先用包围盒过滤不可能的关联')));
   $('results').replaceChildren(table([t('Point', '点'), t('Polygon', '区域'), t('Location', '位置')], result.matches.slice(0, 500).map(m => [m.pointId, m.polygonId, locationName(m.location)])),
     h('p', {class: 'hint'}, t('Table shows up to 500 pairs; the download includes every match. This is a bounding-box prefilter, not an R-tree.', '表格最多展示 500 对，导出包含全部结果。这里使用包围盒预过滤，不是 R-tree。')));
@@ -129,6 +129,14 @@ for (const button of document.querySelectorAll('[data-mode]')) button.addEventLi
 });
 $('run').addEventListener('click', analyze);
 $('sample').addEventListener('click', () => { $('json').value = sampleText; $('lon').value = '114.3'; $('lat').value = '30.59'; $('boundary').checked = true; $('speed').value = '120'; analyze(); });
+$('islands')?.addEventListener('click', async () => {
+  try {
+    const response = await fetch(new URL('./islands.geojson', import.meta.url));
+    if (!response.ok) throw new Error('Islands exercise unavailable');
+    $('json').value = await response.text(); $('lon').value = '2.5'; $('lat').value = '2.5';
+    $('boundary').checked = true; chooseMode('join');
+  } catch (error) { invalidate(error); }
+});
 for (const id of ['boundary', 'polygon', 'lon', 'lat', 'speed']) $(id).addEventListener('change', analyze);
 $('file').addEventListener('change', async event => {
   try { $('json').value = await readJsonFile(event.target.files[0]); analyze(); } catch (error) { invalidate(error); }
@@ -175,4 +183,5 @@ try {
   const response = await fetch(new URL('./sample.geojson', import.meta.url));
   if (!response.ok) throw new Error(t('Sample unavailable. Import GeoJSON or reload.', '示例无法加载，可导入 GeoJSON 或刷新重试。'));
   sampleText = await response.text(); $('json').value = sampleText; $('sample').disabled = false; analyze();
+  if (new URLSearchParams(location.search).get('example') === 'islands') $('islands')?.click();
 } catch (error) { invalidate(error); }

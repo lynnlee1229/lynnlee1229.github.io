@@ -1,0 +1,108 @@
+{
+  "verifiedAt": "2026-11-13T18:13:30.052966+00:00",
+  "resourcesSha256": "cbb172913e6dd2d9736731079ee798dbd5fcfed60208e6b18a784527c14fbaa7",
+  "scope": "Public reading access only; not enrollment, cloud access, tuition or a 2026 schedule verification",
+  "pages": [
+    {
+      "url": "https://autogis-site.readthedocs.io/en/2024.0/",
+      "finalUrl": "https://autogis-site.readthedocs.io/en/2024.0/",
+      "httpStatus": 200,
+      "title": "Automating GIS Processes 2024",
+      "courseCodesPresent": {
+        "GEOG-329-2": true,
+        "GEOG-329-1": true
+      }
+    },
+    {
+      "url": "https://autogis-site.readthedocs.io/en/2024.0/course-info/general-information.html",
+      "finalUrl": "https://autogis-site.readthedocs.io/en/2024.0/course-info/general-information.html",
+      "httpStatus": 200,
+      "title": "General information",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-1/geometry-objects.html",
+      "finalUrl": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-1/geometry-objects.html",
+      "httpStatus": 200,
+      "title": "Shapely and geometry objects",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-2/map-projections.html",
+      "finalUrl": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-2/map-projections.html",
+      "httpStatus": 200,
+      "title": "Map projections",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-3/point-in-polygon-queries.html",
+      "finalUrl": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-3/point-in-polygon-queries.html",
+      "httpStatus": 200,
+      "title": "Point-in-polygon queries",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-3/spatial-join.html",
+      "finalUrl": "https://autogis-site.readthedocs.io/en/2024.0/lessons/lesson-3/spatial-join.html",
+      "httpStatus": 200,
+      "title": "Spatial join",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://geo-python-site.readthedocs.io/en/2025.0/",
+      "finalUrl": "https://geo-python-site.readthedocs.io/en/2025.0/",
+      "httpStatus": 200,
+      "title": "Welcome to Geo-Python 2025!",
+      "courseCodesPresent": {
+        "GEOG-329-1": true,
+        "GEOK3001": true
+      }
+    },
+    {
+      "url": "https://geo-python-site.readthedocs.io/en/2025.0/course-info/course-info.html",
+      "finalUrl": "https://geo-python-site.readthedocs.io/en/2025.0/course-info/course-info.html",
+      "httpStatus": 200,
+      "title": "General info",
+      "courseCodesPresent": {
+        "GEOG-329-2": true,
+        "GEOG-329-1": true,
+        "GEOK3001": true
+      }
+    },
+    {
+      "url": "https://geo-python-site.readthedocs.io/en/2025.0/notebooks/L6/advanced-data-processing-with-pandas.html",
+      "finalUrl": "https://geo-python-site.readthedocs.io/en/2025.0/notebooks/L6/advanced-data-processing-with-pandas.html",
+      "httpStatus": 200,
+      "title": "Processing data with pandas II",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://geo-python-site.readthedocs.io/en/2025.0/notebooks/L6/debugging.html",
+      "finalUrl": "https://geo-python-site.readthedocs.io/en/2025.0/notebooks/L6/debugging.html",
+      "httpStatus": 200,
+      "title": "Debugging your Python code",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://pyproj4.github.io/pyproj/stable/api/geod.html",
+      "finalUrl": "https://pyproj4.github.io/pyproj/stable/api/geod.html",
+      "httpStatus": 200,
+      "title": "Geod - pyproj 3.7.2 documentation",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://shapely.readthedocs.io/en/2.0.6/reference/shapely.covers.html",
+      "finalUrl": "https://shapely.readthedocs.io/en/2.0.6/reference/shapely.covers.html",
+      "httpStatus": 200,
+      "title": "shapely.covers — Shapely 2.0.6 documentation",
+      "courseCodesPresent": {}
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc7946",
+      "finalUrl": "https://www.rfc-editor.org/info/rfc7946/",
+      "httpStatus": 200,
+      "title": "RFC 7946: The GeoJSON Format | RFC Editor",
+      "courseCodesPresent": {}
+    }
+  ]
+}

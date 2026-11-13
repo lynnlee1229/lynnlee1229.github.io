@@ -1,0 +1,470 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-13T18:15:58.705868+00:00",
+  "mode": "executed-independent-oracle",
+  "data": "original synthetic coordinates; no personal trajectories",
+  "runtime": {
+    "python": "3.11.2",
+    "node": "v18.3.0",
+    "shapely": "2.0.6",
+    "geos": "3.11.4",
+    "numpy": "1.26.4",
+    "pyproj": "3.6.1",
+    "proj": "9.3.0",
+    "projNetworkEnabled": false
+  },
+  "sourceSha256": {
+    "engine.mjs": "80f39ce0acd557022b053ca46d0b34759a5150d04a91f7b18e36d669602b7a31",
+    "exercises.mjs": "1c95b4775a5079ab14ac4febc61bb529a321e5bafd1c336ebccb29db0ef5cd89",
+    "oracle-bridge.mjs": "eb3363710e0be7d02ceebb16842d33f9cedd080f775b826841e1718aaf3ed3f2",
+    "verify-oracle.py": "3b59a383a49bea9d61a95e8567198da1de47bb0734b4aca4d23c99268d64c2d4",
+    "requirements-oracle.txt": "e6522badda16e86c75a77cc47b536fb201e5137dc5b57e7b9adc587800dae8fb"
+  },
+  "locationComparison": {
+    "regions": 5,
+    "probes": 547,
+    "comparisons": 2735,
+    "mismatches": 0,
+    "probeSha256": "c97856130a577482a9c7317c62f556146477451fa644d075a1f8a785a619cac4",
+    "knownCases": [
+      {
+        "region": 0,
+        "point": [
+          0.5,
+          0.5
+        ],
+        "expected": "inside",
+        "engine": "inside",
+        "geos": "inside"
+      },
+      {
+        "region": 0,
+        "point": [
+          4,
+          4
+        ],
+        "expected": "outside",
+        "engine": "outside",
+        "geos": "outside"
+      },
+      {
+        "region": 0,
+        "point": [
+          1,
+          3
+        ],
+        "expected": "boundary",
+        "engine": "boundary",
+        "geos": "boundary"
+      },
+      {
+        "region": 0,
+        "point": [
+          0,
+          3
+        ],
+        "expected": "boundary",
+        "engine": "boundary",
+        "geos": "boundary"
+      },
+      {
+        "region": 0,
+        "point": [
+          2.5,
+          2.5
+        ],
+        "expected": "inside",
+        "engine": "inside",
+        "geos": "inside"
+      },
+      {
+        "region": 0,
+        "point": [
+          9,
+          1
+        ],
+        "expected": "inside",
+        "engine": "inside",
+        "geos": "inside"
+      },
+      {
+        "region": 0,
+        "point": [
+          7,
+          1
+        ],
+        "expected": "outside",
+        "engine": "outside",
+        "geos": "outside"
+      },
+      {
+        "region": 0,
+        "point": [
+          8,
+          0
+        ],
+        "expected": "boundary",
+        "engine": "boundary",
+        "geos": "boundary"
+      },
+      {
+        "region": 0,
+        "point": [
+          11,
+          1
+        ],
+        "expected": "outside",
+        "engine": "outside",
+        "geos": "outside"
+      },
+      {
+        "region": 1,
+        "point": [
+          9,
+          1
+        ],
+        "expected": "inside",
+        "engine": "inside",
+        "geos": "inside"
+      },
+      {
+        "region": 2,
+        "point": [
+          12.5,
+          0.5
+        ],
+        "expected": "inside",
+        "engine": "inside",
+        "geos": "inside"
+      },
+      {
+        "region": 2,
+        "point": [
+          13,
+          1
+        ],
+        "expected": "boundary",
+        "engine": "boundary",
+        "geos": "boundary"
+      },
+      {
+        "region": 2,
+        "point": [
+          13.5,
+          1.5
+        ],
+        "expected": "outside",
+        "engine": "outside",
+        "geos": "outside"
+      },
+      {
+        "region": 3,
+        "point": [
+          17,
+          2
+        ],
+        "expected": "outside",
+        "engine": "outside",
+        "geos": "outside"
+      },
+      {
+        "region": 3,
+        "point": [
+          15.5,
+          2
+        ],
+        "expected": "inside",
+        "engine": "inside",
+        "geos": "inside"
+      }
+    ]
+  },
+  "nearBoundaryCounterexample": [
+    {
+      "point": [
+        -1e-11,
+        3
+      ],
+      "engine": "boundary",
+      "geos": "outside"
+    },
+    {
+      "point": [
+        1e-11,
+        3
+      ],
+      "engine": "boundary",
+      "geos": "inside"
+    },
+    {
+      "point": [
+        -1e-08,
+        3
+      ],
+      "engine": "outside",
+      "geos": "outside"
+    },
+    {
+      "point": [
+        1e-08,
+        3
+      ],
+      "engine": "inside",
+      "geos": "inside"
+    }
+  ],
+  "joins": [
+    {
+      "includeBoundary": true,
+      "enginePairs": [
+        "east-vertex/archipelago",
+        "east/archipelago",
+        "east/overlap-zone",
+        "hole-edge/archipelago",
+        "island/archipelago",
+        "shell-edge/archipelago",
+        "shell/archipelago"
+      ],
+      "geosPairs": [
+        "east-vertex/archipelago",
+        "east/archipelago",
+        "east/overlap-zone",
+        "hole-edge/archipelago",
+        "island/archipelago",
+        "shell-edge/archipelago",
+        "shell/archipelago"
+      ],
+      "equal": true
+    },
+    {
+      "includeBoundary": false,
+      "enginePairs": [
+        "east/archipelago",
+        "east/overlap-zone",
+        "island/archipelago",
+        "shell/archipelago"
+      ],
+      "geosPairs": [
+        "east/archipelago",
+        "east/overlap-zone",
+        "island/archipelago",
+        "shell/archipelago"
+      ],
+      "equal": true
+    }
+  ],
+  "validation": [
+    {
+      "case": "overlapping-components",
+      "accepted": false,
+      "message": "Feature 0: MultiPolygon components must be strictly disjoint (touching is unsupported)",
+      "geosValid": false,
+      "meaning": "Invalid topology rejected by both"
+    },
+    {
+      "case": "contained-component",
+      "accepted": false,
+      "message": "Feature 0: MultiPolygon components must be strictly disjoint (touching is unsupported)",
+      "geosValid": false,
+      "meaning": "Invalid topology rejected by both"
+    },
+    {
+      "case": "edge-touch",
+      "accepted": false,
+      "message": "Feature 0: MultiPolygon components must be strictly disjoint (touching is unsupported)",
+      "geosValid": false,
+      "meaning": "Invalid topology rejected by both"
+    },
+    {
+      "case": "point-touch-valid-ogc",
+      "accepted": false,
+      "message": "Feature 0: MultiPolygon components must be strictly disjoint (touching is unsupported)",
+      "geosValid": true,
+      "meaning": "Intentional stricter subset"
+    },
+    {
+      "case": "empty-multipart",
+      "accepted": false,
+      "message": "Feature 0: use 1–20 MultiPolygon components",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "malformed-multipart",
+      "accepted": false,
+      "message": "Feature 0: rings need 4–600 positions",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "unclosed-ring",
+      "accepted": false,
+      "message": "Feature 0: polygon rings must be closed",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "bow-tie",
+      "accepted": false,
+      "message": "Feature 0: polygon ring has zero area",
+      "geosValid": false,
+      "meaning": "Invalid topology rejected by both"
+    },
+    {
+      "case": "outside-hole",
+      "accepted": false,
+      "message": "Feature 0: hole must be strictly within exterior ring",
+      "geosValid": false,
+      "meaning": "Invalid topology rejected by both"
+    },
+    {
+      "case": "legacy-collection-crs",
+      "accepted": false,
+      "message": "Use WGS84 longitude/latitude; legacy crs is unsupported",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "legacy-feature-crs",
+      "accepted": false,
+      "message": "Feature 0: legacy crs is unsupported; convert to WGS84 before importing",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "legacy-geometry-crs",
+      "accepted": false,
+      "message": "Feature 0: legacy crs is unsupported; convert to WGS84 before importing",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "projected-meters",
+      "accepted": false,
+      "message": "Feature 0: positions must be [longitude, latitude] in WGS84 (2D)",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "altitude",
+      "accepted": false,
+      "message": "Feature 0: positions must be [longitude, latitude] in WGS84 (2D)",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "antimeridian",
+      "accepted": false,
+      "message": "Use a regional extent up to 30° per axis; antimeridian/global geometry is unsupported",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    },
+    {
+      "case": "unsupported-collection",
+      "accepted": false,
+      "message": "Feature 0: supported types are Point, Polygon, MultiPolygon, LineString",
+      "meaning": "Format or regional scope gate; not a GEOS topology claim"
+    }
+  ],
+  "incorrectAlgorithmControls": [
+    {
+      "pointId": "shell",
+      "exactCovered": true,
+      "envelopeCovered": true,
+      "firstComponentCovered": true
+    },
+    {
+      "pointId": "hole",
+      "exactCovered": false,
+      "envelopeCovered": true,
+      "firstComponentCovered": false
+    },
+    {
+      "pointId": "hole-edge",
+      "exactCovered": true,
+      "envelopeCovered": true,
+      "firstComponentCovered": true
+    },
+    {
+      "pointId": "island",
+      "exactCovered": true,
+      "envelopeCovered": true,
+      "firstComponentCovered": false
+    },
+    {
+      "pointId": "east",
+      "exactCovered": true,
+      "envelopeCovered": true,
+      "firstComponentCovered": false
+    },
+    {
+      "pointId": "gap",
+      "exactCovered": false,
+      "envelopeCovered": true,
+      "firstComponentCovered": false
+    },
+    {
+      "pointId": "outside",
+      "exactCovered": false,
+      "envelopeCovered": false,
+      "firstComponentCovered": false
+    },
+    {
+      "pointId": "shell-edge",
+      "exactCovered": true,
+      "envelopeCovered": true,
+      "firstComponentCovered": true
+    },
+    {
+      "pointId": "east-vertex",
+      "exactCovered": true,
+      "envelopeCovered": true,
+      "firstComponentCovered": false
+    }
+  ],
+  "distanceComparison": [
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        1,
+        0
+      ],
+      "engineSphereMeters": 111195.0802335329,
+      "projSphereMeters": 111195.0802335329,
+      "wgs84EllipsoidMeters": 111319.49079327357,
+      "sphereErrorPercent": -0.11175990732089938
+    },
+    {
+      "from": [
+        0,
+        60
+      ],
+      "to": [
+        1,
+        60
+      ],
+      "engineSphereMeters": 55597.01086489692,
+      "projSphereMeters": 55597.01086489691,
+      "wgs84EllipsoidMeters": 55799.47039326038,
+      "sphereErrorPercent": -0.36283413970881745
+    }
+  ],
+  "crsExercise": {
+    "from": "EPSG:3067",
+    "input": [
+      385700,
+      6672000
+    ],
+    "to": "EPSG:4326",
+    "alwaysXY": true,
+    "longitudeLatitude": [
+      24.94006363196405,
+      60.168862588385124
+    ],
+    "roundtripMeters": [
+      385700.0,
+      6672000.0
+    ]
+  },
+  "limits": [
+    "Regional planar membership only; not global or ellipsoidal polygon containment",
+    "Point-touching MultiPolygon is valid in GEOS but deliberately unsupported in this Lab",
+    "Two near-boundary disagreements are preserved and disclosed; the tolerance is in degrees",
+    "A finite synthetic corpus is evidence for these cases, not a universal geometry proof",
+    "Recorded GEOS/PROJ output is not a live browser oracle or a GPS accuracy estimate"
+  ]
+}

@@ -39,7 +39,19 @@ export function polygonLocation(p, rings) {
 export function bounds(coords) {
   return coords.reduce((b, p) => [Math.min(b[0], p[0]), Math.min(b[1], p[1]), Math.max(b[2], p[0]), Math.max(b[3], p[1])], [Infinity, Infinity, -Infinity, -Infinity]);
 }
-export const geometryPoints = g => g.type === 'Point' ? [g.coordinates] : g.type === 'LineString' ? g.coordinates : g.coordinates.flat();
+export const geometryPolygons = g => g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+export const geometryPoints = g => g.type === 'Point' ? [g.coordinates] : g.type === 'LineString' ? g.coordinates : geometryPolygons(g).flat(2);
+
+// One region ID can contain disconnected components. Never treat its envelope as its area.
+export function areaLocation(p, geometry) {
+  let boundary = false;
+  for (const rings of geometryPolygons(geometry)) {
+    const location = polygonLocation(p, rings);
+    if (location === 'inside') return 'inside';
+    if (location === 'boundary') boundary = true;
+  }
+  return boundary ? 'boundary' : 'outside';
+}
 
 function ringsIntersect(a, b) {
   for (let i = 0; i < a.length - 1; i++) for (let j = 0; j < b.length - 1; j++)
@@ -49,22 +61,26 @@ function ringsIntersect(a, b) {
 
 export function validateCollection(fc) {
   assert(fc && fc.type === 'FeatureCollection' && Array.isArray(fc.features), 'Expected a GeoJSON FeatureCollection');
-  assert(!fc.crs, 'Use WGS84 longitude/latitude; legacy crs is unsupported');
+  assert(!Object.hasOwn(fc, 'crs'), 'Use WGS84 longitude/latitude; legacy crs is unsupported');
   assert(fc.features.length > 0 && fc.features.length <= 10000, 'Use 1–10,000 features');
   let total = 0, polygonCount = 0;
   const all = [], ids = new Set();
   fc.features.forEach((f, index) => {
-    assert(f && f.type === 'Feature' && f.geometry && ['Point', 'Polygon', 'LineString'].includes(f.geometry.type), `Feature ${index}: supported types are Point, Polygon, LineString`);
+    assert(f && f.type === 'Feature' && f.geometry && ['Point', 'Polygon', 'MultiPolygon', 'LineString'].includes(f.geometry.type), `Feature ${index}: supported types are Point, Polygon, MultiPolygon, LineString`);
+    assert(!Object.hasOwn(f, 'crs') && !Object.hasOwn(f.geometry, 'crs'), `Feature ${index}: legacy crs is unsupported; convert to WGS84 before importing`);
     assert(f.properties === null || f.properties === undefined || (typeof f.properties === 'object' && !Array.isArray(f.properties)), `Feature ${index}: invalid properties`);
     const id = f.id ?? `feature-${index}`;
     assert((typeof id === 'string' || typeof id === 'number' && finite(id)) && !ids.has(String(id)), `Feature ${index}: duplicate or invalid id`);
     ids.add(String(id));
     const g = f.geometry;
     assert(Array.isArray(g.coordinates), `Feature ${index}: coordinates must be an array`);
-    if (g.type === 'Polygon') {
-      polygonCount++;
-      assert(g.coordinates.length > 0 && g.coordinates.length <= 20, `Feature ${index}: use 1–20 polygon rings`);
-      assert(g.coordinates.every(r => Array.isArray(r) && r.length >= 4 && r.length <= 600 && r.every(Array.isArray)), `Feature ${index}: rings need 4–600 positions`);
+    if (g.type === 'MultiPolygon') assert(g.coordinates.length > 0 && g.coordinates.length <= 20 && g.coordinates.every(Array.isArray), `Feature ${index}: use 1–20 MultiPolygon components`);
+    const components = geometryPolygons(g);
+    polygonCount += components.length;
+    assert(polygonCount <= 200, 'At most 200 polygon components per input');
+    for (const rings of components) {
+      assert(rings.length > 0 && rings.length <= 20, `Feature ${index}: use 1–20 polygon rings per component`);
+      assert(rings.every(r => Array.isArray(r) && r.length >= 4 && r.length <= 600 && r.every(Array.isArray)), `Feature ${index}: rings need 4–600 positions`);
     }
     if (g.type === 'LineString') assert(g.coordinates.length >= 2 && g.coordinates.every(Array.isArray), `Feature ${index}: a line needs at least 2 positions`);
     const points = geometryPoints(g);
@@ -74,8 +90,8 @@ export function validateCollection(fc) {
     total += points.length;
     assert(total <= 20000, 'At most 20,000 positions per input');
     all.push(...points);
-    if (g.type === 'Polygon') {
-      for (const ring of g.coordinates) {
+    for (const rings of components) {
+      for (const ring of rings) {
         assert(same(ring[0], ring.at(-1)), `Feature ${index}: polygon rings must be closed`);
         assert(ring.slice(1).every((p, i) => !same(p, ring[i])), `Feature ${index}: repeated adjacent ring vertex`);
         // Translate before area calculation to reduce cancellation at large longitudes.
@@ -87,42 +103,49 @@ export function validateCollection(fc) {
           assert(!intersects(ring[i], ring[i + 1], ring[j], ring[j + 1]), `Feature ${index}: self-intersecting ring`);
         }
       }
-      for (let i = 1; i < g.coordinates.length; i++) {
-        const h = g.coordinates[i];
-        assert(ringLocation(h[0], g.coordinates[0]) === 'inside' && !ringsIntersect(h, g.coordinates[0]), `Feature ${index}: hole must be strictly within exterior ring`);
-        for (let j = 1; j < i; j++) assert(!ringsIntersect(h, g.coordinates[j]) && ringLocation(h[0], g.coordinates[j]) === 'outside' && ringLocation(g.coordinates[j][0], h) === 'outside', `Feature ${index}: holes must be disjoint`);
+      for (let i = 1; i < rings.length; i++) {
+        const h = rings[i];
+        assert(ringLocation(h[0], rings[0]) === 'inside' && !ringsIntersect(h, rings[0]), `Feature ${index}: hole must be strictly within exterior ring`);
+        for (let j = 1; j < i; j++) assert(!ringsIntersect(h, rings[j]) && ringLocation(h[0], rings[j]) === 'outside' && ringLocation(rings[j][0], h) === 'outside', `Feature ${index}: holes must be disjoint`);
       }
     }
+    for (let i = 1; i < components.length; i++) for (let j = 0; j < i; j++) {
+      const a = components[i], b = components[j];
+      // Deliberately narrower than OGC: even point-touching components are rejected.
+      // A component wholly within another component's hole is allowed.
+      assert(!a.some(r => b.some(s => ringsIntersect(r, s))) && polygonLocation(a[0][0], b) === 'outside' && polygonLocation(b[0][0], a) === 'outside', `Feature ${index}: MultiPolygon components must be strictly disjoint (touching is unsupported)`);
+    }
   });
-  assert(polygonCount <= 200, 'At most 200 polygons per input');
   const b = bounds(all);
   assert(b[2] - b[0] <= 30 && b[3] - b[1] <= 30, 'Use a regional extent up to 30° per axis; antimeridian/global geometry is unsupported');
   return fc;
 }
 
 function items(fc, type) {
-  return fc.features.map((f, i) => ({...f, id: String(f.id ?? `feature-${i}`)})).filter(f => f.geometry.type === type);
+  const types = Array.isArray(type) ? type : [type];
+  return fc.features.map((f, i) => ({...f, id: String(f.id ?? `feature-${i}`)})).filter(f => types.includes(f.geometry.type));
 }
 
 export function spatialJoin(fc, includeBoundary = true, indexed = true) {
   validateCollection(fc);
-  const points = items(fc, 'Point'), polygons = items(fc, 'Polygon');
-  assert(points.length > 0 && polygons.length > 0, 'Spatial join needs both Point and Polygon features');
-  assert(points.length * polygons.length <= 1000000, 'At most 1,000,000 point/polygon pairs per analysis');
-  const prepared = polygons.map(f => ({feature: f, bbox: bounds(f.geometry.coordinates[0])}));
+  const points = items(fc, 'Point'), polygons = items(fc, ['Polygon', 'MultiPolygon']);
+  const polygonComponents = polygons.reduce((n, f) => n + geometryPolygons(f.geometry).length, 0);
+  assert(points.length > 0 && polygons.length > 0, 'Spatial join needs Point and Polygon or MultiPolygon features');
+  assert(points.length * polygonComponents <= 1000000, 'At most 1,000,000 point/component pairs per analysis');
+  const prepared = polygons.map(f => ({feature: f, bbox: bounds(geometryPoints(f.geometry))}));
   let exactTests = 0;
   const matches = [];
   for (const p of points) for (const polygon of prepared) {
     const [x, y] = p.geometry.coordinates, b = polygon.bbox;
     if (indexed && (x < b[0] - EPS || x > b[2] + EPS || y < b[1] - EPS || y > b[3] + EPS)) continue;
     exactTests++;
-    const location = polygonLocation(p.geometry.coordinates, polygon.feature.geometry.coordinates);
+    const location = areaLocation(p.geometry.coordinates, polygon.feature.geometry);
     if (location === 'inside' || includeBoundary && location === 'boundary') {
       assert(matches.length < 100000, 'More than 100,000 matches; split the input into smaller regions');
       matches.push({pointId: p.id, polygonId: polygon.feature.id, location});
     }
   }
-  return {matches, exactTests, possiblePairs: points.length * polygons.length, points: points.length, polygons: polygons.length};
+  return {matches, exactTests, possiblePairs: points.length * polygons.length, points: points.length, polygons: polygons.length, polygonComponents};
 }
 
 export function haversine(a, b) {
