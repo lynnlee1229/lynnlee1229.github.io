@@ -1,5 +1,5 @@
 // Original GeoData Lab exercises. These are not university assignment solutions.
-import {validateCollection, areaLocation, polygonLocation, bounds, geometryPoints, spatialJoin, annotateJoin, haversine, trajectory} from './engine.mjs';
+import {validateCollection, areaLocation, polygonLocation, bounds, geometryPoints, spatialJoin, annotateJoin, haversine, trajectory} from './engine.mjs?v=1.1';
 
 export const rect = (x, y, w, h) => [[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]];
 export const feature = (id, geometry) => ({type:'Feature', id, properties:{source:'synthetic-lab'}, geometry});

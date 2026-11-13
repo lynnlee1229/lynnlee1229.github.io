@@ -1,22 +1,22 @@
 {
   "edition": "1.1",
   "files": {
-    "assets/app.mjs": "f0d6db81b2246bb549c9cba51f276e3d15d4f9ef1866ee012cc7244bfa51bc39",
+    "assets/app.mjs": "d6eb36acb976021a3adaa219172c0bbd282c7ab38a41dd17960e30e1b166f1a9",
     "assets/engine.mjs": "80f39ce0acd557022b053ca46d0b34759a5150d04a91f7b18e36d669602b7a31",
-    "assets/exercises.mjs": "1c95b4775a5079ab14ac4febc61bb529a321e5bafd1c336ebccb29db0ef5cd89",
+    "assets/exercises.mjs": "f6cefb63c77ac3416ae478fc0b922d6716b256d8dcb6adf827e11c2431423877",
     "assets/islands.geojson": "0b0b19869e655e7000f0e5c4ef10f63f2695dc383003f236678f3fc334673ea3",
-    "assets/oracle-results.json": "ccab2450b7f505e219a0583d8b3fb9d6e8173da6fa474608e89a4e2deb375085",
+    "assets/oracle-results.json": "cc8ea0329f4f2a0c8564fc60b2fcbb40b9878ace7cacf48749cb8b0b3b643fa7",
     "assets/resource-verification.json": "9f4f4287f761f63f13aafc327956e0446efb2bbb6aa5560aec898001e42ada65",
     "assets/resources.json": "cbb172913e6dd2d9736731079ee798dbd5fcfed60208e6b18a784527c14fbaa7",
     "assets/sample.geojson": "3553b97b5b3c8b6db59c927cb03527b28649ea11aba29b7921a006f2fee14b3e",
-    "assets/study-ui.mjs": "425105eed8dc112969db7612a0735faba6bcd68dfec0c81410ab65617d9acb6b",
-    "en/guide/index.html": "8b1b0ec3271179a066ee8000d9809e24f34073be095d09882e645cd3871acc1f",
-    "en/index.html": "e0d05a1ff23de6444025a9e1da3e8bff0c7098a46760fa0e8705363c5bb24c66",
+    "assets/study-ui.mjs": "412994118cbb629ce5cf3561d26271745d43efe25f078a7f4a91af5eaaa30a9a",
+    "en/guide/index.html": "6ca118efdee22cd4c4fc96e6f9a158c5ff5f09dcd08127393309a659733ce043",
+    "en/index.html": "11f64b50e1ed4f7355478eea9474ebaafbbf2de8ba77e9114ad8692743b09a65",
     "en/method/index.html": "562ffda8d21cec19ee89b9fd8605c5902c0b923c814ad2757c0889b01a7cee7b",
     "index.html": "3c9dd57a24951526a70ba191c7cbeee22150cc059a9b030a5350b930856f92d1",
     "sitemap.xml": "dae8e1c46b22b2077a7ca18b297159b6c343fe6d12f2194a43fc32f21faa1e73",
-    "zh/guide/index.html": "227049e8f6b4b1866a77abe27ebfc0fed493a4451e899ddc6c4b4100f8c3b4af",
-    "zh/index.html": "fa51e89090678a0881a7056fa0b742647aeb049ae226f28beda57692a0a0201d",
+    "zh/guide/index.html": "2e54747cda3dad774dfbf54374ffbb2d8c0e0e4c3b1ebdc6c7e0b4d23629594a",
+    "zh/index.html": "5c0401d80a0a7d74e0d08d80f819a92b780e3cbfc737f7d36116f402a95fbe55",
     "zh/method/index.html": "a6ba1ef7f0a7e31166970d0c493e77318e5e1dc8c54b2d97611897f7a1aa64cc"
   }
 }

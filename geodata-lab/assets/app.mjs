@@ -1,4 +1,4 @@
-import {validateCollection, geometryPoints, geometryPolygons, bounds, areaLocation, spatialJoin, annotateJoin, trajectory, benchmarkData} from './engine.mjs';
+import {validateCollection, geometryPoints, geometryPolygons, bounds, areaLocation, spatialJoin, annotateJoin, trajectory, benchmarkData} from './engine.mjs?v=1.1';
 import {$, h, t, table, metric, badge, download, readJsonFile, showError, showStatus} from '/learning-lab-assets/shared.mjs';
 
 let fc = null, mode = 'fence', exported = null, sampleText = '', overlay = null, probe = null, transform = null;

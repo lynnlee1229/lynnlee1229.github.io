@@ -1,4 +1,4 @@
-import {runExercise} from './exercises.mjs';
+import {runExercise} from './exercises.mjs?v=1.1';
 const zh=document.documentElement.lang.startsWith('zh');
 const t=(en,cn)=>zh?cn:en;
 for(const button of document.querySelectorAll('[data-exercise]')) button.addEventListener('click',()=>{

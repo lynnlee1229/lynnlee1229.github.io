@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-11-13T18:15:58.705868+00:00",
+  "recordedAt": "2026-11-13T18:26:36.059312+00:00",
   "mode": "executed-independent-oracle",
   "data": "original synthetic coordinates; no personal trajectories",
   "runtime": {
@@ -15,7 +15,7 @@
   },
   "sourceSha256": {
     "engine.mjs": "80f39ce0acd557022b053ca46d0b34759a5150d04a91f7b18e36d669602b7a31",
-    "exercises.mjs": "1c95b4775a5079ab14ac4febc61bb529a321e5bafd1c336ebccb29db0ef5cd89",
+    "exercises.mjs": "f6cefb63c77ac3416ae478fc0b922d6716b256d8dcb6adf827e11c2431423877",
     "oracle-bridge.mjs": "eb3363710e0be7d02ceebb16842d33f9cedd080f775b826841e1718aaf3ed3f2",
     "verify-oracle.py": "3b59a383a49bea9d61a95e8567198da1de47bb0734b4aca4d23c99268d64c2d4",
     "requirements-oracle.txt": "e6522badda16e86c75a77cc47b536fb201e5137dc5b57e7b9adc587800dae8fb"
