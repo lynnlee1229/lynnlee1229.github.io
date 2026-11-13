@@ -1,0 +1,138 @@
+{
+  "schema": 1,
+  "export": "allowlisted distributed-systems-lab",
+  "files": [
+    {
+      "path": "assets/app.mjs",
+      "sha256": "68d4abac45102a51af9aba88e9f12bf7f98d20d64ff730c6a51df99371bd46d1"
+    },
+    {
+      "path": "assets/checker.mjs",
+      "sha256": "1f083040249217810da051517a44c595f3fba285365acdcc89b5acfc4e6c1247"
+    },
+    {
+      "path": "assets/icon.svg",
+      "sha256": "2e05aee7460abd563f88dee2c2e9b99fcf304603dedb6c86a7561772e3293c1c"
+    },
+    {
+      "path": "assets/style.css",
+      "sha256": "e2ade7fbc788bb1acdc31c0efbe756103f81a194ae544c429ff00cf72cf66d7c"
+    },
+    {
+      "path": "downloads/distributed-systems-lab.zip",
+      "sha256": "3e4a0ca5bc9fd61360e3ccb9403e561ce364e66b7f171a36a1c0b7181613255d"
+    },
+    {
+      "path": "en/01-assumptions.html",
+      "sha256": "0537a37d95f3a892a12681523920311d35e92a4b32c173cbd4a542a965a34202"
+    },
+    {
+      "path": "en/02-time.html",
+      "sha256": "ca52902b326cf3c916f63f2e396f4f1bb8243fc1b681631e6ed011c26e56cb4f"
+    },
+    {
+      "path": "en/03-consistency.html",
+      "sha256": "067befe7e92c85b0d56372f5dd8c38add898ef7b7bad67ace882a0fcc5c35e68"
+    },
+    {
+      "path": "en/04-consensus.html",
+      "sha256": "9b30d460418082d827925b4a0efbc70e7e9543027ac3ab239de280b6403fcd88"
+    },
+    {
+      "path": "en/05-retries.html",
+      "sha256": "f8fc4e487b0a8ce18ac644a4bbc1f2a42d792999171b28184555e34ab2b93355"
+    },
+    {
+      "path": "en/06-fencing.html",
+      "sha256": "0fce5eb0629305c33ac3dc2732d9457d1ff5cfe7ad502c7e18fa2a535e7e6354"
+    },
+    {
+      "path": "en/07-recovery.html",
+      "sha256": "fb253c70ea1c3191be4a4fa3d1acaa1efa9f29f8461b87db018a3b287a18bb28"
+    },
+    {
+      "path": "en/checker.html",
+      "sha256": "df9e90e143485e74d5f6e7a22ba56bbf626d7a206656b09b5fdc9d63b9c3b55f"
+    },
+    {
+      "path": "en/evidence.html",
+      "sha256": "43f0783fb93ddd8465f37a95bd9fe276864e86c6e93d13d3c4f0905f3f5d7cb0"
+    },
+    {
+      "path": "en/index.html",
+      "sha256": "150539188cad9ad4974be26fd04d8aaf7970c57d4df8bdcfd0709ba658c69058"
+    },
+    {
+      "path": "en/references.html",
+      "sha256": "e6c3fa6b41c28f16a41b27e0597707084e34765ebffea5d7124ddbd77ae436c1"
+    },
+    {
+      "path": "en/reproduce.html",
+      "sha256": "f23ecc2aa4e96a252e23b1c004d9d1a5198eeb82294e7371499fa8f1f64f9dd4"
+    },
+    {
+      "path": "index.html",
+      "sha256": "89c10e96bc5f8ac855ca55df93d7c62452a193a776df2be540d1fc5e3a645bef"
+    },
+    {
+      "path": "results/experiments.json",
+      "sha256": "df927af381c415e574f1a48755345be7a1bcaee243fdbc3f73002a05ab6bbbf6"
+    },
+    {
+      "path": "results/index.json",
+      "sha256": "86cfa7f2617d56dbfce153c9ba1bade32081c1d2436bbf1c23e9800c5352e06f"
+    },
+    {
+      "path": "sitemap.xml",
+      "sha256": "b2bc74a6381a7d413cf4f924cf87f4b7e0a3473bc6724219a8f55676bb88cc91"
+    },
+    {
+      "path": "zh/01-assumptions.html",
+      "sha256": "43b13dec1db59c79ff41c05952f9103d9fc156f32d03a79ed3d035babf77ae4f"
+    },
+    {
+      "path": "zh/02-time.html",
+      "sha256": "755bf74647b26b0188d693e46979e14c68943c393c94fdc2d42a07a8313eeddf"
+    },
+    {
+      "path": "zh/03-consistency.html",
+      "sha256": "3f801c523dffd28460658d5a955bd317fb46a115974daa53a611eae62e977f48"
+    },
+    {
+      "path": "zh/04-consensus.html",
+      "sha256": "75bc3ff940ca71d6dcd63c705de0befa0bda7bed2d03d27031cfd6fb28852ab5"
+    },
+    {
+      "path": "zh/05-retries.html",
+      "sha256": "48936d25cd3d3399b7ed14c62bd888b73a553524c65d094260b6bdf4012d2378"
+    },
+    {
+      "path": "zh/06-fencing.html",
+      "sha256": "496ec5dff29f933e5a11ef1e6e904b23d0e23df89a92c5b3ab5e278345c416b9"
+    },
+    {
+      "path": "zh/07-recovery.html",
+      "sha256": "0c033be72fd8661a325bae495d6f7d31f7f61802233a14aa7913ed2bf2c0c6c9"
+    },
+    {
+      "path": "zh/checker.html",
+      "sha256": "8a5da3c953bf3a47e020adc455d23ceebd42eadeb0e41fb5b9c0c549649eed62"
+    },
+    {
+      "path": "zh/evidence.html",
+      "sha256": "d798063354fc7d515cfee218714f8c3d6b13a0c7e0076c47e2c51b8584c44c7d"
+    },
+    {
+      "path": "zh/index.html",
+      "sha256": "e2ef7267e86e19554b1fcc8b841402aad27c48680c72bd37c1ce77f5d6db18ae"
+    },
+    {
+      "path": "zh/references.html",
+      "sha256": "5eb242611916d01666e777db8d1e7f5ad73f1adea1261ea653b5d8588db95ba6"
+    },
+    {
+      "path": "zh/reproduce.html",
+      "sha256": "a3fefc8a9af786bfaced469ea5a72cc7dc9a2d867da1001cafc881a4a9aa0292"
+    }
+  ]
+}

@@ -1,0 +1,646 @@
+{
+  "schema": 1,
+  "kind": "real-process-experiments",
+  "recorded_at": "2026-11-13T17:39:41.195190+00:00",
+  "runtime": {
+    "etcd": "3.6.6",
+    "platform": "Darwin arm64",
+    "python": "3.11.2",
+    "topology": "three loopback etcd processes on one host; independent WAL directories",
+    "transport": "etcd v3 JSON gRPC gateway; HTTP application endpoints",
+    "resource_bounds": "GOMAXPROCS=2, GOMEMLIMIT=128MiB per etcd (soft GC target), 64MiB backend quota"
+  },
+  "limitations": [
+    "not a multi-host availability or performance benchmark",
+    "process crash/pause, not packet partition or disk corruption",
+    "timeouts are unknown outcomes; post-recovery reconciliation is recorded",
+    "fencing checks freshness only after the sink has observed the newer token",
+    "no authentication or TLS; loopback synthetic learning runtime only"
+  ],
+  "repetitions": [
+    {
+      "repeat": 1,
+      "quorum": {
+        "before": {
+          "leader": "n1",
+          "revision": 2,
+          "term": 2
+        },
+        "new_leader": "n2",
+        "committed_write_survived": "acknowledged-before-crash",
+        "failover_write": {
+          "outcome": "ok",
+          "duration_ms": 11.609,
+          "response": {
+            "header": {
+              "cluster_id": "17193519525117484670",
+              "member_id": "9419852838338823221",
+              "revision": "3",
+              "raft_term": "3"
+            }
+          }
+        },
+        "wal_restart": {
+          "node": "n1",
+          "value": "acknowledged-before-crash",
+          "after_crash_value": "committed"
+        },
+        "one_unreachable": {
+          "outcome": "ok",
+          "duration_ms": 13.268,
+          "response": {
+            "header": {
+              "cluster_id": "17193519525117484670",
+              "member_id": "9419852838338823221",
+              "revision": "4",
+              "raft_term": "3"
+            }
+          }
+        },
+        "two_unreachable_write": {
+          "outcome": "unknown",
+          "duration_ms": 702.506
+        },
+        "two_unreachable_linearizable_read": {
+          "outcome": "unknown",
+          "duration_ms": 701.85
+        },
+        "unknown_write_after_recovery": "maybe-committed",
+        "conditions": {
+          "nodes": 3,
+          "quorum": 2,
+          "faults": [
+            "leader SIGKILL and same-data-dir restart",
+            "one follower SIGSTOP",
+            "two followers SIGSTOP"
+          ],
+          "election_timeout_ms": 1000,
+          "client_deadline_ms": 700
+        },
+        "assertions_passed": true
+      },
+      "retry": {
+        "conditions": {
+          "response_delay_after_commit_ms": 800,
+          "client_deadline_ms": 150,
+          "effect": "etcd CAS counter plus durable operation-result key in one Txn",
+          "dedup_retention": "no expiry in this bounded experiment"
+        },
+        "cases": [
+          {
+            "dedup": false,
+            "first_client": {
+              "outcome": "unknown",
+              "duration_ms": 151.713
+            },
+            "commits_before_delayed_response": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 6
+              }
+            ],
+            "retry_response": {
+              "amount": 1,
+              "value": 2,
+              "replayed": false
+            },
+            "final_counter": 2,
+            "commits": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 6
+              },
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 2,
+                "revision": 7
+              }
+            ]
+          },
+          {
+            "dedup": true,
+            "first_client": {
+              "outcome": "unknown",
+              "duration_ms": 151.561
+            },
+            "commits_before_delayed_response": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 8
+              }
+            ],
+            "retry_response": {
+              "amount": 1,
+              "value": 1,
+              "replayed": true
+            },
+            "final_counter": 1,
+            "commits": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 8
+              }
+            ],
+            "concurrent_retries": [
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              }
+            ],
+            "changed_payload": {
+              "error": "id-conflict"
+            }
+          }
+        ],
+        "assertions_passed": true
+      },
+      "fencing": {
+        "conditions": {
+          "fault": "SIGSTOP owned worker A; no lease keepalive",
+          "sink": "HTTP plus SQLite BEGIN IMMEDIATE; token check and write atomic"
+        },
+        "A": {
+          "owner": "A",
+          "token": 9,
+          "lease": "136130354206351129",
+          "requested_ttl_seconds": 2,
+          "granted_ttl_seconds": 2
+        },
+        "B": {
+          "owner": "B",
+          "token": 11,
+          "lease": "136130354206351154",
+          "requested_ttl_seconds": 2,
+          "granted_ttl_seconds": 2
+        },
+        "observed_key_absence_after_ms": 2063.627,
+        "B_writes": {
+          "plain": {
+            "accepted": true,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          },
+          "fenced": {
+            "accepted": true,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          }
+        },
+        "A_late_writes": {
+          "plain": {
+            "accepted": true,
+            "stored_token": 9,
+            "stored_value": "A-late"
+          },
+          "fenced": {
+            "accepted": false,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          }
+        },
+        "assertions_passed": true
+      }
+    },
+    {
+      "repeat": 2,
+      "quorum": {
+        "before": {
+          "leader": "n1",
+          "revision": 2,
+          "term": 2
+        },
+        "new_leader": "n3",
+        "committed_write_survived": "acknowledged-before-crash",
+        "failover_write": {
+          "outcome": "ok",
+          "duration_ms": 10.696,
+          "response": {
+            "header": {
+              "cluster_id": "4613693674493055459",
+              "member_id": "10308100773522122874",
+              "revision": "3",
+              "raft_term": "3"
+            }
+          }
+        },
+        "wal_restart": {
+          "node": "n1",
+          "value": "acknowledged-before-crash",
+          "after_crash_value": "committed"
+        },
+        "one_unreachable": {
+          "outcome": "ok",
+          "duration_ms": 16.954,
+          "response": {
+            "header": {
+              "cluster_id": "4613693674493055459",
+              "member_id": "10308100773522122874",
+              "revision": "4",
+              "raft_term": "3"
+            }
+          }
+        },
+        "two_unreachable_write": {
+          "outcome": "unknown",
+          "duration_ms": 702.975
+        },
+        "two_unreachable_linearizable_read": {
+          "outcome": "unknown",
+          "duration_ms": 702.011
+        },
+        "unknown_write_after_recovery": "maybe-committed",
+        "conditions": {
+          "nodes": 3,
+          "quorum": 2,
+          "faults": [
+            "leader SIGKILL and same-data-dir restart",
+            "one follower SIGSTOP",
+            "two followers SIGSTOP"
+          ],
+          "election_timeout_ms": 1000,
+          "client_deadline_ms": 700
+        },
+        "assertions_passed": true
+      },
+      "retry": {
+        "conditions": {
+          "response_delay_after_commit_ms": 800,
+          "client_deadline_ms": 150,
+          "effect": "etcd CAS counter plus durable operation-result key in one Txn",
+          "dedup_retention": "no expiry in this bounded experiment"
+        },
+        "cases": [
+          {
+            "dedup": false,
+            "first_client": {
+              "outcome": "unknown",
+              "duration_ms": 151.176
+            },
+            "commits_before_delayed_response": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 6
+              }
+            ],
+            "retry_response": {
+              "amount": 1,
+              "value": 2,
+              "replayed": false
+            },
+            "final_counter": 2,
+            "commits": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 6
+              },
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 2,
+                "revision": 7
+              }
+            ]
+          },
+          {
+            "dedup": true,
+            "first_client": {
+              "outcome": "unknown",
+              "duration_ms": 152.061
+            },
+            "commits_before_delayed_response": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 8
+              }
+            ],
+            "retry_response": {
+              "amount": 1,
+              "value": 1,
+              "replayed": true
+            },
+            "final_counter": 1,
+            "commits": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 8
+              }
+            ],
+            "concurrent_retries": [
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              }
+            ],
+            "changed_payload": {
+              "error": "id-conflict"
+            }
+          }
+        ],
+        "assertions_passed": true
+      },
+      "fencing": {
+        "conditions": {
+          "fault": "SIGSTOP owned worker A; no lease keepalive",
+          "sink": "HTTP plus SQLite BEGIN IMMEDIATE; token check and write atomic"
+        },
+        "A": {
+          "owner": "A",
+          "token": 9,
+          "lease": "4664218304555072282",
+          "requested_ttl_seconds": 2,
+          "granted_ttl_seconds": 2
+        },
+        "B": {
+          "owner": "B",
+          "token": 11,
+          "lease": "4664218304555072308",
+          "requested_ttl_seconds": 2,
+          "granted_ttl_seconds": 2
+        },
+        "observed_key_absence_after_ms": 2186.343,
+        "B_writes": {
+          "plain": {
+            "accepted": true,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          },
+          "fenced": {
+            "accepted": true,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          }
+        },
+        "A_late_writes": {
+          "plain": {
+            "accepted": true,
+            "stored_token": 9,
+            "stored_value": "A-late"
+          },
+          "fenced": {
+            "accepted": false,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          }
+        },
+        "assertions_passed": true
+      }
+    },
+    {
+      "repeat": 3,
+      "quorum": {
+        "before": {
+          "leader": "n1",
+          "revision": 2,
+          "term": 2
+        },
+        "new_leader": "n3",
+        "committed_write_survived": "acknowledged-before-crash",
+        "failover_write": {
+          "outcome": "ok",
+          "duration_ms": 12.79,
+          "response": {
+            "header": {
+              "cluster_id": "10587831175002086049",
+              "member_id": "15120877559436342554",
+              "revision": "3",
+              "raft_term": "3"
+            }
+          }
+        },
+        "wal_restart": {
+          "node": "n1",
+          "value": "acknowledged-before-crash",
+          "after_crash_value": "committed"
+        },
+        "one_unreachable": {
+          "outcome": "ok",
+          "duration_ms": 11.273,
+          "response": {
+            "header": {
+              "cluster_id": "10587831175002086049",
+              "member_id": "15120877559436342554",
+              "revision": "4",
+              "raft_term": "3"
+            }
+          }
+        },
+        "two_unreachable_write": {
+          "outcome": "unknown",
+          "duration_ms": 702.407
+        },
+        "two_unreachable_linearizable_read": {
+          "outcome": "unknown",
+          "duration_ms": 702.367
+        },
+        "unknown_write_after_recovery": "maybe-committed",
+        "conditions": {
+          "nodes": 3,
+          "quorum": 2,
+          "faults": [
+            "leader SIGKILL and same-data-dir restart",
+            "one follower SIGSTOP",
+            "two followers SIGSTOP"
+          ],
+          "election_timeout_ms": 1000,
+          "client_deadline_ms": 700
+        },
+        "assertions_passed": true
+      },
+      "retry": {
+        "conditions": {
+          "response_delay_after_commit_ms": 800,
+          "client_deadline_ms": 150,
+          "effect": "etcd CAS counter plus durable operation-result key in one Txn",
+          "dedup_retention": "no expiry in this bounded experiment"
+        },
+        "cases": [
+          {
+            "dedup": false,
+            "first_client": {
+              "outcome": "unknown",
+              "duration_ms": 151.671
+            },
+            "commits_before_delayed_response": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 6
+              }
+            ],
+            "retry_response": {
+              "amount": 1,
+              "value": 2,
+              "replayed": false
+            },
+            "final_counter": 2,
+            "commits": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 6
+              },
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 2,
+                "revision": 7
+              }
+            ]
+          },
+          {
+            "dedup": true,
+            "first_client": {
+              "outcome": "unknown",
+              "duration_ms": 152.451
+            },
+            "commits_before_delayed_response": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 8
+              }
+            ],
+            "retry_response": {
+              "amount": 1,
+              "value": 1,
+              "replayed": true
+            },
+            "final_counter": 1,
+            "commits": [
+              {
+                "kind": "commit",
+                "id": "synthetic-op-1",
+                "value": 1,
+                "revision": 8
+              }
+            ],
+            "concurrent_retries": [
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              },
+              {
+                "amount": 1,
+                "value": 1,
+                "replayed": true
+              }
+            ],
+            "changed_payload": {
+              "error": "id-conflict"
+            }
+          }
+        ],
+        "assertions_passed": true
+      },
+      "fencing": {
+        "conditions": {
+          "fault": "SIGSTOP owned worker A; no lease keepalive",
+          "sink": "HTTP plus SQLite BEGIN IMMEDIATE; token check and write atomic"
+        },
+        "A": {
+          "owner": "A",
+          "token": 9,
+          "lease": "7099539803060749087",
+          "requested_ttl_seconds": 2,
+          "granted_ttl_seconds": 2
+        },
+        "B": {
+          "owner": "B",
+          "token": 11,
+          "lease": "7099539803060749113",
+          "requested_ttl_seconds": 2,
+          "granted_ttl_seconds": 2
+        },
+        "observed_key_absence_after_ms": 2181.863,
+        "B_writes": {
+          "plain": {
+            "accepted": true,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          },
+          "fenced": {
+            "accepted": true,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          }
+        },
+        "A_late_writes": {
+          "plain": {
+            "accepted": true,
+            "stored_token": 9,
+            "stored_value": "A-late"
+          },
+          "fenced": {
+            "accepted": false,
+            "stored_token": 11,
+            "stored_value": "B-current"
+          }
+        },
+        "assertions_passed": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,607 @@
+<!doctype html><html lang="en-US"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Real experiment evidence · Distributed Systems Lab</title><meta name="description" content="A foundation-first course on delay, failure and concurrency. Seven chapters, real etcd experiments, bounded history checks and reproducible evidence."><meta name="color-scheme" content="light"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-systems-lab/en/evidence.html"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/distributed-systems-lab/en/evidence.html"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/distributed-systems-lab/zh/evidence.html"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/distributed-systems-lab/en/evidence.html"><link rel="stylesheet" href="../assets/style.css"><link rel="icon" href="../assets/icon.svg" type="image/svg+xml"></head><body><a class="skip" href="#main">Skip to content</a><header class="top"><a class="brand" href="index.html"><em>DS / LAB</em> Distributed Systems</a><nav aria-label="Main"><a class="home-link" href="https://lynnlee1229.github.io/websites/#learning-labs">All Labs</a><a href="evidence.html">Evidence</a><a href="reproduce.html">Run locally</a><a class="lang" lang="zh-CN" href="../zh/evidence.html">中文 ↗</a></nav></header><main id="main" class="shell reading"><aside class="side"><p class="side-label">LEARNING PATH</p><nav aria-label="Chapters"><a class="" href="01-assumptions.html">01 · System &amp; failure assumptions</a><a class="" href="02-time.html">02 · Time, causality &amp; histories</a><a class="" href="03-consistency.html">03 · Replication &amp; consistency</a><a class="" href="04-consensus.html">04 · State machines, Raft &amp; quorum</a><a class="" href="05-retries.html">05 · RPC, unknown outcomes &amp; retries</a><a class="" href="06-fencing.html">06 · Leases, locks &amp; fencing</a><a class="" href="07-recovery.html">07 · Recovery &amp; evidence</a></nav><div class="aux"><a href="checker.html">History workbench</a><a href="evidence.html">Real experiment evidence</a><a href="reproduce.html">Reproduce the real experiments</a><a href="references.html">Sources &amp; scope</a></div></aside><article class="article"><div class="eyebrow">METHODS & TOOLS / FIRST EDITION · ETCD 3.6.6</div><h1>Real experiment evidence</h1><p class="lede">Recorded results from real processes. All three repetitions remain inspectable.</p><p class="evidence-badge">REAL PROCESS EVIDENCE / 2026-11-13T17:39:41.195190+00:00</p><div class="wide-note"><strong>Topology and conditions</strong><p>etcd 3.6.6 · Darwin arm64 · Python 3.11.2</p><p>Three loopback voting processes, separate WAL directories, one host. Actual process kill/pause and delayed HTTP responses. No packet partition, storage destruction or multi-host performance measurement. Durations use the orchestrator’s monotonic clock and include request round trips.</p></div><div class="actions"><a class="btn" href="../results/experiments.json" download>Download evidence JSON</a><a class="btn secondary" href="../results/index.json">Hash manifest</a></div><p class="hash">SHA-256: df927af381c415e574f1a48755345be7a1bcaee243fdbc3f73002a05ab6bbbf6</p><table><thead><tr><th>Repeat</th><th>Leader</th><th>1 down</th><th>2 down write/read</th><th>plain / dedup</th><th>Fence tokens</th></tr></thead><tbody><tr><td>1</td><td>n1 → n2</td><td>ok</td><td>unknown / unknown</td><td>2 / 1</td><td>9 &lt; 11</td></tr><tr><td>2</td><td>n1 → n3</td><td>ok</td><td>unknown / unknown</td><td>2 / 1</td><td>9 &lt; 11</td></tr><tr><td>3</td><td>n1 → n3</td><td>ok</td><td>unknown / unknown</td><td>2 / 1</td><td>9 &lt; 11</td></tr></tbody></table><section id="quorum"><h2>A · Leader crash and quorum loss</h2><p>The acknowledged pre-crash value survives and the restarted member catches up. One unavailable follower still permits a successful write. With two followers paused, both write and default read return no success inside their deadlines. Inspect the eventual value of the unknown write separately.</p><div class="report"><span class="evidence-badge">REAL RUN / 01</span><p>n1 → n2; 1 down: ok; 2 down: unknown; reconciled = maybe-committed</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;before&quot;: {
+    &quot;leader&quot;: &quot;n1&quot;,
+    &quot;revision&quot;: 2,
+    &quot;term&quot;: 2
+  },
+  &quot;new_leader&quot;: &quot;n2&quot;,
+  &quot;committed_write_survived&quot;: &quot;acknowledged-before-crash&quot;,
+  &quot;failover_write&quot;: {
+    &quot;outcome&quot;: &quot;ok&quot;,
+    &quot;duration_ms&quot;: 11.609,
+    &quot;response&quot;: {
+      &quot;header&quot;: {
+        &quot;cluster_id&quot;: &quot;17193519525117484670&quot;,
+        &quot;member_id&quot;: &quot;9419852838338823221&quot;,
+        &quot;revision&quot;: &quot;3&quot;,
+        &quot;raft_term&quot;: &quot;3&quot;
+      }
+    }
+  },
+  &quot;wal_restart&quot;: {
+    &quot;node&quot;: &quot;n1&quot;,
+    &quot;value&quot;: &quot;acknowledged-before-crash&quot;,
+    &quot;after_crash_value&quot;: &quot;committed&quot;
+  },
+  &quot;one_unreachable&quot;: {
+    &quot;outcome&quot;: &quot;ok&quot;,
+    &quot;duration_ms&quot;: 13.268,
+    &quot;response&quot;: {
+      &quot;header&quot;: {
+        &quot;cluster_id&quot;: &quot;17193519525117484670&quot;,
+        &quot;member_id&quot;: &quot;9419852838338823221&quot;,
+        &quot;revision&quot;: &quot;4&quot;,
+        &quot;raft_term&quot;: &quot;3&quot;
+      }
+    }
+  },
+  &quot;two_unreachable_write&quot;: {
+    &quot;outcome&quot;: &quot;unknown&quot;,
+    &quot;duration_ms&quot;: 702.506
+  },
+  &quot;two_unreachable_linearizable_read&quot;: {
+    &quot;outcome&quot;: &quot;unknown&quot;,
+    &quot;duration_ms&quot;: 701.85
+  },
+  &quot;unknown_write_after_recovery&quot;: &quot;maybe-committed&quot;,
+  &quot;conditions&quot;: {
+    &quot;nodes&quot;: 3,
+    &quot;quorum&quot;: 2,
+    &quot;faults&quot;: [
+      &quot;leader SIGKILL and same-data-dir restart&quot;,
+      &quot;one follower SIGSTOP&quot;,
+      &quot;two followers SIGSTOP&quot;
+    ],
+    &quot;election_timeout_ms&quot;: 1000,
+    &quot;client_deadline_ms&quot;: 700
+  },
+  &quot;assertions_passed&quot;: true
+}</pre></details></div><div class="report"><span class="evidence-badge">REAL RUN / 02</span><p>n1 → n3; 1 down: ok; 2 down: unknown; reconciled = maybe-committed</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;before&quot;: {
+    &quot;leader&quot;: &quot;n1&quot;,
+    &quot;revision&quot;: 2,
+    &quot;term&quot;: 2
+  },
+  &quot;new_leader&quot;: &quot;n3&quot;,
+  &quot;committed_write_survived&quot;: &quot;acknowledged-before-crash&quot;,
+  &quot;failover_write&quot;: {
+    &quot;outcome&quot;: &quot;ok&quot;,
+    &quot;duration_ms&quot;: 10.696,
+    &quot;response&quot;: {
+      &quot;header&quot;: {
+        &quot;cluster_id&quot;: &quot;4613693674493055459&quot;,
+        &quot;member_id&quot;: &quot;10308100773522122874&quot;,
+        &quot;revision&quot;: &quot;3&quot;,
+        &quot;raft_term&quot;: &quot;3&quot;
+      }
+    }
+  },
+  &quot;wal_restart&quot;: {
+    &quot;node&quot;: &quot;n1&quot;,
+    &quot;value&quot;: &quot;acknowledged-before-crash&quot;,
+    &quot;after_crash_value&quot;: &quot;committed&quot;
+  },
+  &quot;one_unreachable&quot;: {
+    &quot;outcome&quot;: &quot;ok&quot;,
+    &quot;duration_ms&quot;: 16.954,
+    &quot;response&quot;: {
+      &quot;header&quot;: {
+        &quot;cluster_id&quot;: &quot;4613693674493055459&quot;,
+        &quot;member_id&quot;: &quot;10308100773522122874&quot;,
+        &quot;revision&quot;: &quot;4&quot;,
+        &quot;raft_term&quot;: &quot;3&quot;
+      }
+    }
+  },
+  &quot;two_unreachable_write&quot;: {
+    &quot;outcome&quot;: &quot;unknown&quot;,
+    &quot;duration_ms&quot;: 702.975
+  },
+  &quot;two_unreachable_linearizable_read&quot;: {
+    &quot;outcome&quot;: &quot;unknown&quot;,
+    &quot;duration_ms&quot;: 702.011
+  },
+  &quot;unknown_write_after_recovery&quot;: &quot;maybe-committed&quot;,
+  &quot;conditions&quot;: {
+    &quot;nodes&quot;: 3,
+    &quot;quorum&quot;: 2,
+    &quot;faults&quot;: [
+      &quot;leader SIGKILL and same-data-dir restart&quot;,
+      &quot;one follower SIGSTOP&quot;,
+      &quot;two followers SIGSTOP&quot;
+    ],
+    &quot;election_timeout_ms&quot;: 1000,
+    &quot;client_deadline_ms&quot;: 700
+  },
+  &quot;assertions_passed&quot;: true
+}</pre></details></div><div class="report"><span class="evidence-badge">REAL RUN / 03</span><p>n1 → n3; 1 down: ok; 2 down: unknown; reconciled = maybe-committed</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;before&quot;: {
+    &quot;leader&quot;: &quot;n1&quot;,
+    &quot;revision&quot;: 2,
+    &quot;term&quot;: 2
+  },
+  &quot;new_leader&quot;: &quot;n3&quot;,
+  &quot;committed_write_survived&quot;: &quot;acknowledged-before-crash&quot;,
+  &quot;failover_write&quot;: {
+    &quot;outcome&quot;: &quot;ok&quot;,
+    &quot;duration_ms&quot;: 12.79,
+    &quot;response&quot;: {
+      &quot;header&quot;: {
+        &quot;cluster_id&quot;: &quot;10587831175002086049&quot;,
+        &quot;member_id&quot;: &quot;15120877559436342554&quot;,
+        &quot;revision&quot;: &quot;3&quot;,
+        &quot;raft_term&quot;: &quot;3&quot;
+      }
+    }
+  },
+  &quot;wal_restart&quot;: {
+    &quot;node&quot;: &quot;n1&quot;,
+    &quot;value&quot;: &quot;acknowledged-before-crash&quot;,
+    &quot;after_crash_value&quot;: &quot;committed&quot;
+  },
+  &quot;one_unreachable&quot;: {
+    &quot;outcome&quot;: &quot;ok&quot;,
+    &quot;duration_ms&quot;: 11.273,
+    &quot;response&quot;: {
+      &quot;header&quot;: {
+        &quot;cluster_id&quot;: &quot;10587831175002086049&quot;,
+        &quot;member_id&quot;: &quot;15120877559436342554&quot;,
+        &quot;revision&quot;: &quot;4&quot;,
+        &quot;raft_term&quot;: &quot;3&quot;
+      }
+    }
+  },
+  &quot;two_unreachable_write&quot;: {
+    &quot;outcome&quot;: &quot;unknown&quot;,
+    &quot;duration_ms&quot;: 702.407
+  },
+  &quot;two_unreachable_linearizable_read&quot;: {
+    &quot;outcome&quot;: &quot;unknown&quot;,
+    &quot;duration_ms&quot;: 702.367
+  },
+  &quot;unknown_write_after_recovery&quot;: &quot;maybe-committed&quot;,
+  &quot;conditions&quot;: {
+    &quot;nodes&quot;: 3,
+    &quot;quorum&quot;: 2,
+    &quot;faults&quot;: [
+      &quot;leader SIGKILL and same-data-dir restart&quot;,
+      &quot;one follower SIGSTOP&quot;,
+      &quot;two followers SIGSTOP&quot;
+    ],
+    &quot;election_timeout_ms&quot;: 1000,
+    &quot;client_deadline_ms&quot;: 700
+  },
+  &quot;assertions_passed&quot;: true
+}</pre></details></div></section><section id="retry"><h2>B · Timeout after commit and deduplication</h2><p>Each first request commits, then its response is delayed. Both callers time out. A retry causes two effects without deduplication, one with the atomic operation key. Concurrent replays and changed-payload conflicts are included.</p><div class="report"><span class="evidence-badge">REAL RUN / 01</span><p>2 → 1 (plain / dedup)</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;conditions&quot;: {
+    &quot;response_delay_after_commit_ms&quot;: 800,
+    &quot;client_deadline_ms&quot;: 150,
+    &quot;effect&quot;: &quot;etcd CAS counter plus durable operation-result key in one Txn&quot;,
+    &quot;dedup_retention&quot;: &quot;no expiry in this bounded experiment&quot;
+  },
+  &quot;cases&quot;: [
+    {
+      &quot;dedup&quot;: false,
+      &quot;first_client&quot;: {
+        &quot;outcome&quot;: &quot;unknown&quot;,
+        &quot;duration_ms&quot;: 151.713
+      },
+      &quot;commits_before_delayed_response&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 6
+        }
+      ],
+      &quot;retry_response&quot;: {
+        &quot;amount&quot;: 1,
+        &quot;value&quot;: 2,
+        &quot;replayed&quot;: false
+      },
+      &quot;final_counter&quot;: 2,
+      &quot;commits&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 6
+        },
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 2,
+          &quot;revision&quot;: 7
+        }
+      ]
+    },
+    {
+      &quot;dedup&quot;: true,
+      &quot;first_client&quot;: {
+        &quot;outcome&quot;: &quot;unknown&quot;,
+        &quot;duration_ms&quot;: 151.561
+      },
+      &quot;commits_before_delayed_response&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 8
+        }
+      ],
+      &quot;retry_response&quot;: {
+        &quot;amount&quot;: 1,
+        &quot;value&quot;: 1,
+        &quot;replayed&quot;: true
+      },
+      &quot;final_counter&quot;: 1,
+      &quot;commits&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 8
+        }
+      ],
+      &quot;concurrent_retries&quot;: [
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        }
+      ],
+      &quot;changed_payload&quot;: {
+        &quot;error&quot;: &quot;id-conflict&quot;
+      }
+    }
+  ],
+  &quot;assertions_passed&quot;: true
+}</pre></details></div><div class="report"><span class="evidence-badge">REAL RUN / 02</span><p>2 → 1 (plain / dedup)</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;conditions&quot;: {
+    &quot;response_delay_after_commit_ms&quot;: 800,
+    &quot;client_deadline_ms&quot;: 150,
+    &quot;effect&quot;: &quot;etcd CAS counter plus durable operation-result key in one Txn&quot;,
+    &quot;dedup_retention&quot;: &quot;no expiry in this bounded experiment&quot;
+  },
+  &quot;cases&quot;: [
+    {
+      &quot;dedup&quot;: false,
+      &quot;first_client&quot;: {
+        &quot;outcome&quot;: &quot;unknown&quot;,
+        &quot;duration_ms&quot;: 151.176
+      },
+      &quot;commits_before_delayed_response&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 6
+        }
+      ],
+      &quot;retry_response&quot;: {
+        &quot;amount&quot;: 1,
+        &quot;value&quot;: 2,
+        &quot;replayed&quot;: false
+      },
+      &quot;final_counter&quot;: 2,
+      &quot;commits&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 6
+        },
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 2,
+          &quot;revision&quot;: 7
+        }
+      ]
+    },
+    {
+      &quot;dedup&quot;: true,
+      &quot;first_client&quot;: {
+        &quot;outcome&quot;: &quot;unknown&quot;,
+        &quot;duration_ms&quot;: 152.061
+      },
+      &quot;commits_before_delayed_response&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 8
+        }
+      ],
+      &quot;retry_response&quot;: {
+        &quot;amount&quot;: 1,
+        &quot;value&quot;: 1,
+        &quot;replayed&quot;: true
+      },
+      &quot;final_counter&quot;: 1,
+      &quot;commits&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 8
+        }
+      ],
+      &quot;concurrent_retries&quot;: [
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        }
+      ],
+      &quot;changed_payload&quot;: {
+        &quot;error&quot;: &quot;id-conflict&quot;
+      }
+    }
+  ],
+  &quot;assertions_passed&quot;: true
+}</pre></details></div><div class="report"><span class="evidence-badge">REAL RUN / 03</span><p>2 → 1 (plain / dedup)</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;conditions&quot;: {
+    &quot;response_delay_after_commit_ms&quot;: 800,
+    &quot;client_deadline_ms&quot;: 150,
+    &quot;effect&quot;: &quot;etcd CAS counter plus durable operation-result key in one Txn&quot;,
+    &quot;dedup_retention&quot;: &quot;no expiry in this bounded experiment&quot;
+  },
+  &quot;cases&quot;: [
+    {
+      &quot;dedup&quot;: false,
+      &quot;first_client&quot;: {
+        &quot;outcome&quot;: &quot;unknown&quot;,
+        &quot;duration_ms&quot;: 151.671
+      },
+      &quot;commits_before_delayed_response&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 6
+        }
+      ],
+      &quot;retry_response&quot;: {
+        &quot;amount&quot;: 1,
+        &quot;value&quot;: 2,
+        &quot;replayed&quot;: false
+      },
+      &quot;final_counter&quot;: 2,
+      &quot;commits&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 6
+        },
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 2,
+          &quot;revision&quot;: 7
+        }
+      ]
+    },
+    {
+      &quot;dedup&quot;: true,
+      &quot;first_client&quot;: {
+        &quot;outcome&quot;: &quot;unknown&quot;,
+        &quot;duration_ms&quot;: 152.451
+      },
+      &quot;commits_before_delayed_response&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 8
+        }
+      ],
+      &quot;retry_response&quot;: {
+        &quot;amount&quot;: 1,
+        &quot;value&quot;: 1,
+        &quot;replayed&quot;: true
+      },
+      &quot;final_counter&quot;: 1,
+      &quot;commits&quot;: [
+        {
+          &quot;kind&quot;: &quot;commit&quot;,
+          &quot;id&quot;: &quot;synthetic-op-1&quot;,
+          &quot;value&quot;: 1,
+          &quot;revision&quot;: 8
+        }
+      ],
+      &quot;concurrent_retries&quot;: [
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        },
+        {
+          &quot;amount&quot;: 1,
+          &quot;value&quot;: 1,
+          &quot;replayed&quot;: true
+        }
+      ],
+      &quot;changed_payload&quot;: {
+        &quot;error&quot;: &quot;id-conflict&quot;
+      }
+    }
+  ],
+  &quot;assertions_passed&quot;: true
+}</pre></details></div></section><section id="fencing"><h2>C · Lease expiry and stale writer</h2><p>A is paused until the leased lock is observed absent. B obtains a larger create_revision and writes first. A resumes: plain mode accepts its stale value; fenced mode rejects it and retains B-current.</p><div class="report"><span class="evidence-badge">REAL RUN / 01</span><p>tokens 9 &lt; 11; plain = A-late; fenced = B-current</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;conditions&quot;: {
+    &quot;fault&quot;: &quot;SIGSTOP owned worker A; no lease keepalive&quot;,
+    &quot;sink&quot;: &quot;HTTP plus SQLite BEGIN IMMEDIATE; token check and write atomic&quot;
+  },
+  &quot;A&quot;: {
+    &quot;owner&quot;: &quot;A&quot;,
+    &quot;token&quot;: 9,
+    &quot;lease&quot;: &quot;136130354206351129&quot;,
+    &quot;requested_ttl_seconds&quot;: 2,
+    &quot;granted_ttl_seconds&quot;: 2
+  },
+  &quot;B&quot;: {
+    &quot;owner&quot;: &quot;B&quot;,
+    &quot;token&quot;: 11,
+    &quot;lease&quot;: &quot;136130354206351154&quot;,
+    &quot;requested_ttl_seconds&quot;: 2,
+    &quot;granted_ttl_seconds&quot;: 2
+  },
+  &quot;observed_key_absence_after_ms&quot;: 2063.627,
+  &quot;B_writes&quot;: {
+    &quot;plain&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    },
+    &quot;fenced&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    }
+  },
+  &quot;A_late_writes&quot;: {
+    &quot;plain&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 9,
+      &quot;stored_value&quot;: &quot;A-late&quot;
+    },
+    &quot;fenced&quot;: {
+      &quot;accepted&quot;: false,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    }
+  },
+  &quot;assertions_passed&quot;: true
+}</pre></details></div><div class="report"><span class="evidence-badge">REAL RUN / 02</span><p>tokens 9 &lt; 11; plain = A-late; fenced = B-current</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;conditions&quot;: {
+    &quot;fault&quot;: &quot;SIGSTOP owned worker A; no lease keepalive&quot;,
+    &quot;sink&quot;: &quot;HTTP plus SQLite BEGIN IMMEDIATE; token check and write atomic&quot;
+  },
+  &quot;A&quot;: {
+    &quot;owner&quot;: &quot;A&quot;,
+    &quot;token&quot;: 9,
+    &quot;lease&quot;: &quot;4664218304555072282&quot;,
+    &quot;requested_ttl_seconds&quot;: 2,
+    &quot;granted_ttl_seconds&quot;: 2
+  },
+  &quot;B&quot;: {
+    &quot;owner&quot;: &quot;B&quot;,
+    &quot;token&quot;: 11,
+    &quot;lease&quot;: &quot;4664218304555072308&quot;,
+    &quot;requested_ttl_seconds&quot;: 2,
+    &quot;granted_ttl_seconds&quot;: 2
+  },
+  &quot;observed_key_absence_after_ms&quot;: 2186.343,
+  &quot;B_writes&quot;: {
+    &quot;plain&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    },
+    &quot;fenced&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    }
+  },
+  &quot;A_late_writes&quot;: {
+    &quot;plain&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 9,
+      &quot;stored_value&quot;: &quot;A-late&quot;
+    },
+    &quot;fenced&quot;: {
+      &quot;accepted&quot;: false,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    }
+  },
+  &quot;assertions_passed&quot;: true
+}</pre></details></div><div class="report"><span class="evidence-badge">REAL RUN / 03</span><p>tokens 9 &lt; 11; plain = A-late; fenced = B-current</p><details><summary>Inspect complete exported record</summary><pre>{
+  &quot;conditions&quot;: {
+    &quot;fault&quot;: &quot;SIGSTOP owned worker A; no lease keepalive&quot;,
+    &quot;sink&quot;: &quot;HTTP plus SQLite BEGIN IMMEDIATE; token check and write atomic&quot;
+  },
+  &quot;A&quot;: {
+    &quot;owner&quot;: &quot;A&quot;,
+    &quot;token&quot;: 9,
+    &quot;lease&quot;: &quot;7099539803060749087&quot;,
+    &quot;requested_ttl_seconds&quot;: 2,
+    &quot;granted_ttl_seconds&quot;: 2
+  },
+  &quot;B&quot;: {
+    &quot;owner&quot;: &quot;B&quot;,
+    &quot;token&quot;: 11,
+    &quot;lease&quot;: &quot;7099539803060749113&quot;,
+    &quot;requested_ttl_seconds&quot;: 2,
+    &quot;granted_ttl_seconds&quot;: 2
+  },
+  &quot;observed_key_absence_after_ms&quot;: 2181.863,
+  &quot;B_writes&quot;: {
+    &quot;plain&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    },
+    &quot;fenced&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    }
+  },
+  &quot;A_late_writes&quot;: {
+    &quot;plain&quot;: {
+      &quot;accepted&quot;: true,
+      &quot;stored_token&quot;: 9,
+      &quot;stored_value&quot;: &quot;A-late&quot;
+    },
+    &quot;fenced&quot;: {
+      &quot;accepted&quot;: false,
+      &quot;stored_token&quot;: 11,
+      &quot;stored_value&quot;: &quot;B-current&quot;
+    }
+  },
+  &quot;assertions_passed&quot;: true
+}</pre></details></div></section><h2>What remains unmeasured</h2><p>These checks establish the asserted outcomes in this bounded schedule, not universal correctness or production capacity. Recovery uses the same durable directory; backup restore is not executed. The history workbench uses synthetic fixtures and does not certify these records. Raw logs remain local; this report contains only selected synthetic observations.</p></article></main><footer class="footer"><span>Distributed Systems Lab · Original course · MIT licensed · 2026-11-14</span><span><a href="references.html">Sources & boundaries</a> · <a href="https://github.com/lynnlee1229/distributed-systems-lab">Companion source</a></span></footer><script type="module" src="../assets/app.mjs"></script></body></html>
