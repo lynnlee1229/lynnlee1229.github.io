@@ -1,0 +1,269 @@
+{
+  "schema": 1,
+  "kind": "real-loopback-peer-partitions",
+  "recorded_at": "2026-11-13T18:07:17.573823+00:00",
+  "runtime": {
+    "etcd": "3.6.6",
+    "platform": "Darwin arm64",
+    "python": "3.11.2"
+  },
+  "method": "Three live etcd voters; owned plaintext HTTP/1 TCP peer proxies classify X-Server-From; cut existing cross-group connections and reject reconnects; direct client ports remain reachable.",
+  "independent_oracle": "Majority write success and exact returned values; stale serializable read versus unknown linearizable read; all subprocesses remain alive; healed replicas agree. Proxy counters corroborate scope, not correctness.",
+  "limits": [
+    "single host, synthetic data",
+    "connection close/reject, not arbitrary packet loss, latency distribution or TLS",
+    "not a full Raft implementation or production network chaos matrix",
+    "timed-out writes remain unknown and may apply after healing"
+  ],
+  "repetitions": [
+    {
+      "initial_leader": "n2",
+      "majority_leader": "n3",
+      "groups_during_minority_cut": [
+        [
+          "n2"
+        ],
+        [
+          "n1",
+          "n3"
+        ]
+      ],
+      "majority_write": {
+        "outcome": "ok",
+        "duration_ms": 14.676,
+        "response": {
+          "header": {
+            "cluster_id": "12925061331799992745",
+            "member_id": "4438762448107083495",
+            "revision": "3",
+            "raft_term": "3"
+          }
+        }
+      },
+      "isolated_serializable_read": "before-cut",
+      "isolated_linearizable_read": {
+        "outcome": "unknown",
+        "duration_ms": 601.887
+      },
+      "isolated_write": {
+        "outcome": "unknown",
+        "duration_ms": 602.415
+      },
+      "all_processes_alive_during_cut": [
+        true,
+        true,
+        true
+      ],
+      "proxy_minority_phase": {
+        "cut_connections": [
+          {
+            "from": "n1",
+            "to": "n2",
+            "count": 57
+          },
+          {
+            "from": "n2",
+            "to": "n1",
+            "count": 72
+          },
+          {
+            "from": "n2",
+            "to": "n3",
+            "count": 71
+          },
+          {
+            "from": "n3",
+            "to": "n2",
+            "count": 71
+          }
+        ],
+        "observed_peer_connections": [],
+        "unclassified_connections_rejected": 4
+      },
+      "healed_values": [
+        "majority-committed",
+        "majority-committed",
+        "majority-committed"
+      ],
+      "isolated_unknown_after_heal": null,
+      "three_singleton_write": {
+        "outcome": "unknown",
+        "duration_ms": 605.861
+      },
+      "all_processes_alive_during_singletons": [
+        true,
+        true,
+        true
+      ],
+      "final_acknowledged_value_preserved": true,
+      "assertions_passed": true,
+      "repeat": 1
+    },
+    {
+      "initial_leader": "n1",
+      "majority_leader": "n3",
+      "groups_during_minority_cut": [
+        [
+          "n1"
+        ],
+        [
+          "n2",
+          "n3"
+        ]
+      ],
+      "majority_write": {
+        "outcome": "ok",
+        "duration_ms": 13.252,
+        "response": {
+          "header": {
+            "cluster_id": "17702344321327505975",
+            "member_id": "15769064079333596798",
+            "revision": "3",
+            "raft_term": "3"
+          }
+        }
+      },
+      "isolated_serializable_read": "before-cut",
+      "isolated_linearizable_read": {
+        "outcome": "unknown",
+        "duration_ms": 601.605
+      },
+      "isolated_write": {
+        "outcome": "unknown",
+        "duration_ms": 602.325
+      },
+      "all_processes_alive_during_cut": [
+        true,
+        true,
+        true
+      ],
+      "proxy_minority_phase": {
+        "cut_connections": [
+          {
+            "from": "n1",
+            "to": "n2",
+            "count": 69
+          },
+          {
+            "from": "n1",
+            "to": "n3",
+            "count": 69
+          },
+          {
+            "from": "n2",
+            "to": "n1",
+            "count": 57
+          },
+          {
+            "from": "n3",
+            "to": "n1",
+            "count": 71
+          }
+        ],
+        "observed_peer_connections": [],
+        "unclassified_connections_rejected": 4
+      },
+      "healed_values": [
+        "majority-committed",
+        "majority-committed",
+        "majority-committed"
+      ],
+      "isolated_unknown_after_heal": null,
+      "three_singleton_write": {
+        "outcome": "unknown",
+        "duration_ms": 602.583
+      },
+      "all_processes_alive_during_singletons": [
+        true,
+        true,
+        true
+      ],
+      "final_acknowledged_value_preserved": true,
+      "assertions_passed": true,
+      "repeat": 2
+    },
+    {
+      "initial_leader": "n2",
+      "majority_leader": "n3",
+      "groups_during_minority_cut": [
+        [
+          "n2"
+        ],
+        [
+          "n1",
+          "n3"
+        ]
+      ],
+      "majority_write": {
+        "outcome": "ok",
+        "duration_ms": 15.606,
+        "response": {
+          "header": {
+            "cluster_id": "7952547343214289856",
+            "member_id": "7206213169483371824",
+            "revision": "3",
+            "raft_term": "3"
+          }
+        }
+      },
+      "isolated_serializable_read": "before-cut",
+      "isolated_linearizable_read": {
+        "outcome": "unknown",
+        "duration_ms": 601.602
+      },
+      "isolated_write": {
+        "outcome": "unknown",
+        "duration_ms": 602.278
+      },
+      "all_processes_alive_during_cut": [
+        true,
+        true,
+        true
+      ],
+      "proxy_minority_phase": {
+        "cut_connections": [
+          {
+            "from": "n1",
+            "to": "n2",
+            "count": 60
+          },
+          {
+            "from": "n2",
+            "to": "n1",
+            "count": 73
+          },
+          {
+            "from": "n2",
+            "to": "n3",
+            "count": 73
+          },
+          {
+            "from": "n3",
+            "to": "n2",
+            "count": 72
+          }
+        ],
+        "observed_peer_connections": [],
+        "unclassified_connections_rejected": 4
+      },
+      "healed_values": [
+        "majority-committed",
+        "majority-committed",
+        "majority-committed"
+      ],
+      "isolated_unknown_after_heal": null,
+      "three_singleton_write": {
+        "outcome": "unknown",
+        "duration_ms": 601.137
+      },
+      "all_processes_alive_during_singletons": [
+        true,
+        true,
+        true
+      ],
+      "final_acknowledged_value_preserved": true,
+      "assertions_passed": true,
+      "repeat": 3
+    }
+  ]
+}

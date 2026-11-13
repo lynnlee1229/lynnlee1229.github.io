@@ -4,6 +4,10 @@
     {
       "file": "experiments.json",
       "sha256": "df927af381c415e574f1a48755345be7a1bcaee243fdbc3f73002a05ab6bbbf6"
+    },
+    {
+      "file": "network.json",
+      "sha256": "2fce068f9e2c1d0926da453d828ee2071098c962a3afb720ec38baf2642dabf1"
     }
   ]
 }

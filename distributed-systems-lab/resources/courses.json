@@ -1,0 +1,199 @@
+{
+  "schema": 1,
+  "verified_on": "2026-11-14",
+  "course": {
+    "id": "mit-6.5840-spring-2026",
+    "school": "Massachusetts Institute of Technology",
+    "number": "6.5840",
+    "former_number": "6.824 (before 2023)",
+    "name": "Distributed Systems",
+    "term": "Spring 2026",
+    "status": "Published official course home, schedule, linked notes and assignment descriptions observed; schedule itself is labelled tentative.",
+    "url": "https://pdos.csail.mit.edu/6.824/",
+    "schedule_url": "https://pdos.csail.mit.edu/6.824/schedule.html",
+    "policy_url": "https://pdos.csail.mit.edu/6.824/general.html",
+    "prerequisites": "6.1910 (6.004) and one of 6.1800 (6.033) or 6.1810, or equivalent; substantial programming experience helpful.",
+    "public_materials": "Home, schedule, selected lecture notes, paper links and lab descriptions are publicly readable without course registration.",
+    "registration_and_fees": "Public reading is separate from MIT enrollment, grading, check-offs and credit. This resource index does not establish enrollment eligibility, tuition, free certification or a public submission service.",
+    "reuse": "No MIT assignment solutions, skeleton code or test harness are copied. These Lab exercises are independent originals, not answers to MIT labs."
+  },
+  "units": [
+    {
+      "unit": "01-assumptions",
+      "title_en": "System and failure assumptions",
+      "title_zh": "系统与故障假设",
+      "course_id": "mit-6.5840-spring-2026",
+      "materials": [
+        {
+          "title": "Lecture 2: Threads and RPC",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-rpc.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        },
+        {
+          "title": "Lecture 6: Fault Tolerance: Raft (1)",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-raft.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        }
+      ],
+      "original_practice_command": "python3 scripts/learning_exercises.py assumptions",
+      "practice_goal_en": "Classify evidence without converting a timeout into an abort.",
+      "practice_goal_zh": "分类观测，不把超时转换成回滚。",
+      "exercise_origin": "Independent Distributed Systems Lab exercise, not an MIT solution",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "unit": "02-time",
+      "title_en": "Time and causal histories",
+      "title_zh": "时间与因果历史",
+      "course_id": "mit-6.5840-spring-2026",
+      "materials": [
+        {
+          "title": "Lecture 8: Consistency and Linearizability",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-linearizability.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        }
+      ],
+      "original_practice_command": "node tests/demo-models.test.mjs",
+      "practice_goal_en": "Trace a transitive causal path and a concurrent pair; logical-clock supplement is Lamport 1978, not a dedicated MIT lecture claim.",
+      "practice_goal_zh": "追踪传递因果与并发对；逻辑时钟补充来自 Lamport 1978，不冒充 MIT 的独立讲次。",
+      "exercise_origin": "Independent Distributed Systems Lab exercise, not an MIT solution",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "unit": "03-consistency",
+      "title_en": "Consistency models",
+      "title_zh": "一致性模型",
+      "course_id": "mit-6.5840-spring-2026",
+      "materials": [
+        {
+          "title": "Lecture 8: Consistency and Linearizability",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-linearizability.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        },
+        {
+          "title": "Lab 2: Key/Value Server",
+          "url": "https://pdos.csail.mit.edu/6.824/labs/lab-kvsrv1.html",
+          "access": "publicly readable; verified 2026-11-14"
+        }
+      ],
+      "original_practice_command": "node tests/checker.test.mjs",
+      "practice_goal_en": "Compare real-time versus client-order constraints with an independent exhaustive oracle.",
+      "practice_goal_zh": "通过独立穷举 oracle 比较真实时间与客户端顺序约束。",
+      "exercise_origin": "Independent Distributed Systems Lab exercise, not an MIT solution",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "unit": "04-consensus",
+      "title_en": "Raft and quorum",
+      "title_zh": "Raft 与多数派",
+      "course_id": "mit-6.5840-spring-2026",
+      "materials": [
+        {
+          "title": "Lecture 6: Fault Tolerance: Raft (1)",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-raft.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        },
+        {
+          "title": "Lecture 7: Fault Tolerance: Raft (2)",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-raft2.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        },
+        {
+          "title": "Lab 3: Raft",
+          "url": "https://pdos.csail.mit.edu/6.824/labs/lab-raft1.html",
+          "access": "publicly readable; verified 2026-11-14"
+        }
+      ],
+      "original_practice_command": "python3 scripts/run_network.py --repeats 3 --out build/my-network.json",
+      "practice_goal_en": "Run real three-voter connection partitions; contrast a majority component and three singletons.",
+      "practice_goal_zh": "运行真实三投票节点连接分区，对照多数派分区与三个孤立节点。",
+      "exercise_origin": "Independent Distributed Systems Lab exercise, not an MIT solution",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "unit": "05-retries",
+      "title_en": "RPC and retry identity",
+      "title_zh": "RPC 与重试身份",
+      "course_id": "mit-6.5840-spring-2026",
+      "materials": [
+        {
+          "title": "Lecture 2: Threads and RPC",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-rpc.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        },
+        {
+          "title": "Lab 2: Key/Value Server",
+          "url": "https://pdos.csail.mit.edu/6.824/labs/lab-kvsrv1.html",
+          "access": "publicly readable; verified 2026-11-14"
+        }
+      ],
+      "original_practice_command": "python3 scripts/run_all.py --repeats 1 --out build/my-retry-study",
+      "practice_goal_en": "Observe commit-before-response timeouts and atomically stored deduplication results.",
+      "practice_goal_zh": "观察先提交后超时，以及原子保存的去重结果。",
+      "exercise_origin": "Independent Distributed Systems Lab exercise, not an MIT solution",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "unit": "06-fencing",
+      "title_en": "Coordination and stale holders",
+      "title_zh": "协调与过期持有者",
+      "course_id": "mit-6.5840-spring-2026",
+      "materials": [
+        {
+          "title": "Lecture 9: Zookeeper",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-zookeeper.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        },
+        {
+          "title": "Lab 2: Key/Value Server, lock section",
+          "url": "https://pdos.csail.mit.edu/6.824/labs/lab-kvsrv1.html",
+          "access": "publicly readable; verified 2026-11-14"
+        }
+      ],
+      "original_practice_command": "python3 scripts/run_all.py --repeats 1 --out build/my-fence-study",
+      "practice_goal_en": "Compare stale-generation writes after a real lease expires; Chubby §2.4 supplements the course.",
+      "practice_goal_zh": "真实租约过期后比较旧代次写；以 Chubby §2.4 补充课程。",
+      "exercise_origin": "Independent Distributed Systems Lab exercise, not an MIT solution",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "unit": "07-recovery",
+      "title_en": "Recovery and reconciliation",
+      "title_zh": "恢复与结果核对",
+      "course_id": "mit-6.5840-spring-2026",
+      "materials": [
+        {
+          "title": "Lecture 7: Fault Tolerance: Raft (2)",
+          "url": "https://pdos.csail.mit.edu/6.824/notes/l-raft2.txt",
+          "access": "publicly readable; verified 2026-11-14"
+        },
+        {
+          "title": "Lab 3: Raft, persistence and snapshots",
+          "url": "https://pdos.csail.mit.edu/6.824/labs/lab-raft1.html",
+          "access": "publicly readable; verified 2026-11-14"
+        }
+      ],
+      "original_practice_command": "python3 scripts/learning_exercises.py recovery",
+      "practice_goal_en": "Check committed-value preservation, healed replicas and unknown outcomes from saved real reports.",
+      "practice_goal_zh": "核查保存真实报告中的已提交值、恢复副本与未知结果。",
+      "exercise_origin": "Independent Distributed Systems Lab exercise, not an MIT solution",
+      "verified_on": "2026-11-14"
+    }
+  ],
+  "supplements": [
+    {
+      "title": "Time, Clocks, and the Ordering of Events in a Distributed System",
+      "authors": "Leslie Lamport",
+      "year": 1978,
+      "url": "https://lamport.azurewebsites.net/pubs/time-clocks.pdf",
+      "role": "Causality supplement; classic paper, not a 2026 new result"
+    },
+    {
+      "title": "The Chubby lock service for loosely-coupled distributed systems",
+      "authors": "Mike Burrows",
+      "year": 2006,
+      "url": "https://research.google/pubs/the-chubby-lock-service-for-loosely-coupled-distributed-systems/",
+      "role": "Sequencers and stale requests, §2.4; classic paper"
+    }
+  ]
+}
