@@ -1,5 +1,5 @@
 // DCL/1: intentionally restricted contract language. Not a JSON Schema implementation.
-export const VERSION='1.0.0';
+export const VERSION='1.1.0';
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const obj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const esc=s=>String(s).replace(/~/g,'~0').replace(/\//g,'~1');
@@ -92,7 +92,88 @@ function examples(s,b,depth=0){const out=[];if(ts(s).includes('null'))out.push(n
  if(t==='boolean')out.push(false,true);if(t==='null')out.push(null);
  return out.filter(v=>v!==undefined&&smallWitness(v)&&!validate(s,v).length).slice(0,200);
 }
-export function compare(producer,consumer){const concerns=inclusion(producer.schema,consumer.schema);const witness=concerns.length?examples(producer.schema,consumer.schema).find(v=>validate(consumer.schema,v).length):undefined;
+// Build one small producer-valid value without expanding large array products.
+// NONE is distinct from the valid witness null; each construction owns its budget.
+const NONE=Symbol('no bounded witness');
+function representative(s,quota={left:1000}){
+ if(--quota.left<0)return NONE;
+ if(s.enum)return s.enum[0];
+ if(ts(s).includes('null'))return null;
+ const t=ts(s)[0];
+ if(t==='object'){
+  const value=Object.create(null);
+  for(const k of s.required||[]){const x=representative(s.properties[k],quota);if(x===NONE)return NONE;value[k]=x;}
+  return value;
+ }
+ if(t==='array'){
+  const n=s.minItems??0;if(n>quota.left)return NONE;
+  const value=[];for(let i=0;i<n;i++){const x=representative(s.items,quota);if(x===NONE)return NONE;value.push(x);}return value;
+ }
+ if(t==='string')return 'x'.repeat(s.minLength??0);
+ if(t==='boolean')return false;
+ if(t==='integer'||t==='number'){
+  const lo=t==='integer'?Math.ceil(s.minimum??-Number.MAX_SAFE_INTEGER):s.minimum??-Number.MAX_SAFE_INTEGER;
+  const hi=t==='integer'?Math.floor(s.maximum??Number.MAX_SAFE_INTEGER):s.maximum??Number.MAX_SAFE_INTEGER;
+  const x=Math.max(lo,Math.min(0,hi));return typeOK(t,x)?x:NONE;
+ }
+ return NONE;
+}
+// Follow differing schema branches before generic sampling can truncate them.
+// Recursing over schemas (not splitting concern paths) also disambiguates a
+// literal '*' property from the array wildcard used in human-readable concerns.
+function directedWitness(a,b,budget={left:2000}){
+ if(budget.left<=0)return NONE;
+ const verify=x=>{
+  if(x===NONE||--budget.left<0||!smallWitness(x))return NONE;
+  return !validate(a,x).length&&validate(b,x).length?x:NONE;
+ };
+ let found=verify(representative(a));if(found!==NONE)return found;
+ if(ts(a).includes('object')&&ts(b).includes('object')){
+  const base=representative({...a,type:'object'});
+  if(base!==NONE){
+   found=verify(base);if(found!==NONE)return found;
+   for(const [k,bs] of Object.entries(b.properties||{})){
+    if(budget.left<=0)break;
+    if(own(a.properties||{},k)){
+     const x=directedWitness(a.properties[k],bs,budget);
+     if(x!==NONE){found=verify({...base,[k]:x});if(found!==NONE)return found;}
+    }else if(a.additionalProperties!==false){
+     for(const x of [null,0,'probe',true,{},[]]){
+      found=verify({...base,[k]:x});if(found!==NONE)return found;
+     }
+    }
+   }
+   if(b.additionalProperties===false){
+    for(const [k,s] of Object.entries(a.properties||{}))if(!own(b.properties||{},k)){
+     const x=representative(s);if(x!==NONE){found=verify({...base,[k]:x});if(found!==NONE)return found;}
+    }
+    if(a.additionalProperties!==false){
+     let k='__extra';while(own(a.properties||{},k)||own(b.properties||{},k))k+='_';
+     found=verify({...base,[k]:'probe'});if(found!==NONE)return found;
+    }
+   }
+  }
+ }
+ if(ts(a).includes('array')&&ts(b).includes('array')){
+  // Do not even allocate a counterexample that cannot fit the 1,000-node cap.
+  for(const n of new Set([a.minItems??0,(b.minItems??0)-1,(b.maxItems??0)+1])){
+   if(n<0||n<(a.minItems??0)||n>(a.maxItems??Infinity)||n>=1000)continue;
+   const x=representative({...a,type:'array',minItems:n});found=verify(x);if(found!==NONE)return found;
+  }
+  const n=Math.max(1,a.minItems??0);
+  if(n<= (a.maxItems??Infinity)&&n<1000){
+   const x=directedWitness(a.items,b.items,budget);
+   if(x!==NONE){const base=representative({...a,type:'array',minItems:n});if(base!==NONE){base[0]=x;found=verify(base);if(found!==NONE)return found;}}
+  }
+ }
+ // Scalar boundary/enum candidates cannot hide a deep branch behind siblings.
+ if(!ts(a).some(t=>t==='object'||t==='array'))for(const x of examples(a,b)){
+  found=verify(x);if(found!==NONE)return found;
+ }
+ return NONE;
+}
+export function compare(producer,consumer){const concerns=inclusion(producer.schema,consumer.schema);let witness;
+ if(concerns.length){const directed=directedWitness(producer.schema,consumer.schema);witness=directed!==NONE?directed:examples(producer.schema,consumer.schema).find(v=>validate(consumer.schema,v).length);}
  const semantic=[];for(const [p,r] of Object.entries(consumer.semantics||{})){const a=producer.semantics?.[p];if(!a)semantic.push(issue(p,'undeclared','Producer semantic declaration is missing.'));else{for(const k of ['kind','unit','timezone','format'])if(r[k]!==a[k])semantic.push(issue(p,'semantic-drift','Declared '+k+' differs: '+String(a[k])+' → '+String(r[k])));if(r.kind==='timestamp'&&((r.after&&(!a.after||Date.parse(a.after)<Date.parse(r.after)))||(r.before&&(!a.before||Date.parse(a.before)>Date.parse(r.before)))))semantic.push(issue(p,'semantic-window','Producer does not guarantee the consumer time window.'));}}
  return {structural:concerns.length?(witness!==undefined?'counterexample':'not-proven'):'proven',concerns,...(witness!==undefined?{witness,witnessChecks:{producer:validate(producer.schema,witness),consumer:validate(consumer.schema,witness)}}:{}),semantic:semantic.length?'review-required':Object.keys(consumer.semantics||{}).length?'declared-match':'not-declared',semanticConcerns:semantic,semanticScope:Object.keys(consumer.semantics||{}).length?'Consumer-declared paths only; declarations are promises, not behavior proof.':'No consumer semantic expectations declared; business compatibility is unknown.'};}
 export function run(oldC,newC,consumers,text){checkContract(oldC);checkContract(newC);if(!Array.isArray(consumers)||!consumers.length||consumers.length>12)throw Error('Provide 1–12 consumers.');const names=new Set();for(const c of consumers){keys(c,['name','contract'],'Consumer');if(typeof c.name!=='string'||!c.name.trim()||c.name.length>100||names.has(c.name))throw Error('Consumers need unique names, at most 100 characters.');names.add(c.name);checkContract(c.contract);}

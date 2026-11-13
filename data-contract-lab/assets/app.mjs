@@ -1,5 +1,5 @@
-import {parseJSON,run,csv} from './core.mjs?rev=516e4c93a03d378f';
-import {scenarios} from './fixtures.mjs?rev=b5403f54ccce1fa5';
+import {parseJSON,run,csv} from './core.mjs?rev=b0339a6da8dbd4cc';
+import {scenarios} from './fixtures.mjs?rev=4bf0ebceaa226db4';
 const zh=document.documentElement.lang==='zh-CN';const $=s=>document.querySelector(s);const text=(en,cn)=>zh?cn:en;let report=null;
 const labels={'not-declared':text('No semantic expectations declared','未声明语义约定'),proven:text('Proven inclusion','已证明包含'),counterexample:text('Verified counterexample','已验证反例'),'not-proven':text('Not proven','尚未证明'),'review-required':text('Review required','需复核'),'declared-match':text('Declarations match in scope','范围内声明一致'),'parse-error':text('Parse error','解析错误'),'new-failure':text('New failing row','新增失败行'),fixed:text('Fixed row','已修复行'),'still-failing':text('Still failing','仍失败'),pass:text('Pass both','均通过')};
 const h=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

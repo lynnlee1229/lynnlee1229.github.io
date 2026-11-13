@@ -1,0 +1,560 @@
+{
+  "baseline": {
+    "format": "dcl-nested-audit/1",
+    "executedAt": "2026-11-13T18:01:09.694Z",
+    "engine": "1.0.0",
+    "baseline": "339042298330292458a47d0ac8df966eb4d691c8",
+    "scope": "Actual comparator execution on authored synthetic cases. Case-specific oracle does not import the engine. Finite regression evidence, not a completeness proof.",
+    "summary": {
+      "cases": 18,
+      "missedKnownWitnesses": 7,
+      "verifiedWitnesses": 8
+    },
+    "cases": [
+      {
+        "id": "late-range-0",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-0",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": [
+            {
+              "target": 9
+            }
+          ]
+        },
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "late-range-4",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-4",
+        "expected": "counterexample",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "late-range-18",
+        "expected": "counterexample",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-18",
+        "expected": "counterexample",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "late-range-24",
+        "expected": "counterexample",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-24",
+        "expected": "counterexample",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "late-range-48",
+        "expected": "counterexample",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-48",
+        "expected": "counterexample",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "missing-nested",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {}
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "nullable-parent",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": null
+        },
+        "concernPaths": [
+          "/payload"
+        ]
+      },
+      {
+        "id": "nullable-leaf",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": null
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "escaped-pointer",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "a/b~": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/a~1b~0"
+        ]
+      },
+      {
+        "id": "closed-item",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": "",
+            "extra": ""
+          }
+        },
+        "concernPaths": [
+          "/payload/extra"
+        ]
+      },
+      {
+        "id": "compatible-control",
+        "expected": "proven",
+        "actual": "proven",
+        "independentWitnessExists": false,
+        "generatedWitnessVerified": false,
+        "concernPaths": []
+      },
+      {
+        "id": "compatible-but-unproved",
+        "expected": "not-proven",
+        "actual": "not-proven",
+        "independentWitnessExists": false,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload"
+        ]
+      },
+      {
+        "id": "over-budget",
+        "expected": "not-proven",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload"
+        ]
+      }
+    ]
+  },
+  "audit": {
+    "format": "dcl-nested-audit/1",
+    "executedAt": "2026-11-13T18:01:09.779Z",
+    "engine": "1.1.0",
+    "baseline": null,
+    "scope": "Actual comparator execution on authored synthetic cases. Case-specific oracle does not import the engine. Finite regression evidence, not a completeness proof.",
+    "summary": {
+      "cases": 18,
+      "missedKnownWitnesses": 0,
+      "verifiedWitnesses": 15
+    },
+    "cases": [
+      {
+        "id": "late-range-0",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-0",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": [
+            {
+              "target": 9
+            }
+          ]
+        },
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "late-range-4",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-4",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": [
+            {
+              "target": 9
+            }
+          ]
+        },
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "late-range-18",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-18",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": [
+            {
+              "target": 9
+            }
+          ]
+        },
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "late-range-24",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-24",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": [
+            {
+              "target": 9
+            }
+          ]
+        },
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "late-range-48",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "array-late-range-48",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": [
+            {
+              "target": 9
+            }
+          ]
+        },
+        "concernPaths": [
+          "/payload/*/target"
+        ]
+      },
+      {
+        "id": "missing-nested",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {}
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "nullable-parent",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": null
+        },
+        "concernPaths": [
+          "/payload"
+        ]
+      },
+      {
+        "id": "nullable-leaf",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": null
+          }
+        },
+        "concernPaths": [
+          "/payload/target"
+        ]
+      },
+      {
+        "id": "escaped-pointer",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "a/b~": 9
+          }
+        },
+        "concernPaths": [
+          "/payload/a~1b~0"
+        ]
+      },
+      {
+        "id": "closed-item",
+        "expected": "counterexample",
+        "actual": "counterexample",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": true,
+        "witness": {
+          "payload": {
+            "target": "",
+            "extra": ""
+          }
+        },
+        "concernPaths": [
+          "/payload/extra"
+        ]
+      },
+      {
+        "id": "compatible-control",
+        "expected": "proven",
+        "actual": "proven",
+        "independentWitnessExists": false,
+        "generatedWitnessVerified": false,
+        "concernPaths": []
+      },
+      {
+        "id": "compatible-but-unproved",
+        "expected": "not-proven",
+        "actual": "not-proven",
+        "independentWitnessExists": false,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload"
+        ]
+      },
+      {
+        "id": "over-budget",
+        "expected": "not-proven",
+        "actual": "not-proven",
+        "independentWitnessExists": true,
+        "generatedWitnessVerified": false,
+        "concernPaths": [
+          "/payload"
+        ]
+      }
+    ]
+  },
+  "replay": {
+    "format": "dcl-nested-replay/1",
+    "executedAt": "2026-11-13T18:01:10.084Z",
+    "engine": "1.1.0",
+    "before": {
+      "inclusion": "counterexample",
+      "summary": {
+        "total": 6,
+        "parsed": 6,
+        "parseErrors": 0,
+        "pass": 1,
+        "newFailures": 0,
+        "fixed": 1,
+        "stillFailing": 4,
+        "introducedErrors": 0,
+        "resolvedErrors": 1
+      },
+      "rows": [
+        "pass",
+        "fixed",
+        "still-failing",
+        "still-failing",
+        "still-failing",
+        "still-failing"
+      ]
+    },
+    "producerRepair": {
+      "inclusion": "proven",
+      "summary": {
+        "total": 6,
+        "parsed": 6,
+        "parseErrors": 0,
+        "pass": 1,
+        "newFailures": 0,
+        "fixed": 0,
+        "stillFailing": 5,
+        "introducedErrors": 0,
+        "resolvedErrors": 0
+      },
+      "rows": [
+        "pass",
+        "still-failing",
+        "still-failing",
+        "still-failing",
+        "still-failing",
+        "still-failing"
+      ]
+    },
+    "consumerAgreement": {
+      "inclusion": "proven"
+    },
+    "interpretation": "fixed means accepted by the new producer contract, not accepted by the existing consumer. Five archived rows still fail after the producer contract repair; changing a promise does not rewrite data."
+  }
+}

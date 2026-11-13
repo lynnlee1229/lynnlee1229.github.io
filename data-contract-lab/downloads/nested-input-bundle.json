@@ -1,0 +1,329 @@
+{
+  "old": {
+    "dialect": "dcl/1",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "batch_id": {
+          "type": "string"
+        },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "properties": {
+              "note0": {
+                "type": "string"
+              },
+              "note1": {
+                "type": "string"
+              },
+              "note2": {
+                "type": "string"
+              },
+              "note3": {
+                "type": "string"
+              },
+              "note4": {
+                "type": "string"
+              },
+              "note5": {
+                "type": "string"
+              },
+              "note6": {
+                "type": "string"
+              },
+              "note7": {
+                "type": "string"
+              },
+              "note8": {
+                "type": "string"
+              },
+              "note9": {
+                "type": "string"
+              },
+              "note10": {
+                "type": "string"
+              },
+              "note11": {
+                "type": "string"
+              },
+              "note12": {
+                "type": "string"
+              },
+              "note13": {
+                "type": "string"
+              },
+              "note14": {
+                "type": "string"
+              },
+              "note15": {
+                "type": "string"
+              },
+              "note16": {
+                "type": "string"
+              },
+              "note17": {
+                "type": "string"
+              },
+              "note18": {
+                "type": "string"
+              },
+              "note19": {
+                "type": "string"
+              },
+              "note20": {
+                "type": "string"
+              },
+              "note21": {
+                "type": "string"
+              },
+              "note22": {
+                "type": "string"
+              },
+              "note23": {
+                "type": "string"
+              },
+              "quantity/unit~": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8
+              }
+            },
+            "required": [
+              "quantity/unit~"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "batch_id",
+        "records"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "new": {
+    "dialect": "dcl/1",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "batch_id": {
+          "type": "string"
+        },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "properties": {
+              "note0": {
+                "type": "string"
+              },
+              "note1": {
+                "type": "string"
+              },
+              "note2": {
+                "type": "string"
+              },
+              "note3": {
+                "type": "string"
+              },
+              "note4": {
+                "type": "string"
+              },
+              "note5": {
+                "type": "string"
+              },
+              "note6": {
+                "type": "string"
+              },
+              "note7": {
+                "type": "string"
+              },
+              "note8": {
+                "type": "string"
+              },
+              "note9": {
+                "type": "string"
+              },
+              "note10": {
+                "type": "string"
+              },
+              "note11": {
+                "type": "string"
+              },
+              "note12": {
+                "type": "string"
+              },
+              "note13": {
+                "type": "string"
+              },
+              "note14": {
+                "type": "string"
+              },
+              "note15": {
+                "type": "string"
+              },
+              "note16": {
+                "type": "string"
+              },
+              "note17": {
+                "type": "string"
+              },
+              "note18": {
+                "type": "string"
+              },
+              "note19": {
+                "type": "string"
+              },
+              "note20": {
+                "type": "string"
+              },
+              "note21": {
+                "type": "string"
+              },
+              "note22": {
+                "type": "string"
+              },
+              "note23": {
+                "type": "string"
+              },
+              "quantity/unit~": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9
+              }
+            },
+            "required": [
+              "quantity/unit~"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "batch_id",
+        "records"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "consumers": [
+    {
+      "name": "inventory-reader",
+      "contract": {
+        "dialect": "dcl/1",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "batch_id": {
+              "type": "string"
+            },
+            "records": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "note0": {
+                    "type": "string"
+                  },
+                  "note1": {
+                    "type": "string"
+                  },
+                  "note2": {
+                    "type": "string"
+                  },
+                  "note3": {
+                    "type": "string"
+                  },
+                  "note4": {
+                    "type": "string"
+                  },
+                  "note5": {
+                    "type": "string"
+                  },
+                  "note6": {
+                    "type": "string"
+                  },
+                  "note7": {
+                    "type": "string"
+                  },
+                  "note8": {
+                    "type": "string"
+                  },
+                  "note9": {
+                    "type": "string"
+                  },
+                  "note10": {
+                    "type": "string"
+                  },
+                  "note11": {
+                    "type": "string"
+                  },
+                  "note12": {
+                    "type": "string"
+                  },
+                  "note13": {
+                    "type": "string"
+                  },
+                  "note14": {
+                    "type": "string"
+                  },
+                  "note15": {
+                    "type": "string"
+                  },
+                  "note16": {
+                    "type": "string"
+                  },
+                  "note17": {
+                    "type": "string"
+                  },
+                  "note18": {
+                    "type": "string"
+                  },
+                  "note19": {
+                    "type": "string"
+                  },
+                  "note20": {
+                    "type": "string"
+                  },
+                  "note21": {
+                    "type": "string"
+                  },
+                  "note22": {
+                    "type": "string"
+                  },
+                  "note23": {
+                    "type": "string"
+                  },
+                  "quantity/unit~": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8
+                  }
+                },
+                "required": [
+                  "quantity/unit~"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "batch_id",
+            "records"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "events": "{\"batch_id\":\"synthetic-1\",\"records\":[{\"quantity/unit~\":5}]}\n{\"batch_id\":\"synthetic-2\",\"records\":[{\"quantity/unit~\":9}]}\n{\"batch_id\":\"synthetic-3\",\"records\":[{}]}\n{\"batch_id\":\"synthetic-4\",\"records\":[]}\n{\"batch_id\":\"synthetic-5\",\"records\":[{\"quantity/unit~\":null}]}\n{\"batch_id\":\"synthetic-6\",\"records\":[{\"quantity/unit~\":\"9\"}]}"
+}
