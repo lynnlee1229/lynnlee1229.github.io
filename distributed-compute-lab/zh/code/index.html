@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>阅读代码 · Distributed Compute Lab</title><meta name="description" content="通过原创讲解、真实 Spark 实验与可复现证据学习分布式计算。"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/code/"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/distributed-compute-lab/en/code/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/code/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/distributed-compute-lab/en/code/"><link rel="stylesheet" href="/distributed-compute-lab/assets/site.css"><link rel="icon" href="/distributed-compute-lab/assets/favicon.svg"><script defer src="/distributed-compute-lab/assets/site.js"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-compute-lab/zh/"><span>▦</span> Distributed Compute Lab</a><nav aria-label="全局导航"><a class="home-link" href="/zh/websites/">Lynn Lee</a><a href="https://github.com/lynnlee1229/distributed-compute-lab">源码</a><a lang="en-US" href="/distributed-compute-lab/en/code/">English</a></nav></div></header><div class="layout"><aside class="sidebar" aria-label="课程导航"><span class="eyebrow">学习顺序</span><a href="/distributed-compute-lab/zh/">课程概览</a><a href="/distributed-compute-lab/zh/01-parallel/">为什么并行？</a><a href="/distributed-compute-lab/zh/02-model/">数据并行模型</a><a href="/distributed-compute-lab/zh/03-aggregation/">先聚合，再移动</a><a href="/distributed-compute-lab/zh/04-join/">Join 策略与倾斜</a><a href="/distributed-compute-lab/zh/05-recovery/">重试与重算</a><a href="/distributed-compute-lab/zh/06-resources/">资源诊断</a><a href="/distributed-compute-lab/zh/evidence/">实测证据</a><a href="/distributed-compute-lab/zh/reproduce/">本地复现</a><a href="/distributed-compute-lab/zh/code/" aria-current="page">阅读代码</a></aside><main id="main"><span class="eyebrow">可执行源码</span><h1>阅读实验代码</h1><p>这是生成保存基线的实际实验代码。配套项目还包含编排、清理导出、测试与数据公式。执行前请阅读复现页，以固定运行时并隔离继承配置。</p><div class="actions"><a class="button" href="https://github.com/lynnlee1229/distributed-compute-lab">打开公开仓库</a><a class="button secondary" href="/distributed-compute-lab/downloads/distributed-compute-lab.zip" download>下载完整配套项目</a><a class="button secondary" href="/distributed-compute-lab/code/run.py" download>run.py</a></div><p class="code-meta">experiments/run.py · SHA-256 5f29cfd90866b3d9e3f93722f6f7397d47bc5eced1d5e2134c0b35025f2c21b9</p><pre><code>#!/usr/bin/env python3
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>阅读代码 · Distributed Compute Lab</title><meta name="description" content="通过原创讲解、真实 Spark 实验与可复现证据学习分布式计算。"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/code/"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/distributed-compute-lab/en/code/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/code/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/distributed-compute-lab/en/code/"><link rel="stylesheet" href="/distributed-compute-lab/assets/site.css"><link rel="icon" href="/distributed-compute-lab/assets/favicon.svg"><script defer src="/distributed-compute-lab/assets/site.js"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-compute-lab/zh/"><span>▦</span> Distributed Compute Lab</a><nav aria-label="全局导航"><a class="home-link" href="/zh/websites/">Lynn Lee</a><a href="https://github.com/lynnlee1229/distributed-compute-lab">源码</a><a lang="en-US" href="/distributed-compute-lab/en/code/">English</a></nav></div></header><div class="layout"><aside class="sidebar" aria-label="课程导航"><span class="eyebrow">学习顺序</span><a href="/distributed-compute-lab/zh/">课程概览</a><a href="/distributed-compute-lab/zh/01-parallel/">为什么并行？</a><a href="/distributed-compute-lab/zh/02-model/">数据并行模型</a><a href="/distributed-compute-lab/zh/03-aggregation/">先聚合，再移动</a><a href="/distributed-compute-lab/zh/04-join/">Join 策略与倾斜</a><a href="/distributed-compute-lab/zh/05-recovery/">重试与重算</a><a href="/distributed-compute-lab/zh/06-resources/">资源诊断</a><a href="/distributed-compute-lab/zh/07-aqe/">最终自适应计划</a><a href="/distributed-compute-lab/zh/courses/">课程与阅读映射</a><a href="/distributed-compute-lab/zh/evidence/">实测证据</a><a href="/distributed-compute-lab/zh/reproduce/">本地复现</a><a href="/distributed-compute-lab/zh/code/" aria-current="page">阅读代码</a></aside><main id="main"><span class="eyebrow">可执行源码</span><h1>阅读实验代码</h1><p>这是生成保存基线的实际实验代码。配套项目还包含编排、清理导出、测试与数据公式。执行前请阅读复现页，以固定运行时并隔离继承配置。</p><div class="actions"><a class="button" href="https://github.com/lynnlee1229/distributed-compute-lab">打开公开仓库</a><a class="button secondary" href="/distributed-compute-lab/downloads/distributed-compute-lab.zip" download>下载完整配套项目</a><a class="button secondary" href="/distributed-compute-lab/code/run.py" download>run.py</a></div><p class="code-meta">experiments/run.py · SHA-256 5f29cfd90866b3d9e3f93722f6f7397d47bc5eced1d5e2134c0b35025f2c21b9</p><pre><code>#!/usr/bin/env python3
 &quot;&quot;&quot;Bounded, real Spark experiments. No network service or external dataset needed.&quot;&quot;&quot;
 import argparse, json, os, platform, sys, time
 from pathlib import Path
@@ -178,4 +178,192 @@ for k,v in report[&#x27;plans&#x27;].items():
     report[&#x27;plans&#x27;][k]=v
 (a.out/&#x27;report.json&#x27;).write_text(json.dumps(report,ensure_ascii=False,indent=2)+&#x27;\n&#x27;)
 print(&#x27;REPORT_OK&#x27;,a.experiment,flush=True)
-</code></pre></main></div><footer>Lynn Lee · 原创课程 · MIT 配套项目 · 实测日期 2026-11-13 · 无分析追踪<br>单机 Spark 本地模式。概念图和模型估算均独立标注。</footer></body></html>
+</code></pre><h2>AQE：实际运行器与独立验收器</h2><p><a href="/distributed-compute-lab/code/aqe.py" download>experiments/aqe.py</a> · <a href="/distributed-compute-lab/code/check_aqe.py" download>scripts/check_aqe.py</a></p><pre><code>#!/usr/bin/env python3
+&quot;&quot;&quot;Original bounded AQE coalescing exercise, not a university assignment solution.&quot;&quot;&quot;
+import argparse
+import hashlib
+import json
+import platform
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+from pyspark.sql import SparkSession, functions as F
+
+
+def oracle(rows, seed):
+    # No Spark, partition layout, or output from the implementation is consulted.
+    totals = {}
+    for i in range(rows):
+        key = (31 * i + seed) % 1000
+        count, value = totals.get(key, (0, 0))
+        totals[key] = (count + 1, value + (17 * i + seed) % 101 - 50)
+    return [[key, *totals[key]] for key in sorted(totals)]
+
+
+def scala_values(seq):
+    it = seq.iterator()
+    while it.hasNext():
+        yield it.next()
+
+
+def inspect_plan(root):
+    &quot;&quot;&quot;Allowlist physical operator names + SQLMetrics, never arbitrary JVM state.
+
+    SparkPlan.children omits query-stage and adaptive wrappers. Explicitly unwrap
+    them; deduplicate node ids so query stages aren&#x27;t counted twice. Pinned 3.5.8
+    JVM internals are used only for observation, not to produce the result.
+    &quot;&quot;&quot;
+    seen, nodes = set(), []
+
+    def visit(node):
+        ident = node.id()
+        if ident in seen:
+            return
+        seen.add(ident)
+        metrics = {}
+        for pair in scala_values(node.metrics()):
+            metric = pair._2()
+            metrics[pair._1()] = int(metric.value())
+        item = {&#x27;node&#x27;: node.nodeName(), &#x27;metrics&#x27;: metrics}
+        if node.nodeName() == &#x27;AQEShuffleRead&#x27;:
+            specs = list(scala_values(node.partitionSpecs()))
+            item[&#x27;partition_specs&#x27;] = [
+                {&#x27;kind&#x27;: spec.getClass().getSimpleName(),
+                 &#x27;start_reducer&#x27;: int(spec.startReducerIndex()),
+                 &#x27;end_reducer&#x27;: int(spec.endReducerIndex())}
+                for spec in specs
+            ]
+        nodes.append(item)
+        if node.nodeName() == &#x27;AdaptiveSparkPlan&#x27;:
+            visit(node.executedPlan())
+        elif node.nodeName() in (&#x27;ShuffleQueryStage&#x27;, &#x27;BroadcastQueryStage&#x27;):
+            visit(node.plan())
+        else:
+            for child in scala_values(node.children()):
+                visit(child)
+
+    visit(root)
+    return nodes
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument(&#x27;--rows&#x27;, type=int, default=240000)
+    p.add_argument(&#x27;--repeats&#x27;, type=int, default=3)
+    p.add_argument(&#x27;--seed&#x27;, type=int, default=42)
+    p.add_argument(&#x27;--shuffle-partitions&#x27;, type=int, default=32)
+    p.add_argument(&#x27;--advisory-bytes&#x27;, type=int, default=1048576)
+    p.add_argument(&#x27;--out&#x27;, type=Path, required=True)
+    a = p.parse_args()
+    if not (10000 &lt;= a.rows &lt;= 1000000 and 1 &lt;= a.repeats &lt;= 5
+            and 2 &lt;= a.shuffle_partitions &lt;= 128 and 1 &lt;= a.advisory_bytes &lt;= 67108864
+            and 0 &lt;= a.seed &lt;= 1000000):
+        p.error(&#x27;rows 10000..1000000; repeats 1..5; partitions 2..128; bytes 1..67108864; seed 0..1000000&#x27;)
+    a.out.mkdir(parents=True, exist_ok=True)
+    events = (a.out / &#x27;events&#x27;).resolve()
+    events.mkdir(exist_ok=True)
+    spark = (SparkSession.builder.appName(&#x27;distributed-compute-aqe&#x27;)
+             .master(&#x27;local[2,2]&#x27;).config(&#x27;spark.driver.bindAddress&#x27;, &#x27;127.0.0.1&#x27;)
+             .config(&#x27;spark.driver.host&#x27;, &#x27;127.0.0.1&#x27;)
+             .config(&#x27;spark.hadoop.fs.defaultFS&#x27;, &#x27;file:///&#x27;)
+             .config(&#x27;spark.ui.enabled&#x27;, &#x27;false&#x27;)
+             .config(&#x27;spark.sql.shuffle.partitions&#x27;, str(a.shuffle_partitions))
+             .config(&#x27;spark.sql.autoBroadcastJoinThreshold&#x27;, &#x27;-1&#x27;)
+             .config(&#x27;spark.sql.adaptive.autoBroadcastJoinThreshold&#x27;, &#x27;-1&#x27;)
+             .config(&#x27;spark.sql.adaptive.skewJoin.enabled&#x27;, &#x27;false&#x27;)
+             .config(&#x27;spark.sql.adaptive.localShuffleReader.enabled&#x27;, &#x27;false&#x27;)
+             .config(&#x27;spark.sql.adaptive.coalescePartitions.parallelismFirst&#x27;, &#x27;false&#x27;)
+             .config(&#x27;spark.sql.adaptive.coalescePartitions.minPartitionSize&#x27;, &#x27;1&#x27;)
+             .config(&#x27;spark.sql.adaptive.advisoryPartitionSizeInBytes&#x27;, str(a.advisory_bytes))
+             .config(&#x27;spark.eventLog.enabled&#x27;, &#x27;true&#x27;)
+             .config(&#x27;spark.eventLog.compress&#x27;, &#x27;false&#x27;)
+             .config(&#x27;spark.eventLog.dir&#x27;, events.as_uri())
+             .config(&#x27;spark.local.dir&#x27;, str((a.out / &#x27;scratch&#x27;).resolve())).getOrCreate())
+    sc = spark.sparkContext
+    sc.setLogLevel(&#x27;ERROR&#x27;)
+    expected = oracle(a.rows, a.seed)
+    report = {
+        &#x27;schema_version&#x27;: 1, &#x27;experiment&#x27;: &#x27;aqe&#x27;,
+        &#x27;created_utc&#x27;: datetime.now(timezone.utc).isoformat(),
+        &#x27;environment&#x27;: {&#x27;spark&#x27;: spark.version, &#x27;python&#x27;: platform.python_version(),
+                        &#x27;java&#x27;: sc._jvm.java.lang.System.getProperty(&#x27;java.version&#x27;),
+                        &#x27;os&#x27;: platform.system(), &#x27;architecture&#x27;: platform.machine(),
+                        &#x27;master&#x27;: sc.master,
+                        &#x27;driver_heap_bytes&#x27;: sc._jvm.java.lang.Runtime.getRuntime().maxMemory(),
+                        &#x27;sql_shuffle_partitions&#x27;: a.shuffle_partitions,
+                        &#x27;aqe&#x27;: &#x27;per variant&#x27;, &#x27;broadcast_threshold&#x27;: -1},
+        &#x27;input&#x27;: {&#x27;rows&#x27;: a.rows, &#x27;seed&#x27;: a.seed, &#x27;source_partitions&#x27;: 8,
+                  &#x27;keys&#x27;: 1000, &#x27;external_data&#x27;: False,
+                  &#x27;generator&#x27;: &#x27;k=(31*i+seed)%1000; v=(17*i+seed)%101-50; integer i=0..rows-1&#x27;},
+        &#x27;runs&#x27;: [], &#x27;plans&#x27;: {},
+        &#x27;observations&#x27;: {
+            &#x27;oracle&#x27;: &#x27;independent Python per-key count and sum; full equality for every action&#x27;,
+            &#x27;advisory_bytes&#x27;: a.advisory_bytes, &#x27;min_partition_bytes&#x27;: 1,
+            &#x27;parallelism_first&#x27;: False, &#x27;skew_join&#x27;: False,
+            &#x27;scope&#x27;: &#x27;SQL aggregation post-shuffle coalescing only; no join, executor, or multi-host claim&#x27;,
+            &#x27;timing&#x27;: &#x27;plan construction, collect, Python validation and plan/metric inspection; no application startup&#x27;,
+        },
+    }
+    variants = [(&#x27;aqe-off&#x27;, False, True), (&#x27;aqe-on-no-coalesce&#x27;, True, False),
+                (&#x27;aqe-on-coalesce&#x27;, True, True)]
+
+    def run(variant, adaptive, coalesce, repeat):
+        group = f&#x27;{variant}-{repeat}&#x27;
+        sc.setJobGroup(group, group)
+        start = time.perf_counter()
+        spark.conf.set(&#x27;spark.sql.adaptive.enabled&#x27;, str(adaptive).lower())
+        spark.conf.set(&#x27;spark.sql.adaptive.coalescePartitions.enabled&#x27;, str(coalesce).lower())
+        # Reconstruct the query each time: do not reuse an already-finalized plan.
+        source = spark.range(a.rows, numPartitions=8).select(
+            ((F.col(&#x27;id&#x27;) * 31 + a.seed) % 1000).alias(&#x27;k&#x27;),
+            (((F.col(&#x27;id&#x27;) * 17 + a.seed) % 101) - 50).alias(&#x27;v&#x27;))
+        query = source.groupBy(&#x27;k&#x27;).agg(F.count(&#x27;*&#x27;).alias(&#x27;n&#x27;), F.sum(&#x27;v&#x27;).alias(&#x27;total&#x27;))
+        before = query._jdf.queryExecution().executedPlan().toString()
+        got = sorted([[int(row.k), int(row.n), int(row.total)] for row in query.collect()])
+        assert got == expected, &#x27;Full per-key oracle mismatch&#x27;
+        if &#x27;output&#x27; not in report:
+            report[&#x27;output&#x27;] = got  # An actual collected result, not the oracle fixture.
+        executed = query._jdf.queryExecution().executedPlan()
+        after = executed.toString()
+        if adaptive:
+            assert executed.isFinalPlan(), &#x27;Observed a provisional AQE plan&#x27;
+        nodes = inspect_plan(executed)
+        reads = [node for node in nodes if node[&#x27;node&#x27;] == &#x27;AQEShuffleRead&#x27;]
+        final = executed.executedPlan() if adaptive else executed
+        partitions = int(final.outputPartitioning().numPartitions())
+        # Read the same executed query, not .rdd or a second action&#x27;s plan.
+        report[&#x27;plans&#x27;][group + &#x27;:before&#x27;] = before
+        report[&#x27;plans&#x27;][group + &#x27;:after&#x27;] = after
+        report[&#x27;runs&#x27;].append({
+            &#x27;group&#x27;: group, &#x27;variant&#x27;: variant, &#x27;repeat&#x27;: repeat, &#x27;warmup&#x27;: repeat == -1,
+            &#x27;wall_ms&#x27;: round((time.perf_counter() - start) * 1000, 3),
+            &#x27;result&#x27;: {&#x27;keys&#x27;: len(got), &#x27;rows&#x27;: sum(row[1] for row in got),
+                       &#x27;value_sum&#x27;: sum(row[2] for row in got), &#x27;oracle_equal&#x27;: True},
+            &#x27;output_sha256&#x27;: hashlib.sha256(json.dumps(got, separators=(&#x27;,&#x27;, &#x27;:&#x27;)).encode()).hexdigest(),
+            &#x27;adaptive&#x27;: {&#x27;enabled&#x27;: adaptive, &#x27;coalesce_enabled&#x27;: coalesce,
+                         &#x27;is_final_plan&#x27;: bool(executed.isFinalPlan()) if adaptive else None,
+                         &#x27;output_partitions&#x27;: partitions, &#x27;shuffle_reads&#x27;: reads,
+                         &#x27;sql_operators&#x27;: nodes},
+        })
+        sc.setLocalProperty(&#x27;spark.jobGroup.id&#x27;, None)
+        print(json.dumps({&#x27;completed&#x27;: group, &#x27;partitions&#x27;: partitions,
+                          &#x27;wall_ms&#x27;: report[&#x27;runs&#x27;][-1][&#x27;wall_ms&#x27;]}), flush=True)
+
+    try:
+        for variant in variants:
+            run(*variant, -1)
+        for repeat in range(a.repeats):
+            for variant in variants if repeat % 2 == 0 else list(reversed(variants)):
+                run(*variant, repeat)
+    finally:
+        spark.stop()
+    # Source has no file scans, UDF paths, or exception content. Exporter performs
+    # a second private-content guard on the complete allowlisted report.
+    (a.out / &#x27;report.json&#x27;).write_text(json.dumps(report, indent=2) + &#x27;\n&#x27;)
+    print(&#x27;REPORT_OK aqe&#x27;, flush=True)
+
+
+if __name__ == &#x27;__main__&#x27;:
+    main()
+</code></pre></main></div><footer>Lynn Lee · 原创课程 · MIT 配套项目 · 基线 2026-11-13 / AQE 11-14 · 无分析追踪<br>单机 Spark 本地模式。概念图和模型估算均独立标注。</footer></body></html>

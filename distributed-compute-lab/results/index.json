@@ -7,6 +7,20 @@
     "tasks": 136
   },
   {
+    "experiment": "aqe-1-byte",
+    "file": "aqe-1-byte.json",
+    "sha256": "6164de6d605d421f2d7908757abea792a1e9629caf47dd316d1782c32cee8323",
+    "measured_runs": 3,
+    "tasks": 240
+  },
+  {
+    "experiment": "aqe",
+    "file": "aqe.json",
+    "sha256": "416b66c3ef10d9d21d86579996b6cd4adf3a56d81198f92cb67b9b42a2412027",
+    "measured_runs": 9,
+    "tasks": 356
+  },
+  {
     "experiment": "join",
     "file": "join.json",
     "sha256": "493c3ca33b5cdca9cbcded3dd903360aad628aca0cf6590e76106500b4909645",

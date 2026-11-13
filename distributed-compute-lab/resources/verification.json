@@ -1,0 +1,115 @@
+{
+  "checked_utc": "2026-11-13T18:14:31.600106+00:00",
+  "verified_on": "2026-11-14",
+  "method": "Unauthenticated GET of selected official URLs; read first byte only. Text/PDF content and course policy separately reviewed with official pages. No course video login was attempted.",
+  "checks": [
+    {
+      "url": "https://arxiv.org/abs/1910.02054v3",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://pdos.csail.mit.edu/6.5840/",
+      "status": 200,
+      "content_type": "text/html",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://pdos.csail.mit.edu/6.5840/labs/collab.html",
+      "status": 200,
+      "content_type": "text/html",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://pdos.csail.mit.edu/6.5840/labs/lab-mr.html",
+      "status": 200,
+      "content_type": "text/html",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://pdos.csail.mit.edu/6.5840/notes/l01.txt",
+      "status": 200,
+      "content_type": "text/plain",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://pdos.csail.mit.edu/6.5840/papers/mapreduce.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/",
+      "status": 200,
+      "content_type": "text/html",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/CS_267_Sp2016_Cloud_Computing.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture01_intro_jwd16_4pp.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture02_memhier_jwd16_4pp.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture03_machines_jwd16_4pp.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture23_LoadBalancing_jwd16_4pp.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://sites.google.com/lbl.gov/cs267-spr2025",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://spark.apache.org/docs/3.5.8/rdd-programming-guide.html",
+      "status": 200,
+      "content_type": "text/html",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://spark.apache.org/docs/3.5.8/sql-performance-tuning.html",
+      "status": 200,
+      "content_type": "text/html",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://spark.apache.org/docs/3.5.8/tuning.html",
+      "status": 200,
+      "content_type": "text/html",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://www.usenix.org/conference/osdi22/presentation/yu",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "accessible_without_login": true
+    },
+    {
+      "url": "https://www.usenix.org/system/files/conference/nsdi12/nsdi12-final138.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "accessible_without_login": true
+    }
+  ]
+}

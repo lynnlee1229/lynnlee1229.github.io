@@ -1,0 +1,472 @@
+{
+  "schema_version": 1,
+  "verified_on": "2026-11-14",
+  "scope": "Two selected university courses, version-pinned official implementation guides and primary papers. Original exercises, no upstream solutions.",
+  "courses": [
+    {
+      "id": "berkeley-cs267-2016",
+      "school": "University of California, Berkeley",
+      "course_number": "CS267",
+      "name": "Applications of Parallel Computers",
+      "term": "Spring 2016",
+      "status": "published archive",
+      "verified_on": "2026-11-14",
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/",
+      "prerequisites": {
+        "en": "Conventional programming and mathematics for the application algorithms; this is a parallel-computing course, not a Spark API course.",
+        "zh": "常规语言编程与理解应用算法所需的数学；这是并行计算课程，不是 Spark API 教程。"
+      },
+      "public_materials": {
+        "en": "Course outline and linked lecture PDFs are readable without an account. We checked the selected PDFs, not every archived video.",
+        "zh": "课程主页与选用讲义 PDF 无需登录可读；核验范围为选用 PDF，不涵盖所有历史视频。"
+      },
+      "enrollment": {
+        "en": "Self-study of these public files needs no registration or purchase. University credit, staff support and historical machine accounts are separate; no current enrollment or fee offer is asserted.",
+        "zh": "阅读这些公开资料无需注册或购买；学分、教学支持和历史机器账号另属正式课程，不声称当前可注册或具体收费。"
+      },
+      "era_note": {
+        "en": "2016 archive. Hardware and cloud figures are historical; retain the communication, granularity and locality questions. The 2025 official page exists but says videos require a Berkeley login; it is not substituted for this open archive.",
+        "zh": "2016 年归档。硬件及云平台数字有年代性，学习通信、任务粒度和局部性问题。2025 官方页存在，但注明视频需 Berkeley 登录；不冒充全部开放的新课。"
+      },
+      "context_url": "https://sites.google.com/lbl.gov/cs267-spr2025"
+    },
+    {
+      "id": "mit-65840-2026",
+      "school": "Massachusetts Institute of Technology",
+      "course_number": "6.5840",
+      "name": "Distributed Systems",
+      "term": "Spring 2026",
+      "status": "published materials (schedule labels itself tentative)",
+      "verified_on": "2026-11-14",
+      "url": "https://pdos.csail.mit.edu/6.5840/",
+      "prerequisites": {
+        "en": "Official prerequisites: 6.1910 (6.004), plus 6.1800 (6.033) or 6.1810, or equivalent; substantial programming experience helps. Lab 1 uses Go.",
+        "zh": "官方先修：6.1910（6.004）以及 6.1800（6.033）或 6.1810，或同等基础；需较强编程能力，Lab 1 使用 Go。"
+      },
+      "public_materials": {
+        "en": "Lecture 1 notes, schedule, MapReduce paper and Lab 1 specification are public. Selected 2026 materials were available on the verification date; a tentative schedule alone is not proof of a future lecture.",
+        "zh": "Lecture 1 笔记、课表、MapReduce 原论文与 Lab 1 题面可公开访问。核验日这些 2026 资料已经发布；暂定课表不等于未来讲座已发生。"
+      },
+      "enrollment": {
+        "en": "Reading the public pages is free and needs no course login. MIT assessment/credit and course systems require their own enrollment; this Lab offers neither. Fees were not independently verified.",
+        "zh": "公开页面免费阅读且无需课程登录；MIT 的评分、学分和课程系统另需正式注册，本 Lab 不提供这些服务；未独立核验学费。"
+      },
+      "era_note": {
+        "en": "2026 teaching materials include the 2004 MapReduce classic. Our Spark task exception exercise is narrower than MIT's multi-process worker-crash assignment.",
+        "zh": "2026 教学资料包含 2004 年 MapReduce 经典论文。本 Lab 的 Spark 任务异常练习弱于 MIT 多进程 Worker 崩溃作业。"
+      },
+      "policy_url": "https://pdos.csail.mit.edu/6.5840/labs/collab.html"
+    }
+  ],
+  "sources": [
+    {
+      "id": "cs267-l1",
+      "title": "CS267 Lecture 1: Introduction",
+      "kind": "lecture",
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture01_intro_jwd16_4pp.pdf",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "course_id": "berkeley-cs267-2016",
+      "year": 2016
+    },
+    {
+      "id": "cs267-l2",
+      "title": "CS267 Lecture 2: Single Processor Machines: Memory Hierarchies and Processor Features",
+      "kind": "lecture",
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture02_memhier_jwd16_4pp.pdf",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "course_id": "berkeley-cs267-2016",
+      "year": 2016
+    },
+    {
+      "id": "cs267-l3",
+      "title": "CS267 Lecture 3: Parallel Machines and Programming Models",
+      "kind": "lecture",
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture03_machines_jwd16_4pp.pdf",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "course_id": "berkeley-cs267-2016",
+      "year": 2016
+    },
+    {
+      "id": "cs267-l9",
+      "title": "CS267 Lecture 9: Cloud Computing and Big Data Processing",
+      "kind": "lecture",
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/CS_267_Sp2016_Cloud_Computing.pdf",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "course_id": "berkeley-cs267-2016",
+      "year": 2016
+    },
+    {
+      "id": "cs267-l23",
+      "title": "CS267 Lecture 23: Dynamic Load Balancing",
+      "kind": "lecture",
+      "url": "https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture23_LoadBalancing_jwd16_4pp.pdf",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "course_id": "berkeley-cs267-2016",
+      "year": 2016,
+      "note": {
+        "en": "Linked from the 12 April 2016 course entry; some reused slides carry 2012 dates and different lecture numbering.",
+        "zh": "来自课程 2016-04-12 的 Lecture 23 链接；部分复用幻灯片保留 2012 日期和旧讲次编号。"
+      }
+    },
+    {
+      "id": "mit-l1",
+      "title": "6.5840 2026 Lecture 1: Introduction",
+      "kind": "lecture notes",
+      "url": "https://pdos.csail.mit.edu/6.5840/notes/l01.txt",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "course_id": "mit-65840-2026",
+      "year": 2026
+    },
+    {
+      "id": "mit-lab1",
+      "title": "6.5840 Lab 1: MapReduce",
+      "kind": "assignment specification",
+      "url": "https://pdos.csail.mit.edu/6.5840/labs/lab-mr.html",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "course_id": "mit-65840-2026",
+      "year": 2026,
+      "note": {
+        "en": "Read the specification only. Do not publish a solution; the upstream collaboration policy forbids it. Our exercises do not use the assignment starter or implement its coordinator.",
+        "zh": "只研读题面，不公开该作业解答；原课程协作政策禁止公开解答。本 Lab 练习不使用其作业骨架，也不实现该协调器。"
+      }
+    },
+    {
+      "id": "mapreduce",
+      "title": "MapReduce: Simplified Data Processing on Large Clusters",
+      "kind": "original paper",
+      "url": "https://pdos.csail.mit.edu/6.5840/papers/mapreduce.pdf",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "year": 2004
+    },
+    {
+      "id": "rdd",
+      "title": "Resilient Distributed Datasets: A Fault-Tolerant Abstraction for In-Memory Cluster Computing",
+      "kind": "original paper",
+      "url": "https://www.usenix.org/system/files/conference/nsdi12/nsdi12-final138.pdf",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "year": 2012
+    },
+    {
+      "id": "spark-rdd",
+      "title": "Apache Spark 3.5.8 RDD Programming Guide",
+      "kind": "official implementation guide",
+      "url": "https://spark.apache.org/docs/3.5.8/rdd-programming-guide.html",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "note": {
+        "en": "Version-pinned implementation reference, not a university course.",
+        "zh": "固定版本的实现参考，不算大学课程。"
+      }
+    },
+    {
+      "id": "spark-aqe",
+      "title": "Apache Spark 3.5.8 SQL Performance Tuning",
+      "kind": "official implementation guide",
+      "url": "https://spark.apache.org/docs/3.5.8/sql-performance-tuning.html",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "note": {
+        "en": "Read Adaptive Query Execution and Coalescing Post Shuffle Partitions. Other AQE features are untested here.",
+        "zh": "阅读 Adaptive Query Execution 与 Coalescing Post Shuffle Partitions；其他 AQE 功能未在本实验验证。"
+      }
+    },
+    {
+      "id": "spark-memory",
+      "title": "Apache Spark 3.5.8 Tuning Guide",
+      "kind": "official implementation guide",
+      "url": "https://spark.apache.org/docs/3.5.8/tuning.html",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published"
+    },
+    {
+      "id": "zero",
+      "title": "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models",
+      "kind": "AI extension / original paper",
+      "url": "https://arxiv.org/abs/1910.02054v3",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "year": 2020,
+      "note": {
+        "en": "First preprint 2019; selected v3 revised 2020. Reading extension, not an implemented training benchmark.",
+        "zh": "预印本始于 2019，选用 v3 于 2020 修订。只作延伸阅读，不是已实现训练基准。"
+      }
+    },
+    {
+      "id": "orca",
+      "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+      "kind": "AI extension / original paper",
+      "url": "https://www.usenix.org/conference/osdi22/presentation/yu",
+      "verified_on": "2026-11-14",
+      "availability": "public, read without account",
+      "status": "published",
+      "year": 2022,
+      "note": {
+        "en": "Published OSDI 2022. Read iteration-level scheduling for variable-length requests; no inference engine runs in this Lab.",
+        "zh": "已发表于 OSDI 2022；学习变长请求的迭代级调度。本 Lab 未运行推理引擎。"
+      }
+    }
+  ],
+  "units": [
+    {
+      "id": "01-parallel",
+      "title": {
+        "en": "Work, slots and granularity",
+        "zh": "工作量、槽位与粒度"
+      },
+      "readings": [
+        {
+          "source_id": "cs267-l1",
+          "locator": "Lecture 1 (19 Jan 2016): motivation and parallel performance"
+        },
+        {
+          "source_id": "cs267-l3",
+          "locator": "Lecture 3 (26 Jan 2016): machine and programming models"
+        }
+      ],
+      "exercise": {
+        "authorship": "original Lab exercise; not an upstream assignment solution",
+        "command": "python scripts/run_all.py --only parallel",
+        "predict": {
+          "en": "With two slots, predict whether 64 tiny tasks beat eight. Explain why task count does not mean 64 cores.",
+          "zh": "只有两个槽位时，预测 64 个小任务是否胜过 8 个，解释任务数为何不等于核数。"
+        },
+        "acceptance": {
+          "en": "Every result equals independent sum 119516556; inspect 1/8/64 TaskEnd attempts and all timings.",
+          "zh": "各方案均等于独立和 119516556；检查 1/8/64 个 TaskEnd 尝试与全部耗时。"
+        },
+        "boundary": {
+          "en": "local[2,2], one JVM; neither the cost widget nor the run proves machine scaling.",
+          "zh": "local[2,2] 单 JVM；成本控件与此运行都不能证明多机扩展。"
+        }
+      }
+    },
+    {
+      "id": "02-model",
+      "title": {
+        "en": "MapReduce to DAG and stages",
+        "zh": "从 MapReduce 到 DAG 与 Stage"
+      },
+      "readings": [
+        {
+          "source_id": "mit-l1",
+          "locator": "CASE STUDY: MapReduce; The shuffle; Coordinator"
+        },
+        {
+          "source_id": "mapreduce",
+          "locator": "Sections 2 and 3: model and implementation"
+        },
+        {
+          "source_id": "cs267-l9",
+          "locator": "PDF pages 30–47: MapReduce, recovery and Spark concepts"
+        }
+      ],
+      "exercise": {
+        "authorship": "original Lab exercise; not an upstream assignment solution",
+        "command": "python scripts/run_all.py --smoke --only aggregation",
+        "predict": {
+          "en": "Draw map-side work, exchange and reduce-side work before running. Which dependency causes a stage boundary?",
+          "zh": "执行前画 map 侧、交换与 reduce 侧；哪个依赖形成 Stage 边界？"
+        },
+        "acceptance": {
+          "en": "Find ShuffledRDD in both saved lineages and two task stages in each measured group; output still matches all key totals.",
+          "zh": "在保存的两份 Lineage 中找到 ShuffledRDD，并在每个计时组中找到两个任务阶段；所有键的结果仍正确。"
+        },
+        "boundary": {
+          "en": "This RDD trace illustrates the model; it does not implement MIT Lab 1 or its RPC coordinator.",
+          "zh": "此 RDD 轨迹解释模型，并未实现 MIT Lab 1 或 RPC 协调器。"
+        }
+      }
+    },
+    {
+      "id": "03-aggregation",
+      "title": {
+        "en": "Mergeable summaries before movement",
+        "zh": "移动前的可合并摘要"
+      },
+      "readings": [
+        {
+          "source_id": "mapreduce",
+          "locator": "Section 4.3: Combiner Function"
+        },
+        {
+          "source_id": "spark-rdd",
+          "locator": "Working with Key-Value Pairs; reduceByKey versus groupByKey"
+        }
+      ],
+      "exercise": {
+        "authorship": "original Lab exercise; not an upstream assignment solution",
+        "command": "python scripts/run_all.py --only aggregation",
+        "predict": {
+          "en": "Explain why summing locally preserves a monoid; why averaging local means without counts fails.",
+          "zh": "解释局部求和为何可合并；为什么不带数量的局部平均数不能直接平均。"
+        },
+        "acceptance": {
+          "en": "Compare the full 1,000-key oracle and Shuffle bytes; distinguish serialized batches from source records.",
+          "zh": "核对完整 1,000 键 oracle 与 Shuffle 字节；区分序列化批次与源记录。"
+        },
+        "boundary": {
+          "en": "Local Shuffle bytes measure engine serialization, not cross-host network traffic.",
+          "zh": "本机 Shuffle 字节是引擎序列化指标，不是跨机网络流量。"
+        }
+      }
+    },
+    {
+      "id": "04-join",
+      "title": {
+        "en": "Skew, replication and the long tail",
+        "zh": "倾斜、复制与长尾"
+      },
+      "readings": [
+        {
+          "source_id": "cs267-l23",
+          "locator": "Lecture 23 (12 Apr 2016): task granularity and dynamic load balancing"
+        },
+        {
+          "source_id": "spark-aqe",
+          "locator": "Join Strategy Hints; broadcast and merge hints"
+        }
+      ],
+      "exercise": {
+        "authorship": "original Lab exercise; not an upstream assignment solution",
+        "command": "python scripts/run_all.py --only join",
+        "predict": {
+          "en": "Predict the hottest output partition under 80% hot-key skew; what extra work does salting add?",
+          "zh": "80% 热键下预测最热输出分区；加盐额外增加了什么工作？"
+        },
+        "acceptance": {
+          "en": "All variants: 240000 rows, weighted sum 384001; compare partition histograms and SortMergeJoin/BroadcastHashJoin plans. Keep the slower salted observation.",
+          "zh": "各方案均为 240000 行、加权和 384001；比较分区直方图与 Join 计划，保留加盐更慢的观测。"
+        },
+        "boundary": {
+          "en": "Unique dimension keys. The old join plans are pre-action strategy evidence, not final AQE plans; AQE skew join remains untested.",
+          "zh": "维表键唯一。旧 Join 计划为执行前策略证据，不是最终 AQE 计划；AQE skew join 仍未实测。"
+        }
+      }
+    },
+    {
+      "id": "05-recovery",
+      "title": {
+        "en": "Determinism, retry and lineage",
+        "zh": "确定性、重试与 Lineage"
+      },
+      "readings": [
+        {
+          "source_id": "mit-lab1",
+          "locator": "Introduction; Your Job; worker timeout and crash tests (study only)"
+        },
+        {
+          "source_id": "mapreduce",
+          "locator": "Section 3.3: Fault Tolerance"
+        },
+        {
+          "source_id": "rdd",
+          "locator": "Sections 2.1 and 5: abstraction and implementation, recovery/checkpointing"
+        }
+      ],
+      "exercise": {
+        "authorship": "original Lab exercise; not an upstream assignment solution",
+        "command": "python scripts/run_all.py --only recovery",
+        "predict": {
+          "en": "Which result survives one task exception? What changes when a cache block is removed?",
+          "zh": "一次任务异常后哪些结果应保持？移除缓存后什么会改变？"
+        },
+        "acceptance": {
+          "en": "One failed then successful partition-0 attempt; evaluations 8/0/8; ReliableCheckpointRDD truncates lineage.",
+          "zh": "分区 0 先失败后成功；求值次数 8/0/8；ReliableCheckpointRDD 截断 Lineage。"
+        },
+        "boundary": {
+          "en": "No killed executor or host. Local checkpoint cannot survive host loss; this is weaker than MIT worker-crash testing.",
+          "zh": "没有杀 Executor 或主机；本地检查点不抵抗整机丢失，弱于 MIT Worker 崩溃测试。"
+        }
+      }
+    },
+    {
+      "id": "06-resources",
+      "title": {
+        "en": "Memory hierarchy and diagnosis",
+        "zh": "内存层次与诊断"
+      },
+      "readings": [
+        {
+          "source_id": "cs267-l2",
+          "locator": "Lecture 2 (21 Jan 2016): locality and memory hierarchy"
+        },
+        {
+          "source_id": "spark-memory",
+          "locator": "Memory Management Overview; Memory Tuning"
+        }
+      ],
+      "exercise": {
+        "authorship": "original Lab exercise; not an upstream assignment solution",
+        "command": "python scripts/run_all.py --only resources",
+        "predict": {
+          "en": "Will more partitions change the working set even with unchanged slots? Distinguish CPU caches from persisted RDD storage.",
+          "zh": "槽位不变时更多分区是否改变工作集？区分 CPU Cache 与 RDD 持久化存储。"
+        },
+        "acceptance": {
+          "en": "Validate sorted payloads, row count and ID sum; inspect nonzero real Spill and per-task memory counters.",
+          "zh": "验证已消费且局部有序的 payload、行数与 ID 和；检查真实非零 Spill 与逐任务内存指标。"
+        },
+        "boundary": {
+          "en": "Spill is forced by 8192 elements, not natural OOM; task peak execution memory is not process RSS.",
+          "zh": "Spill 由 8192 元素阈值强制触发，不是自然 OOM；任务执行内存峰值不是进程 RSS。"
+        }
+      }
+    },
+    {
+      "id": "07-aqe",
+      "title": {
+        "en": "Observe a final adaptive plan",
+        "zh": "观察最终自适应计划"
+      },
+      "readings": [
+        {
+          "source_id": "spark-aqe",
+          "locator": "Adaptive Query Execution → Coalescing Post Shuffle Partitions"
+        },
+        {
+          "source_id": "cs267-l23",
+          "locator": "Dynamic scheduling and task-size overhead as conceptual background"
+        }
+      ],
+      "exercise": {
+        "authorship": "original Lab exercise; not an upstream assignment solution",
+        "command": "python scripts/run_aqe.py",
+        "predict": {
+          "en": "Predict why merely enabling AQE may leave 32 reducers, and whether 1-byte versus 1-MiB targets produce the same final plan.",
+          "zh": "预测仅开启 AQE 为何可能仍有 32 个 reducer，以及 1 字节与 1 MiB 目标是否形成同一最终计划。"
+        },
+        "acceptance": {
+          "en": "Full per-key count/sum oracle; compare pre/final plans, AQEShuffleRead SQL metrics and actual TaskEnd stages. Run the 1-byte counterexample in the walkthrough.",
+          "zh": "完整逐键 count/sum oracle；比较执行前/最终计划、AQEShuffleRead SQL 指标与实际 TaskEnd 阶段；按指南运行 1 字节反例。"
+        },
+        "boundary": {
+          "en": "Only post-shuffle coalescing is implemented. Join adaptation, distributed training and inference remain reading extensions.",
+          "zh": "只实现 Shuffle 后分区合并；Join 自适应、分布式训练与推理仅为阅读延伸。"
+        }
+      }
+    }
+  ]
+}
