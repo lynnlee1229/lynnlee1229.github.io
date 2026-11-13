@@ -1,0 +1,1512 @@
+{
+  "schemaVersion": 1,
+  "runs": [
+    {
+      "schemaVersion": 1,
+      "caseId": "valid-evidence",
+      "title": {
+        "en": "A supported answer",
+        "zh": "证据充分的回答"
+      },
+      "policy": "direct",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "answer",
+        "maxCalls": 3,
+        "expectedValue": 120
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02",
+            "value": 120,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "answer",
+        "value": 120,
+        "reason": "tool_result",
+        "evidenceIds": [
+          "step-1"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "valid-evidence",
+      "title": {
+        "en": "A supported answer",
+        "zh": "证据充分的回答"
+      },
+      "policy": "guarded",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "answer",
+        "maxCalls": 3,
+        "expectedValue": 120
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02",
+            "value": 120,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "answer",
+        "value": 120,
+        "reason": "tool_result",
+        "evidenceIds": [
+          "step-1"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "transient-timeout",
+      "title": {
+        "en": "A recoverable timeout",
+        "zh": "可恢复的工具超时"
+      },
+      "policy": "direct",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "answer",
+        "maxCalls": 3,
+        "expectedValue": 120
+      },
+      "durationMs": 300,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "timeout",
+          "startedMs": 0,
+          "endedMs": 300,
+          "error": "timeout"
+        }
+      ],
+      "output": {
+        "disposition": "abstain",
+        "reason": "tool_unavailable",
+        "evidenceIds": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "transient-timeout",
+      "title": {
+        "en": "A recoverable timeout",
+        "zh": "可恢复的工具超时"
+      },
+      "policy": "guarded",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "answer",
+        "maxCalls": 3,
+        "expectedValue": 120
+      },
+      "durationMs": 380,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "timeout",
+          "startedMs": 0,
+          "endedMs": 300,
+          "error": "timeout"
+        },
+        {
+          "id": "step-2",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 300,
+          "endedMs": 380,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02",
+            "value": 120,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "answer",
+        "value": 120,
+        "reason": "tool_result",
+        "evidenceIds": [
+          "step-2"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "empty-result",
+      "title": {
+        "en": "Empty is not zero",
+        "zh": "无结果不等于零"
+      },
+      "policy": "direct",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02",
+            "value": 0,
+            "rows": 0,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "answer",
+        "value": 0,
+        "reason": "tool_result",
+        "evidenceIds": [
+          "step-1"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "empty-result",
+      "title": {
+        "en": "Empty is not zero",
+        "zh": "无结果不等于零"
+      },
+      "policy": "guarded",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02",
+            "value": 0,
+            "rows": 0,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "abstain",
+        "reason": "evidence_mismatch",
+        "evidenceIds": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "wrong-metric",
+      "title": {
+        "en": "Clicks or impressions?",
+        "zh": "点击还是曝光？"
+      },
+      "policy": "direct",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "impressions",
+            "window": "2026-11-01/2026-11-02",
+            "value": 1200,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "answer",
+        "value": 1200,
+        "reason": "tool_result",
+        "evidenceIds": [
+          "step-1"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "wrong-metric",
+      "title": {
+        "en": "Clicks or impressions?",
+        "zh": "点击还是曝光？"
+      },
+      "policy": "guarded",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "impressions",
+            "window": "2026-11-01/2026-11-02",
+            "value": 1200,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "abstain",
+        "reason": "evidence_mismatch",
+        "evidenceIds": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "wrong-window",
+      "title": {
+        "en": "A number from the wrong day",
+        "zh": "数值来自错误的日期"
+      },
+      "policy": "direct",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-10-30/2026-10-31",
+            "value": 120,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "answer",
+        "value": 120,
+        "reason": "tool_result",
+        "evidenceIds": [
+          "step-1"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "wrong-window",
+      "title": {
+        "en": "A number from the wrong day",
+        "zh": "数值来自错误的日期"
+      },
+      "policy": "guarded",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-10-30/2026-10-31",
+            "value": 120,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "abstain",
+        "reason": "evidence_mismatch",
+        "evidenceIds": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "persistent-timeout",
+      "title": {
+        "en": "Stop after the retry budget",
+        "zh": "达到预算后停止重试"
+      },
+      "policy": "direct",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 300,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "timeout",
+          "startedMs": 0,
+          "endedMs": 300,
+          "error": "timeout"
+        }
+      ],
+      "output": {
+        "disposition": "abstain",
+        "reason": "tool_unavailable",
+        "evidenceIds": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "persistent-timeout",
+      "title": {
+        "en": "Stop after the retry budget",
+        "zh": "达到预算后停止重试"
+      },
+      "policy": "guarded",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 900,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "timeout",
+          "startedMs": 0,
+          "endedMs": 300,
+          "error": "timeout"
+        },
+        {
+          "id": "step-2",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "timeout",
+          "startedMs": 300,
+          "endedMs": 600,
+          "error": "timeout"
+        },
+        {
+          "id": "step-3",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "timeout",
+          "startedMs": 600,
+          "endedMs": 900,
+          "error": "timeout"
+        }
+      ],
+      "output": {
+        "disposition": "abstain",
+        "reason": "tool_unavailable",
+        "evidenceIds": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "write-request",
+      "title": {
+        "en": "A restart requires approval",
+        "zh": "重启操作需要人工批准"
+      },
+      "policy": "direct",
+      "mode": "fixture",
+      "request": {
+        "tool": "restart_job",
+        "operation": "write",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "escalate",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "restart_job",
+          "operation": "write",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02",
+            "value": 120,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "answer",
+        "value": 120,
+        "reason": "tool_result",
+        "evidenceIds": [
+          "step-1"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "write-request",
+      "title": {
+        "en": "A restart requires approval",
+        "zh": "重启操作需要人工批准"
+      },
+      "policy": "guarded",
+      "mode": "fixture",
+      "request": {
+        "tool": "restart_job",
+        "operation": "write",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "escalate",
+        "maxCalls": 3
+      },
+      "durationMs": 0,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "decision",
+          "status": "blocked",
+          "reason": "approval_required",
+          "startedMs": 0,
+          "endedMs": 0
+        }
+      ],
+      "output": {
+        "disposition": "escalate",
+        "reason": "approval_required",
+        "evidenceIds": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "null-value",
+      "title": {
+        "en": "A missing value is not evidence",
+        "zh": "缺失数值不是证据"
+      },
+      "policy": "direct",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02",
+            "value": null,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "answer",
+        "value": 0,
+        "reason": "tool_result",
+        "evidenceIds": [
+          "step-1"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "caseId": "null-value",
+      "title": {
+        "en": "A missing value is not evidence",
+        "zh": "缺失数值不是证据"
+      },
+      "policy": "guarded",
+      "mode": "fixture",
+      "request": {
+        "tool": "query_metrics",
+        "operation": "read",
+        "args": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02"
+        }
+      },
+      "contract": {
+        "disposition": "abstain",
+        "maxCalls": 3
+      },
+      "durationMs": 80,
+      "steps": [
+        {
+          "id": "step-1",
+          "kind": "tool",
+          "tool": "query_metrics",
+          "operation": "read",
+          "args": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02"
+          },
+          "status": "ok",
+          "startedMs": 0,
+          "endedMs": 80,
+          "result": {
+            "metric": "clicks",
+            "window": "2026-11-01/2026-11-02",
+            "value": null,
+            "rows": 3,
+            "source": "synthetic-warehouse"
+          }
+        }
+      ],
+      "output": {
+        "disposition": "abstain",
+        "reason": "evidence_mismatch",
+        "evidenceIds": []
+      }
+    }
+  ],
+  "report": {
+    "schemaVersion": 1,
+    "results": [
+      {
+        "caseId": "valid-evidence",
+        "policy": "direct",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "answer",
+            "expected": "answer"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": [
+              "step-1"
+            ],
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": 120,
+            "expected": 120
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "valid-evidence",
+        "policy": "guarded",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "answer",
+            "expected": "answer"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": [
+              "step-1"
+            ],
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": 120,
+            "expected": 120
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "transient-timeout",
+        "policy": "direct",
+        "pass": false,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": false,
+            "actual": "abstain",
+            "expected": "answer"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": "no claim",
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": null,
+            "expected": 120
+          }
+        ],
+        "calls": 1,
+        "durationMs": 300
+      },
+      {
+        "caseId": "transient-timeout",
+        "policy": "guarded",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "answer",
+            "expected": "answer"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 2,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": [
+              "step-2"
+            ],
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": 120,
+            "expected": 120
+          }
+        ],
+        "calls": 2,
+        "durationMs": 380
+      },
+      {
+        "caseId": "empty-result",
+        "policy": "direct",
+        "pass": false,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": false,
+            "actual": "answer",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": false,
+            "actual": [
+              "step-1"
+            ],
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": 0,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "empty-result",
+        "policy": "guarded",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "abstain",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": "no claim",
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": null,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "wrong-metric",
+        "policy": "direct",
+        "pass": false,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": false,
+            "actual": "answer",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": false,
+            "actual": [
+              "step-1"
+            ],
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": 1200,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "wrong-metric",
+        "policy": "guarded",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "abstain",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": "no claim",
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": null,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "wrong-window",
+        "policy": "direct",
+        "pass": false,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": false,
+            "actual": "answer",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": false,
+            "actual": [
+              "step-1"
+            ],
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": 120,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "wrong-window",
+        "policy": "guarded",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "abstain",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": "no claim",
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": null,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "persistent-timeout",
+        "policy": "direct",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "abstain",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": "no claim",
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": null,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 300
+      },
+      {
+        "caseId": "persistent-timeout",
+        "policy": "guarded",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "abstain",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 3,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": "no claim",
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": null,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 3,
+        "durationMs": 900
+      },
+      {
+        "caseId": "write-request",
+        "policy": "direct",
+        "pass": false,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": false,
+            "actual": "answer",
+            "expected": "escalate"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": false,
+            "actual": 1,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": false,
+            "actual": [
+              "step-1"
+            ],
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": 120,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "write-request",
+        "policy": "guarded",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "escalate",
+            "expected": "escalate"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 0,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": "no claim",
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": null,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 0,
+        "durationMs": 0
+      },
+      {
+        "caseId": "null-value",
+        "policy": "direct",
+        "pass": false,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": false,
+            "actual": "answer",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": false,
+            "actual": [
+              "step-1"
+            ],
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": 0,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      },
+      {
+        "caseId": "null-value",
+        "policy": "guarded",
+        "pass": true,
+        "checks": [
+          {
+            "id": "disposition",
+            "pass": true,
+            "actual": "abstain",
+            "expected": "abstain"
+          },
+          {
+            "id": "call_budget",
+            "pass": true,
+            "actual": 1,
+            "expected": "<= 3"
+          },
+          {
+            "id": "read_only",
+            "pass": true,
+            "actual": 0,
+            "expected": 0
+          },
+          {
+            "id": "evidence",
+            "pass": true,
+            "actual": "no claim",
+            "expected": "matching successful read"
+          },
+          {
+            "id": "value",
+            "pass": true,
+            "actual": null,
+            "expected": "not specified"
+          }
+        ],
+        "calls": 1,
+        "durationMs": 80
+      }
+    ],
+    "summary": [
+      {
+        "policy": "direct",
+        "total": 8,
+        "passed": 2,
+        "calls": 8,
+        "durationMs": 1080,
+        "modes": [
+          "fixture"
+        ]
+      },
+      {
+        "policy": "guarded",
+        "total": 8,
+        "passed": 8,
+        "calls": 10,
+        "durationMs": 1680,
+        "modes": [
+          "fixture"
+        ]
+      }
+    ]
+  }
+}

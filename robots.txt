@@ -1,1 +1,7 @@
 User-agent: *
+Allow: /
+
+Sitemap: https://lynnlee1229.github.io/sitemap.xml
+Sitemap: https://lynnlee1229.github.io/agent-reliability-lab/sitemap.xml
+Sitemap: https://lynnlee1229.github.io/geodata-lab/sitemap.xml
+

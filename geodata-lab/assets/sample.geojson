@@ -1,0 +1,196 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "region-a",
+      "properties": {
+        "name": "Synthetic region with a hole"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              114.28,
+              30.58
+            ],
+            [
+              114.32,
+              30.58
+            ],
+            [
+              114.32,
+              30.62
+            ],
+            [
+              114.28,
+              30.62
+            ],
+            [
+              114.28,
+              30.58
+            ]
+          ],
+          [
+            [
+              114.294,
+              30.604
+            ],
+            [
+              114.306,
+              30.604
+            ],
+            [
+              114.306,
+              30.614
+            ],
+            [
+              114.294,
+              30.614
+            ],
+            [
+              114.294,
+              30.604
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "region-b",
+      "properties": {},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              114.31,
+              30.59
+            ],
+            [
+              114.34,
+              30.59
+            ],
+            [
+              114.34,
+              30.63
+            ],
+            [
+              114.31,
+              30.63
+            ],
+            [
+              114.31,
+              30.59
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "inside-a",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.3,
+          30.59
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "in-the-hole",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.3,
+          30.61
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "on-edge",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.28,
+          30.6
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "overlap",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.315,
+          30.6
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "outside",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.35,
+          30.64
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "route-1",
+      "properties": {
+        "timestamps": [
+          "2026-11-01T00:00:00Z",
+          "2026-11-01T00:01:00Z",
+          "2026-11-01T00:02:00Z",
+          "2026-11-01T00:03:00Z",
+          "2026-11-01T00:04:00Z",
+          "2026-11-01T00:05:00Z"
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            114.285,
+            30.585
+          ],
+          [
+            114.29,
+            30.59
+          ],
+          [
+            114.34,
+            30.635
+          ],
+          [
+            114.295,
+            30.595
+          ],
+          [
+            114.3,
+            30.6
+          ],
+          [
+            114.305,
+            30.605
+          ]
+        ]
+      }
+    }
+  ]
+}

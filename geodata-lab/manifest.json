@@ -1,0 +1,16 @@
+{
+  "edition": "1.0",
+  "files": {
+    "assets/app.mjs": "33e79471a9e596c810218eef316c00c94a392bb1c479ec066a3e849d62e01ec8",
+    "assets/engine.mjs": "f562972c8dd5b3f344cdb82299ef7e938ce0d9658a43752e7cae0fe9c565497d",
+    "assets/sample.geojson": "3553b97b5b3c8b6db59c927cb03527b28649ea11aba29b7921a006f2fee14b3e",
+    "en/guide/index.html": "399ef2f4be08012685ef7c34c2d9613d79ae9f6f246a14321f63175643193f44",
+    "en/index.html": "09e4684016f8b098a95dcf944bbb4fe333a8f73d62313e6784631ca764cb8cfa",
+    "en/method/index.html": "da9310c810e6afad366aed5083e267684d490088cce95c996d9579608e31c666",
+    "index.html": "3c9dd57a24951526a70ba191c7cbeee22150cc059a9b030a5350b930856f92d1",
+    "sitemap.xml": "40a4bbc2f4cf228f13ed4a4eeef4e2fd84fffd42ecaa48704616d6714fa1ca77",
+    "zh/guide/index.html": "5e424d4d0f26913cdf0db88dd7b63577a19b2e1f42938d771fd19faa915bf2ab",
+    "zh/index.html": "7a62c7d77b87291fb34b7cc3956419b7bae83851d0f9faf9199652f088316940",
+    "zh/method/index.html": "17f5df289203226f37461aaa732c9fb8099ff697fcd64866e904306d2678fbe1"
+  }
+}

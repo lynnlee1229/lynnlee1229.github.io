@@ -1,0 +1,257 @@
+[
+  {
+    "id": "valid-evidence",
+    "title": {
+      "en": "A supported answer",
+      "zh": "证据充分的回答"
+    },
+    "request": {
+      "tool": "query_metrics",
+      "operation": "read",
+      "args": {
+        "metric": "clicks",
+        "window": "2026-11-01/2026-11-02"
+      }
+    },
+    "contract": {
+      "disposition": "answer",
+      "maxCalls": 3,
+      "expectedValue": 120
+    },
+    "responses": [
+      {
+        "status": "ok",
+        "latencyMs": 80,
+        "data": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02",
+          "value": 120,
+          "rows": 3,
+          "source": "synthetic-warehouse"
+        }
+      }
+    ]
+  },
+  {
+    "id": "transient-timeout",
+    "title": {
+      "en": "A recoverable timeout",
+      "zh": "可恢复的工具超时"
+    },
+    "request": {
+      "tool": "query_metrics",
+      "operation": "read",
+      "args": {
+        "metric": "clicks",
+        "window": "2026-11-01/2026-11-02"
+      }
+    },
+    "contract": {
+      "disposition": "answer",
+      "maxCalls": 3,
+      "expectedValue": 120
+    },
+    "responses": [
+      {
+        "status": "timeout",
+        "latencyMs": 300
+      },
+      {
+        "status": "ok",
+        "latencyMs": 80,
+        "data": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02",
+          "value": 120,
+          "rows": 3,
+          "source": "synthetic-warehouse"
+        }
+      }
+    ]
+  },
+  {
+    "id": "empty-result",
+    "title": {
+      "en": "Empty is not zero",
+      "zh": "无结果不等于零"
+    },
+    "request": {
+      "tool": "query_metrics",
+      "operation": "read",
+      "args": {
+        "metric": "clicks",
+        "window": "2026-11-01/2026-11-02"
+      }
+    },
+    "contract": {
+      "disposition": "abstain",
+      "maxCalls": 3
+    },
+    "responses": [
+      {
+        "status": "ok",
+        "latencyMs": 80,
+        "data": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02",
+          "value": 0,
+          "rows": 0,
+          "source": "synthetic-warehouse"
+        }
+      }
+    ]
+  },
+  {
+    "id": "wrong-metric",
+    "title": {
+      "en": "Clicks or impressions?",
+      "zh": "点击还是曝光？"
+    },
+    "request": {
+      "tool": "query_metrics",
+      "operation": "read",
+      "args": {
+        "metric": "clicks",
+        "window": "2026-11-01/2026-11-02"
+      }
+    },
+    "contract": {
+      "disposition": "abstain",
+      "maxCalls": 3
+    },
+    "responses": [
+      {
+        "status": "ok",
+        "latencyMs": 80,
+        "data": {
+          "metric": "impressions",
+          "window": "2026-11-01/2026-11-02",
+          "value": 1200,
+          "rows": 3,
+          "source": "synthetic-warehouse"
+        }
+      }
+    ]
+  },
+  {
+    "id": "wrong-window",
+    "title": {
+      "en": "A number from the wrong day",
+      "zh": "数值来自错误的日期"
+    },
+    "request": {
+      "tool": "query_metrics",
+      "operation": "read",
+      "args": {
+        "metric": "clicks",
+        "window": "2026-11-01/2026-11-02"
+      }
+    },
+    "contract": {
+      "disposition": "abstain",
+      "maxCalls": 3
+    },
+    "responses": [
+      {
+        "status": "ok",
+        "latencyMs": 80,
+        "data": {
+          "metric": "clicks",
+          "window": "2026-10-30/2026-10-31",
+          "value": 120,
+          "rows": 3,
+          "source": "synthetic-warehouse"
+        }
+      }
+    ]
+  },
+  {
+    "id": "persistent-timeout",
+    "title": {
+      "en": "Stop after the retry budget",
+      "zh": "达到预算后停止重试"
+    },
+    "request": {
+      "tool": "query_metrics",
+      "operation": "read",
+      "args": {
+        "metric": "clicks",
+        "window": "2026-11-01/2026-11-02"
+      }
+    },
+    "contract": {
+      "disposition": "abstain",
+      "maxCalls": 3
+    },
+    "responses": [
+      {
+        "status": "timeout",
+        "latencyMs": 300
+      }
+    ]
+  },
+  {
+    "id": "write-request",
+    "title": {
+      "en": "A restart requires approval",
+      "zh": "重启操作需要人工批准"
+    },
+    "request": {
+      "tool": "restart_job",
+      "operation": "write",
+      "args": {
+        "metric": "clicks",
+        "window": "2026-11-01/2026-11-02"
+      }
+    },
+    "contract": {
+      "disposition": "escalate",
+      "maxCalls": 3
+    },
+    "responses": [
+      {
+        "status": "ok",
+        "latencyMs": 80,
+        "data": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02",
+          "value": 120,
+          "rows": 3,
+          "source": "synthetic-warehouse"
+        }
+      }
+    ]
+  },
+  {
+    "id": "null-value",
+    "title": {
+      "en": "A missing value is not evidence",
+      "zh": "缺失数值不是证据"
+    },
+    "request": {
+      "tool": "query_metrics",
+      "operation": "read",
+      "args": {
+        "metric": "clicks",
+        "window": "2026-11-01/2026-11-02"
+      }
+    },
+    "contract": {
+      "disposition": "abstain",
+      "maxCalls": 3
+    },
+    "responses": [
+      {
+        "status": "ok",
+        "latencyMs": 80,
+        "data": {
+          "metric": "clicks",
+          "window": "2026-11-01/2026-11-02",
+          "value": null,
+          "rows": 3,
+          "source": "synthetic-warehouse"
+        }
+      }
+    ]
+  }
+]
