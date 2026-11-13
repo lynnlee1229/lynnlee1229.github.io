@@ -1,0 +1,474 @@
+{
+  "schema_version": 1,
+  "kind": "real-flink-checkpoint-recovery",
+  "started_at": "2026-11-13T18:12:19+00:00",
+  "finished_at": "2026-11-13T18:12:26+00:00",
+  "engine": "Apache Flink 1.20.2 local MiniCluster",
+  "runtime": {
+    "java": "openjdk version \"11.0.15\" 2022-04-19 LTS",
+    "os": "Darwin",
+    "arch": "arm64",
+    "heap_max_mib": 512,
+    "parallelism": 1
+  },
+  "command": "JAVA_HOME=<JDK-11-or-17> python3 scripts/run_checkpoint_lab.py --output outputs/my-run",
+  "source_sha256": {
+    "experiments/checkpoint/pom.xml": "52eb75826a9f542ce1fb8ad1b52cf809cd381f91555cf5aec47d481c3a1959cc",
+    "experiments/checkpoint/src/main/java/lab/CheckpointLab.java": "e38b770894f756a053cb72d886dbac8efe9c7a30c26e940cd4afa5143dece0ef",
+    "experiments/checkpoint/input.tsv": "3f9ba3e463450af11640b9f06dbcc753bee1d9791a24d14376283b93fc7657d3",
+    "experiments/checkpoint/oracle.json": "d46682252eca9d4da264020e1276c7136a004eac20621e80d5b09c1ed044151f",
+    "scripts/run_checkpoint_lab.py": "6d240d9f088b9bcb96032fba2fafd2ae5fa77e60a6f284aaaaf7c05f57736998"
+  },
+  "input": [
+    "0\tA\t5",
+    "1\tB\t7",
+    "2\tA\t11",
+    "3\tB\t13",
+    "4\tA\t17",
+    "5\tB\t19",
+    "6\tA\t23",
+    "7\tB\t29"
+  ],
+  "oracle": {
+    "description": "Hand-calculated expectation, separate from Flink's implementation: A=5+11+17+23, B=7+13+19+29.",
+    "unique_events": 8,
+    "totals": {
+      "A": 56,
+      "B": 68
+    },
+    "prefix_totals": [
+      5,
+      7,
+      16,
+      20,
+      33,
+      39,
+      56,
+      68
+    ],
+    "replayed_sequences": [
+      4,
+      5
+    ],
+    "fault_append_rows": 10,
+    "fault_naive_amount_sum": 160,
+    "unique_amount_sum": 124
+  },
+  "runs": {
+    "baseline": {
+      "append": [
+        [
+          0,
+          "A",
+          5,
+          5,
+          0
+        ],
+        [
+          1,
+          "B",
+          7,
+          7,
+          0
+        ],
+        [
+          2,
+          "A",
+          11,
+          16,
+          0
+        ],
+        [
+          3,
+          "B",
+          13,
+          20,
+          0
+        ],
+        [
+          4,
+          "A",
+          17,
+          33,
+          0
+        ],
+        [
+          5,
+          "B",
+          19,
+          39,
+          0
+        ],
+        [
+          6,
+          "A",
+          23,
+          56,
+          0
+        ],
+        [
+          7,
+          "B",
+          29,
+          68,
+          0
+        ]
+      ],
+      "materialized": {
+        "B": [
+          7,
+          "B",
+          29,
+          68,
+          0
+        ],
+        "A": [
+          6,
+          "A",
+          23,
+          56,
+          0
+        ]
+      },
+      "trace": [
+        [
+          "ENGINE_START",
+          "Flink-1.20.2",
+          "baseline"
+        ],
+        [
+          "SOURCE_INIT",
+          "false",
+          "0"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "0",
+          "5"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "1",
+          "7"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "2",
+          "16"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "3",
+          "20"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "4",
+          "33"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "5",
+          "39"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "6",
+          "56"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "7",
+          "68"
+        ],
+        [
+          "SNAPSHOT",
+          "1",
+          "8"
+        ],
+        [
+          "JOB_FINISHED",
+          "baseline"
+        ],
+        [
+          "ENGINE_CLOSED",
+          "baseline"
+        ]
+      ],
+      "engine_observations": {
+        "job_transitions": [
+          [
+            "CREATED",
+            "RUNNING"
+          ],
+          [
+            "RUNNING",
+            "FINISHED"
+          ]
+        ],
+        "completed_checkpoints": [
+          1
+        ],
+        "restored_checkpoints": [],
+        "injected_exception_seen": false,
+        "taskexecutor_stopped": true,
+        "raw_log_sha256": "ebd67f01a638ead914a2ff577a4f0cd47a2f052d74ef35804c69af9534f500dc"
+      }
+    },
+    "fault": {
+      "append": [
+        [
+          0,
+          "A",
+          5,
+          5,
+          0
+        ],
+        [
+          1,
+          "B",
+          7,
+          7,
+          0
+        ],
+        [
+          2,
+          "A",
+          11,
+          16,
+          0
+        ],
+        [
+          3,
+          "B",
+          13,
+          20,
+          0
+        ],
+        [
+          4,
+          "A",
+          17,
+          33,
+          0
+        ],
+        [
+          5,
+          "B",
+          19,
+          39,
+          0
+        ],
+        [
+          4,
+          "A",
+          17,
+          33,
+          1
+        ],
+        [
+          5,
+          "B",
+          19,
+          39,
+          1
+        ],
+        [
+          6,
+          "A",
+          23,
+          56,
+          1
+        ],
+        [
+          7,
+          "B",
+          29,
+          68,
+          1
+        ]
+      ],
+      "materialized": {
+        "B": [
+          7,
+          "B",
+          29,
+          68,
+          1
+        ],
+        "A": [
+          6,
+          "A",
+          23,
+          56,
+          1
+        ]
+      },
+      "trace": [
+        [
+          "ENGINE_START",
+          "Flink-1.20.2",
+          "fault"
+        ],
+        [
+          "SOURCE_INIT",
+          "false",
+          "0"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "0",
+          "5"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "1",
+          "7"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "2",
+          "16"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "3",
+          "20"
+        ],
+        [
+          "SNAPSHOT",
+          "1",
+          "4"
+        ],
+        [
+          "CHECKPOINT_COMPLETE",
+          "1",
+          "4"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "4",
+          "33"
+        ],
+        [
+          "SINK_WRITE",
+          "0",
+          "5",
+          "39"
+        ],
+        [
+          "INJECTED_FAILURE",
+          "0",
+          "5"
+        ],
+        [
+          "SOURCE_INIT",
+          "true",
+          "4"
+        ],
+        [
+          "SINK_WRITE",
+          "1",
+          "4",
+          "33"
+        ],
+        [
+          "SINK_WRITE",
+          "1",
+          "5",
+          "39"
+        ],
+        [
+          "SINK_WRITE",
+          "1",
+          "6",
+          "56"
+        ],
+        [
+          "SINK_WRITE",
+          "1",
+          "7",
+          "68"
+        ],
+        [
+          "SNAPSHOT",
+          "2",
+          "8"
+        ],
+        [
+          "JOB_FINISHED",
+          "fault"
+        ],
+        [
+          "ENGINE_CLOSED",
+          "fault"
+        ]
+      ],
+      "engine_observations": {
+        "job_transitions": [
+          [
+            "CREATED",
+            "RUNNING"
+          ],
+          [
+            "RUNNING",
+            "RESTARTING"
+          ],
+          [
+            "RESTARTING",
+            "RUNNING"
+          ],
+          [
+            "RUNNING",
+            "FINISHED"
+          ]
+        ],
+        "completed_checkpoints": [
+          1,
+          2
+        ],
+        "restored_checkpoints": [
+          1
+        ],
+        "injected_exception_seen": true,
+        "taskexecutor_stopped": true,
+        "raw_log_sha256": "816f5516f634c112531f25d390b116df7a895742e5981058852705ae27985cf4"
+      }
+    }
+  },
+  "checks": {
+    "baseline:materialized-totals": true,
+    "baseline:every-state-prefix": true,
+    "baseline:finished-and-closed": true,
+    "baseline:engine-finished-and-stopped": true,
+    "baseline:one-delivery-each": true,
+    "baseline:amount-sum": true,
+    "baseline:no-injection": true,
+    "fault:materialized-totals": true,
+    "fault:every-state-prefix": true,
+    "fault:finished-and-closed": true,
+    "fault:engine-finished-and-stopped": true,
+    "fault:replay-exact-cohort": true,
+    "fault:append-counterexample": true,
+    "fault:checkpoint-before-failure-before-restore": true,
+    "fault:two-attempts": true,
+    "fault:engine-confirms-checkpoint-restore": true,
+    "fault:engine-confirms-failure-restart": true
+  },
+  "passed": true,
+  "scope": "Real Flink task exception and automatic checkpoint restore inside one local JVM. Not a process kill, JobManager HA, production connector, full-stack or global exactly-once test.",
+  "sink_assumptions": "Single writer, ordered deterministic replay, immutable sequence IDs, local atomic replacement. Idempotent latest state can transiently regress during replay. No multi-sink atomic commit, concurrent version fence, fsync durability, deletes or business-input deduplication."
+}

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "kind": "static-configuration-verification",
-  "recorded_at": "2026-11-06T16:54:10+00:00",
+  "recorded_at": "2026-11-13T18:12:49+00:00",
   "command": "python3 scripts/verify_contract.py",
   "runtime_tested": false,
-  "runtime_note": "Docker daemon was unavailable during this publication. No end-to-end, recovery, throughput, latency or cross-platform runtime result is claimed.",
+  "runtime_note": "This configuration audit starts no runtime. Full-stack integration remains untested here. The separate checkpoint-recovery.json records a scoped Flink MiniCluster run; it does not validate this seven-component topology.",
   "source_files": {
     "compose.yml": "c74872fde7d9a94c58d4f39b0301612262d9bde9806cbbbf9501daa831828d0a",
     "sql/01_cdc_to_fluss.sql": "faf1e839b83810628a19261a937e2a34d32a65c1550174c6f055e6a095ed2685",

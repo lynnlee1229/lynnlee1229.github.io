@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "verified_on": "2026-11-14",
+  "timezone": "Asia/Shanghai",
+  "selection": "Two archived university courses with specific streaming/replay and lakehouse readings. These are selected units, not complete streaming-specialist degrees.",
+  "access_policy": "Linked course pages and listed readings were publicly readable without login when verified. University enrollment, credit, grading, office hours and restricted resources are separate; no free enrollment or certificate is promised. No tuition purchase is needed for this lab. Original exercises below are not university assignment solutions.",
+  "courses": [
+    {
+      "id": "princeton-cos418-f17",
+      "school": "Princeton University",
+      "number": "COS 418",
+      "name": "Distributed Systems",
+      "term": "Fall 2017",
+      "age_context": "Historical 2017 lecture, not a 2026 offering; some framework descriptions and terminology are dated. Use Flink 1.20 documentation for executable API semantics.",
+      "prerequisites": "Official: COS 217 required; COS 318, COS 333 and/or programming maturity recommended. Lab equivalent: Java basics, processes, key/value maps and aggregation.",
+      "url": "https://www.cs.princeton.edu/courses/archive/fall17/cos418/",
+      "prerequisite_url": "https://www.cs.princeton.edu/courses/archive/fall17/cos418/",
+      "public_materials": [
+        {
+          "title": "Lecture 21: Big Data Processing",
+          "url": "https://www.cs.princeton.edu/courses/archive/fall17/cos418/docs/L21-big-data.pdf",
+          "locator": "Slide numbers printed on handout: 21–26 stateful streaming, 40–48 failure and replay; PDF pages 6–12 contain these slides."
+        }
+      ],
+      "restricted_or_paid": "Piazza and enrolled assessment are separate; no current enrollment availability or tuition checked.",
+      "verified_on": "2026-11-14",
+      "verification": "Official course home and PDF opened successfully."
+    },
+    {
+      "id": "cmu-15721-f24",
+      "school": "Carnegie Mellon University",
+      "number": "15-721",
+      "name": "Advanced Database Systems",
+      "term": "Fall 2024",
+      "age_context": "Archived 2024 course with designated streaming and lakehouse readings, not a claim of a 2026 course or a full Flink syllabus.",
+      "prerequisites": "Official: CMU 15-445/645 or equivalent database systems knowledge.",
+      "url": "https://www.cs.cmu.edu/~15721-f24/",
+      "schedule_url": "https://www.cs.cmu.edu/~15721-f24/schedule.html",
+      "prerequisite_url": "https://www.cs.cmu.edu/~15721-f24/",
+      "public_materials": [
+        {
+          "title": "November 20: Kafka: A Distributed Messaging System for Log Processing (2011)",
+          "url": "https://www.cs.cmu.edu/~15721-f24/schedule.html",
+          "locator": "November 20 required reading; original paper sections 2–3. Course-hosted PDF link timed out during this review; original-paper university mirror separately verified."
+        },
+        {
+          "title": "November 18: Lakehouse (CIDR 2021), optional reading",
+          "url": "https://www.cs.cmu.edu/~15721-f24/papers/Lakehouse.pdf",
+          "locator": "Sections 2, 3.1–3.2; public PDF verified."
+        }
+      ],
+      "restricted_or_paid": "Official site marks the notetaker assignment sheet as registered-student-only. That sheet and submissions are not used. No registration/credit/tuition promise.",
+      "verified_on": "2026-11-14",
+      "verification": "Official course and schedule plus Lakehouse PDF opened. Do not cite unverified DataStreaming slides: fetch timed out."
+    }
+  ],
+  "supplements": [
+    {
+      "id": "flink-ft",
+      "kind": "official-tutorial",
+      "title": "Apache Flink 1.20 Learn Flink: Fault Tolerance",
+      "year": "versioned 1.20 docs (currently header 1.20.3); executable profile pins 1.20.2",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/learn-flink/fault_tolerance/",
+      "locator": "State snapshots, checkpointing, replay and end-to-end sink requirements",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "dataflow",
+      "kind": "original-paper",
+      "title": "The Dataflow Model: A Practical Approach to Balancing Correctness, Latency, and Cost in Massive-Scale, Unbounded, Out-of-Order Data Processing",
+      "year": 2015,
+      "url": "https://research.google/pubs/the-dataflow-model-a-practical-approach-to-balancing-correctness-latency-and-cost-in-massive-scale-unbounded-out-of-order-data-processing/",
+      "locator": "Motivation and event-time/completeness model. Context only: the checkpoint profile implements no watermark or late-data policy.",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "kafka-original",
+      "kind": "original-paper-university-mirror",
+      "title": "Kafka: a Distributed Messaging System for Log Processing",
+      "year": 2011,
+      "url": "https://pages.cs.wisc.edu/~akella/CS744/F17/838-CloudPapers/Kafka.pdf",
+      "locator": "Sections 2–3, especially consumer rewind and delivery guarantees; historical design, not current Kafka 4.x documentation.",
+      "verified_on": "2026-11-14"
+    }
+  ],
+  "units": [
+    {
+      "id": "log",
+      "title": "01 · Events and replay / 事件与回放",
+      "course_id": "princeton-cos418-f17",
+      "reading": {
+        "locator": "Lecture 21 slides 41–43: record identity and replay",
+        "url": "https://www.cs.princeton.edu/courses/archive/fall17/cos418/docs/L21-big-data.pdf#page=11"
+      },
+      "original_exercise": true,
+      "learning_goal_en": "Predict physical writes versus unique event IDs. Count duplicate sequences from real output.",
+      "learning_goal_zh": "从真实输出区分物理写入次数与唯一事件。",
+      "command": "python3 scripts/checkpoint_exercises.py log --result outputs/my-run/result.json",
+      "expected": "8 unique IDs, 10 fault-run append rows; duplicate sequences 4 and 5.",
+      "engine_prerequisite": "Run scripts/run_checkpoint_lab.py once. These exercises inspect actual engine output; audit/feature also include clearly labeled deterministic counterexample models.",
+      "expected_zh": "8个唯一ID，故障组实际追加10行；重复序号为4和5。"
+    },
+    {
+      "id": "state",
+      "title": "02 · Keyed state / 按 key 保存状态",
+      "course_id": "princeton-cos418-f17",
+      "reading": {
+        "locator": "Lecture 21 slides 23–26: retained state and aggregation",
+        "url": "https://www.cs.princeton.edu/courses/archive/fall17/cos418/docs/L21-big-data.pdf#page=6"
+      },
+      "original_exercise": true,
+      "learning_goal_en": "Hand-calculate every per-key prefix, then compare both Flink attempts.",
+      "learning_goal_zh": "手算逐 key 前缀和，核对两次 task attempt。",
+      "command": "python3 scripts/checkpoint_exercises.py state --result outputs/my-run/result.json",
+      "expected": "All eight prefix totals match independent arithmetic; final A=56, B=68.",
+      "engine_prerequisite": "Run scripts/run_checkpoint_lab.py once. These exercises inspect actual engine output; audit/feature also include clearly labeled deterministic counterexample models.",
+      "expected_zh": "8个前缀累计值均匹配独立手算，最终A=56、B=68。"
+    },
+    {
+      "id": "recovery",
+      "title": "03 · Consistent recovery / 一致恢复",
+      "course_id": "princeton-cos418-f17",
+      "reading": {
+        "locator": "Lecture 21 slides 47–48: source rewind and snapshot barriers; Flink Fault Tolerance tutorial",
+        "url": "https://www.cs.princeton.edu/courses/archive/fall17/cos418/docs/L21-big-data.pdf#page=12"
+      },
+      "original_exercise": true,
+      "learning_goal_en": "Locate completed checkpoint at offset 4, injection after seq 5, and restored source offset 4.",
+      "learning_goal_zh": "定位 checkpoint 完成、故障及从 offset 4 恢复的顺序。",
+      "command": "python3 scripts/checkpoint_exercises.py recovery --result outputs/my-run/result.json",
+      "expected": "Completion precedes exception, which precedes restored=true at offset 4; only task-level recovery is tested.",
+      "engine_prerequisite": "Run scripts/run_checkpoint_lab.py once. These exercises inspect actual engine output; audit/feature also include clearly labeled deterministic counterexample models.",
+      "expected_zh": "checkpoint完成先于异常，异常先于source以restored=true恢复到offset4；仅测试task级恢复。"
+    },
+    {
+      "id": "sink",
+      "title": "04 · External side effects / 外部写入",
+      "course_id": "princeton-cos418-f17",
+      "reading": {
+        "locator": "Lecture 21 slides 42–48 plus Flink tutorial: replay and external sink contract",
+        "url": "https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/learn-flink/fault_tolerance/"
+      },
+      "original_exercise": true,
+      "learning_goal_en": "Compare naive append sum with replay-safe keyed replacement. Explain why state checkpoints do not roll back external files.",
+      "learning_goal_zh": "对比追加求和与按 key 覆盖，解释 checkpoint 为什么不会回滚外部文件。",
+      "command": "python3 scripts/checkpoint_exercises.py sink --result outputs/my-run/result.json",
+      "expected": "Naive amount sum=160 vs oracle 124; keyed final values remain 56 and 68 under ordered single-writer assumptions.",
+      "engine_prerequisite": "Run scripts/run_checkpoint_lab.py once. These exercises inspect actual engine output; audit/feature also include clearly labeled deterministic counterexample models.",
+      "expected_zh": "普通追加金额求和160，独立预期124；在单写者、有序回放前提下，按key最终值为56和68。"
+    },
+    {
+      "id": "audit",
+      "title": "05 · Bounded reconciliation / 有界对账",
+      "course_id": "cmu-15721-f24",
+      "reading": {
+        "locator": "November 18 optional Lakehouse (2021), sections 2 and 3.2",
+        "url": "https://www.cs.cmu.edu/~15721-f24/papers/Lakehouse.pdf"
+      },
+      "original_exercise": true,
+      "learning_goal_en": "Recompute from finite input. Corrupt one value while keeping the same key count and detect it by field comparison.",
+      "learning_goal_zh": "从有限输入重算；注入同 key 数量、错误字段的对照并检测。",
+      "command": "python3 scripts/checkpoint_exercises.py audit --result outputs/my-run/result.json",
+      "expected": "Equal row counts still pass on a deliberately corrupted copy; field-level equality fails. This Python counterexample is a model, not an Iceberg run.",
+      "engine_prerequisite": "Run scripts/run_checkpoint_lab.py once. These exercises inspect actual engine output; audit/feature also include clearly labeled deterministic counterexample models.",
+      "expected_zh": "故意损坏副本中的金额后，行数检查仍相等，字段比较失败。这是Python反例模型，不是Iceberg实测。"
+    },
+    {
+      "id": "feature",
+      "title": "06 · Feature freshness / 特征新鲜度",
+      "course_id": "cmu-15721-f24",
+      "reading": {
+        "locator": "November 18 optional Lakehouse (2021), sections 2 and 3.1; November 20 Kafka (2011) sections 2–3",
+        "url": "https://www.cs.cmu.edu/~15721-f24/schedule.html"
+      },
+      "original_exercise": true,
+      "learning_goal_en": "Treat per-key running amount as a feature. Compare a checkpoint-era view with the final view, then replay old feature versions through naive and monotonic consumers.",
+      "learning_goal_zh": "把逐 key 金额当成特征，对比旧位点与最终视图，再比较旧版本回放时普通覆盖与版本栅栏。",
+      "command": "python3 scripts/checkpoint_exercises.py feature --result outputs/my-run/result.json",
+      "expected": "At offset 4, A=16/B=20 are stale versus 56/68. A small explicit consumer model rejects older versions; no RAG retriever, model quality or paid AI API is tested.",
+      "engine_prerequisite": "Run scripts/run_checkpoint_lab.py once. These exercises inspect actual engine output; audit/feature also include clearly labeled deterministic counterexample models.",
+      "expected_zh": "offset4时A=16/B=20相对最终56/68已经陈旧；明确标注的消费模型拒绝旧版本，未测RAG检索器、模型质量或付费API。"
+    }
+  ]
+}
