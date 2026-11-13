@@ -5,4 +5,5 @@ Sitemap: https://lynnlee1229.github.io/sitemap.xml
 Sitemap: https://lynnlee1229.github.io/agent-reliability-lab/sitemap.xml
 Sitemap: https://lynnlee1229.github.io/geodata-lab/sitemap.xml
 Sitemap: https://lynnlee1229.github.io/java-runtime-lab/sitemap.xml
+Sitemap: https://lynnlee1229.github.io/data-contract-lab/sitemap.xml
 

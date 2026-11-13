@@ -1,0 +1,19 @@
+{
+  "format": "data-contract-lab-export/1",
+  "version": "1.0.0",
+  "sourceVisibility": "private",
+  "files": {
+    "assets/app.mjs": "31dce1285b5b5262cc7e9535e7e5244e5b2e39ad12effb4de87ea50a067b4dd3",
+    "assets/core.mjs": "30b315b09ad369de8c2da70c4283b8f8161c2386f8faff3b7162ff43736bab9f",
+    "assets/fixtures.mjs": "b5403f54ccce1fa5f8d2cd26e82723994901241b4e7e5acb67f4b4c6c9d8a1c5",
+    "assets/style.css": "07d58263e8a8a66f82d6031104bb111aa74462ced19fa576f0c9f25f62440f92",
+    "en/guide/index.html": "81b23e86fea91c89a915b4f69f5a3572469d752d98acb1b50a9b15064ef9c417",
+    "en/index.html": "c2997bf67ffd5f5ab14c1c37526f12bacf9f1dcf626ac4a44ab3fa72f098cbfe",
+    "en/methods/index.html": "beb0242123cd7182f346bbaad48b467c8fc50ecaa5522496a4f5ac7e4b5b2890",
+    "index.html": "93f5320fac0aa9c05fc6cf6d2abe253643f54fcc36f42a9236a3db30d72a43f9",
+    "sitemap.xml": "ed188796878e31aef7a672181bb6164ee9ffc01686f9f55998a34cf5c9cb89cb",
+    "zh/guide/index.html": "eb9a6313ab5e536be0d9ac99b8d4a37f5cddb68d3f3acd47de784b8d9d662a1b",
+    "zh/index.html": "57c6b2f4a643a3e1a388ccee310c27e0571dd637a80493fb317fbd0ac117ecd1",
+    "zh/methods/index.html": "fac78290d8d122c11f14d9e1de66bacf26adc3bd523469f90256113a40b95582"
+  }
+}
