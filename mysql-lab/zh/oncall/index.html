@@ -1,0 +1,1943 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>并发撤岗与业务不变量 · MySQL Lab · Lynn Lee</title><meta name="description" content="真实写偏差反例、错误守卫顺序与锁策略对照。"><meta name="theme-color" content="#19333b"><link rel="canonical" href="https://lynnlee1229.github.io/mysql-lab/zh/oncall/"><link rel="alternate" hreflang="en" href="https://lynnlee1229.github.io/mysql-lab/en/oncall/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/mysql-lab/zh/oncall/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/mysql-lab/en/oncall/"><link rel="icon" href="/mysql-lab/assets/rick-favicon.ico"><link rel="stylesheet" href="/mysql-lab/assets/site.css"></head><body><a class="offscreen" href="#main">跳至正文</a><header><div class="top"><a class="brand" href="/zh/"><img src="/mysql-lab/assets/rick-avatar.jpeg" width="38" height="38" alt=""><span>Lynn Lee<small>MYSQL / LEARNING LAB</small></span></a><nav aria-label="主导航"><a href="/mysql-lab/zh/">实验记录</a><a href="/mysql-lab/zh/learn/">课程路线</a><a href="/mysql-lab/zh/oncall/" aria-current="page">并发练习</a><a href="/mysql-lab/zh/guide/">本地运行</a><a href="/mysql-lab/zh/methods/">方法与范围</a><a data-language href="/mysql-lab/en/oncall/" lang="en">English</a></nav></div></header><main class="wrap" id="main"><article class="prose"><p class="eyebrow">EXPERIMENT 04 / BUSINESS INVARIANT</p><h1>两边都提交了，却无人值班。</h1><p class="lead">两名医生各自在“还有别人值班”时才撤岗。事务成功提交，仍可能共同破坏业务规则。</p><p class="notice">这里展示真实 MySQL 8.4 运行记录；浏览器不执行 SQL。实验限于固定成员，不对范围插入、任意已有快照或性能作出保证。</p>
+<p>不变量：SUM(on_call) ≥ 1。初始状态 (1,1)，各有一次撤岗请求。独立 Python 模型枚举两种串行请求顺序，只允许 (0,1) 或 (1,0)。两方提交后，另一个自动提交观察者独立读取 MySQL 终值。</p>
+<p><a href="/mysql-lab/records/oncall-clean.json">实测首跑 JSON</a> · <a href="/mysql-lab/records/oncall-repeat.json">停止重启后复跑 JSON</a> · <a href="/mysql-lab/records/oncall-verification.json">生命周期与反例验收</a> · <a href="https://github.com/lynnlee1229/mysql-lab/blob/main/sql/oncall.json">可修改 SQL</a></p>
+<h2>先预测，再阅读结果</h2><ol><li>双方先完成计数，再开始写入。单行 AND on_call=1 能否保护跨行规则？</li><li>双方先建立 RR 快照，再竞争独占守卫锁。之后的普通计数会更新吗？</li><li>在首次一致性读之前获取守卫锁，或直接 FOR UPDATE 读取名单。什么证据能证明 B 真正等待？</li></ol>
+<h2 id="measured-outcomes">首轮实测结果</h2><div class="table-scroll"><table><thead><tr><th scope="col">隔离级别</th><th scope="col">strategy</th><th scope="col">A 计数</th><th scope="col">B 计数</th><th scope="col">剩余值班</th><th scope="col">串行可达</th></tr></thead><tbody><tr><td>READ COMMITTED</td><td>unguarded</td><td>2</td><td>2</td><td>0</td><td>否</td></tr><tr><td>READ COMMITTED</td><td>late_guard</td><td>2</td><td>1</td><td>1</td><td>是</td></tr><tr><td>READ COMMITTED</td><td>guard_first</td><td>2</td><td>1</td><td>1</td><td>是</td></tr><tr><td>READ COMMITTED</td><td>locking_roster</td><td>2</td><td>1</td><td>1</td><td>是</td></tr><tr><td>REPEATABLE READ</td><td>unguarded</td><td>2</td><td>2</td><td>0</td><td>否</td></tr><tr><td>REPEATABLE READ</td><td>late_guard</td><td>2</td><td>2</td><td>0</td><td>否</td></tr><tr><td>REPEATABLE READ</td><td>guard_first</td><td>2</td><td>1</td><td>1</td><td>是</td></tr><tr><td>REPEATABLE READ</td><td>locking_roster</td><td>2</td><td>1</td><td>1</td><td>是</td></tr></tbody></table></div><p>上表每行都有两次成功提交；是否批准撤岗是另一个决策。每份记录重复三轮，第二轮交换医生 ID；第二份记录来自停止、重启后的复跑。时间只用于检查执行顺序，不作性能基准。</p>
+<h2>差异来自哪里</h2><ul><li><strong>unguarded：</strong>双方在写入前都读到 2，更新不同的行并提交。RC 和 RR 都出现 (0,0) 反例。</li><li><strong>late_guard：</strong>锁确实串行化了访问，但不会替换已有的 RR 读视图。RR 下后来的计数仍为 2；RC 下新的语句在这个调度中读到 1。</li><li><strong>guard_first：</strong>守卫锁之前没有一致性读。B 等待 A 提交，之后首次计数读到 1。所有写入者都必须遵守协议。</li><li><strong>locking_roster：</strong>当前锁定读取保护决策使用的行。B 等待后只返回一名值班医生。这里验证固定成员，不推广到所有范围或谓词场景。</li></ul>
+<h2>运行、修改 SQL、复跑</h2><pre><code>python lab.py doctor
+python lab.py start
+python lab.py oncall --output .local/oncall-first.json
+python lab.py stop
+python lab.py start
+python lab.py oncall --output .local/oncall-repeat.json
+python scripts/validate_oncall.py .local/oncall-first.json .local/oncall-repeat.json
+cp sql/oncall.json .local/oncall-sql.json
+# Edit .local/oncall-sql.json, preserve the baseline
+python lab.py oncall --sql-file .local/oncall-sql.json --output .local/oncall-edited.json
+python lab.py stop</code></pre><ol><li>基线：修改前解释失败场景为何不在模型允许的串行终值内。检查参数绑定，确认每个会话实际修改了哪名医生。</li><li>等价改写：将 count 改为 SELECT COALESCE(SUM(on_call),0) AS n FROM oncall_roster WHERE shift_id=1。复跑完整矩阵，固定名单下应保留相同语义。</li><li>负对照：从 guard 查询中删除 FOR UPDATE。所需 B→A 等待边消失，运行器必须在期限内失败，且不能产生成功 JSON。这是在拒绝失效的调度前提，并非新的终值证明。</li><li>解释把普通读取提前到 guard_first 之前，为何就变成 late_guard。用已有 late_guard RR 记录作为反例，再对比 RC。</li></ol>
+<h2>检查实际证据</h2><details id="unguarded-rc"><summary>READ COMMITTED / unguarded / 剩余 0</summary><h3>独立终值与模型判断</h3><pre><code>{
+  &quot;final_rows&quot;: [
+    {
+      &quot;doctor_id&quot;: 1,
+      &quot;on_call&quot;: 0
+    },
+    {
+      &quot;doctor_id&quot;: 2,
+      &quot;on_call&quot;: 0
+    }
+  ],
+  &quot;oracle&quot;: {
+    &quot;on_call_count&quot;: 0,
+    &quot;invariant_holds&quot;: false,
+    &quot;serially_reachable&quot;: false,
+    &quot;allowed_serial_states&quot;: [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  &quot;decisions&quot;: {
+    &quot;B&quot;: {
+      &quot;doctor_id&quot;: 2,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    },
+    &quot;A&quot;: {
+      &quot;doctor_id&quot;: 1,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    }
+  }
+}</code></pre><p>这里不声称观测到锁等待，屏障依据是双方已完成的读取。</p><h3>实际执行时间线，含 SQL 参数</h3><pre><code>[
+  {
+    &quot;step&quot;: 1,
+    &quot;elapsed_ms&quot;: 18.576,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;
+  },
+  {
+    &quot;step&quot;: 2,
+    &quot;elapsed_ms&quot;: 19.559,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 3,
+    &quot;elapsed_ms&quot;: 19.568,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 4,
+    &quot;elapsed_ms&quot;: 20.126,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 5,
+    &quot;elapsed_ms&quot;: 20.131,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;
+  },
+  {
+    &quot;step&quot;: 6,
+    &quot;elapsed_ms&quot;: 21.032,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 7,
+    &quot;elapsed_ms&quot;: 21.035,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 8,
+    &quot;elapsed_ms&quot;: 21.464,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 9,
+    &quot;elapsed_ms&quot;: 21.471,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 10,
+    &quot;elapsed_ms&quot;: 22.647,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 11,
+    &quot;elapsed_ms&quot;: 22.651,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 12,
+    &quot;elapsed_ms&quot;: 23.208,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 13,
+    &quot;elapsed_ms&quot;: 23.211,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: both initial counts completed before writes&quot;
+  },
+  {
+    &quot;step&quot;: 14,
+    &quot;elapsed_ms&quot;: 23.303,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      2
+    ]
+  },
+  {
+    &quot;step&quot;: 15,
+    &quot;elapsed_ms&quot;: 23.328,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 16,
+    &quot;elapsed_ms&quot;: 24.057,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 17,
+    &quot;elapsed_ms&quot;: 24.06,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 18,
+    &quot;elapsed_ms&quot;: 24.084,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      2
+    ]
+  },
+  {
+    &quot;step&quot;: 19,
+    &quot;elapsed_ms&quot;: 24.087,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 20,
+    &quot;elapsed_ms&quot;: 25.498,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 21,
+    &quot;elapsed_ms&quot;: 25.822,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  }
+]</code></pre></details><details id="late_guard-rc"><summary>READ COMMITTED / late_guard / 剩余 1</summary><h3>独立终值与模型判断</h3><pre><code>{
+  &quot;final_rows&quot;: [
+    {
+      &quot;doctor_id&quot;: 1,
+      &quot;on_call&quot;: 0
+    },
+    {
+      &quot;doctor_id&quot;: 2,
+      &quot;on_call&quot;: 1
+    }
+  ],
+  &quot;oracle&quot;: {
+    &quot;on_call_count&quot;: 1,
+    &quot;invariant_holds&quot;: true,
+    &quot;serially_reachable&quot;: true,
+    &quot;allowed_serial_states&quot;: [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  &quot;decisions&quot;: {
+    &quot;A&quot;: {
+      &quot;doctor_id&quot;: 1,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    },
+    &quot;B&quot;: {
+      &quot;doctor_id&quot;: 2,
+      &quot;observed_count&quot;: 1,
+      &quot;approved&quot;: false,
+      &quot;outcome&quot;: &quot;committed&quot;
+    }
+  }
+}</code></pre><div class="table-scroll"><table><thead><tr><th scope="col">actor</th><th scope="col">table</th><th scope="col">index</th><th scope="col">mode</th><th scope="col">status</th></tr></thead><tbody><tr><td>A</td><td>oncall_guard</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_guard</td><td>None</td><td>IX</td><td>GRANTED</td></tr><tr><td>B</td><td>oncall_guard</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>WAITING</td></tr><tr><td>B</td><td>oncall_guard</td><td>None</td><td>IX</td><td>GRANTED</td></tr></tbody></table></div><h3>实际执行时间线，含 SQL 参数</h3><pre><code>[
+  {
+    &quot;step&quot;: 1,
+    &quot;elapsed_ms&quot;: 7.396,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;
+  },
+  {
+    &quot;step&quot;: 2,
+    &quot;elapsed_ms&quot;: 8.127,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 3,
+    &quot;elapsed_ms&quot;: 8.132,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 4,
+    &quot;elapsed_ms&quot;: 8.746,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 5,
+    &quot;elapsed_ms&quot;: 8.748,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;
+  },
+  {
+    &quot;step&quot;: 6,
+    &quot;elapsed_ms&quot;: 9.344,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 7,
+    &quot;elapsed_ms&quot;: 9.346,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 8,
+    &quot;elapsed_ms&quot;: 9.865,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 9,
+    &quot;elapsed_ms&quot;: 9.872,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 10,
+    &quot;elapsed_ms&quot;: 10.602,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 11,
+    &quot;elapsed_ms&quot;: 10.606,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 12,
+    &quot;elapsed_ms&quot;: 11.234,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 13,
+    &quot;elapsed_ms&quot;: 11.237,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: both initial counts completed before writes&quot;
+  },
+  {
+    &quot;step&quot;: 14,
+    &quot;elapsed_ms&quot;: 11.238,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 15,
+    &quot;elapsed_ms&quot;: 11.903,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;shift_id&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 16,
+    &quot;elapsed_ms&quot;: 11.996,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 17,
+    &quot;elapsed_ms&quot;: 25.861,
+    &quot;actor&quot;: &quot;observer&quot;,
+    &quot;action&quot;: &quot;barrier: observed lock wait&quot;,
+    &quot;waiting&quot;: &quot;B&quot;,
+    &quot;blocking&quot;: &quot;A&quot;
+  },
+  {
+    &quot;step&quot;: 18,
+    &quot;elapsed_ms&quot;: 25.872,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: release A only after observed B→A wait&quot;
+  },
+  {
+    &quot;step&quot;: 19,
+    &quot;elapsed_ms&quot;: 25.876,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 20,
+    &quot;elapsed_ms&quot;: 26.724,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 21,
+    &quot;elapsed_ms&quot;: 26.729,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 22,
+    &quot;elapsed_ms&quot;: 27.703,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 23,
+    &quot;elapsed_ms&quot;: 27.706,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 24,
+    &quot;elapsed_ms&quot;: 29.426,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 25,
+    &quot;elapsed_ms&quot;: 29.495,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;shift_id&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 26,
+    &quot;elapsed_ms&quot;: 29.501,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 27,
+    &quot;elapsed_ms&quot;: 30.322,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 28,
+    &quot;elapsed_ms&quot;: 30.325,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 29,
+    &quot;elapsed_ms&quot;: 31.188,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  }
+]</code></pre></details><details id="guard_first-rc"><summary>READ COMMITTED / guard_first / 剩余 1</summary><h3>独立终值与模型判断</h3><pre><code>{
+  &quot;final_rows&quot;: [
+    {
+      &quot;doctor_id&quot;: 1,
+      &quot;on_call&quot;: 0
+    },
+    {
+      &quot;doctor_id&quot;: 2,
+      &quot;on_call&quot;: 1
+    }
+  ],
+  &quot;oracle&quot;: {
+    &quot;on_call_count&quot;: 1,
+    &quot;invariant_holds&quot;: true,
+    &quot;serially_reachable&quot;: true,
+    &quot;allowed_serial_states&quot;: [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  &quot;decisions&quot;: {
+    &quot;A&quot;: {
+      &quot;doctor_id&quot;: 1,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    },
+    &quot;B&quot;: {
+      &quot;doctor_id&quot;: 2,
+      &quot;observed_count&quot;: 1,
+      &quot;approved&quot;: false,
+      &quot;outcome&quot;: &quot;committed&quot;
+    }
+  }
+}</code></pre><div class="table-scroll"><table><thead><tr><th scope="col">actor</th><th scope="col">table</th><th scope="col">index</th><th scope="col">mode</th><th scope="col">status</th></tr></thead><tbody><tr><td>A</td><td>oncall_guard</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_guard</td><td>None</td><td>IX</td><td>GRANTED</td></tr><tr><td>B</td><td>oncall_guard</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>WAITING</td></tr><tr><td>B</td><td>oncall_guard</td><td>None</td><td>IX</td><td>GRANTED</td></tr></tbody></table></div><h3>实际执行时间线，含 SQL 参数</h3><pre><code>[
+  {
+    &quot;step&quot;: 1,
+    &quot;elapsed_ms&quot;: 9.927,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;
+  },
+  {
+    &quot;step&quot;: 2,
+    &quot;elapsed_ms&quot;: 11.009,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 3,
+    &quot;elapsed_ms&quot;: 11.013,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 4,
+    &quot;elapsed_ms&quot;: 11.621,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 5,
+    &quot;elapsed_ms&quot;: 11.63,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;
+  },
+  {
+    &quot;step&quot;: 6,
+    &quot;elapsed_ms&quot;: 12.229,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 7,
+    &quot;elapsed_ms&quot;: 12.232,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 8,
+    &quot;elapsed_ms&quot;: 12.835,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 9,
+    &quot;elapsed_ms&quot;: 12.84,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 10,
+    &quot;elapsed_ms&quot;: 13.554,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;shift_id&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 11,
+    &quot;elapsed_ms&quot;: 13.663,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 12,
+    &quot;elapsed_ms&quot;: 15.733,
+    &quot;actor&quot;: &quot;observer&quot;,
+    &quot;action&quot;: &quot;barrier: observed lock wait&quot;,
+    &quot;waiting&quot;: &quot;B&quot;,
+    &quot;blocking&quot;: &quot;A&quot;
+  },
+  {
+    &quot;step&quot;: 13,
+    &quot;elapsed_ms&quot;: 15.737,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: release A only after observed B→A wait&quot;
+  },
+  {
+    &quot;step&quot;: 14,
+    &quot;elapsed_ms&quot;: 15.74,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 15,
+    &quot;elapsed_ms&quot;: 16.691,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 16,
+    &quot;elapsed_ms&quot;: 16.696,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 17,
+    &quot;elapsed_ms&quot;: 17.423,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 18,
+    &quot;elapsed_ms&quot;: 17.428,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 19,
+    &quot;elapsed_ms&quot;: 18.986,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 20,
+    &quot;elapsed_ms&quot;: 19.068,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;shift_id&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 21,
+    &quot;elapsed_ms&quot;: 19.091,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 22,
+    &quot;elapsed_ms&quot;: 19.963,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 23,
+    &quot;elapsed_ms&quot;: 19.967,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 24,
+    &quot;elapsed_ms&quot;: 20.487,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  }
+]</code></pre></details><details id="locking_roster-rc"><summary>READ COMMITTED / locking_roster / 剩余 1</summary><h3>独立终值与模型判断</h3><pre><code>{
+  &quot;final_rows&quot;: [
+    {
+      &quot;doctor_id&quot;: 1,
+      &quot;on_call&quot;: 0
+    },
+    {
+      &quot;doctor_id&quot;: 2,
+      &quot;on_call&quot;: 1
+    }
+  ],
+  &quot;oracle&quot;: {
+    &quot;on_call_count&quot;: 1,
+    &quot;invariant_holds&quot;: true,
+    &quot;serially_reachable&quot;: true,
+    &quot;allowed_serial_states&quot;: [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  &quot;decisions&quot;: {
+    &quot;A&quot;: {
+      &quot;doctor_id&quot;: 1,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    },
+    &quot;B&quot;: {
+      &quot;doctor_id&quot;: 2,
+      &quot;observed_count&quot;: 1,
+      &quot;approved&quot;: false,
+      &quot;outcome&quot;: &quot;committed&quot;
+    }
+  }
+}</code></pre><div class="table-scroll"><table><thead><tr><th scope="col">actor</th><th scope="col">table</th><th scope="col">index</th><th scope="col">mode</th><th scope="col">status</th></tr></thead><tbody><tr><td>A</td><td>oncall_roster</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_roster</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_roster</td><td>None</td><td>IX</td><td>GRANTED</td></tr><tr><td>B</td><td>oncall_roster</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>WAITING</td></tr><tr><td>B</td><td>oncall_roster</td><td>None</td><td>IX</td><td>GRANTED</td></tr></tbody></table></div><h3>实际执行时间线，含 SQL 参数</h3><pre><code>[
+  {
+    &quot;step&quot;: 1,
+    &quot;elapsed_ms&quot;: 10.083,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;
+  },
+  {
+    &quot;step&quot;: 2,
+    &quot;elapsed_ms&quot;: 10.702,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 3,
+    &quot;elapsed_ms&quot;: 10.71,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 4,
+    &quot;elapsed_ms&quot;: 11.24,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 5,
+    &quot;elapsed_ms&quot;: 11.244,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;
+  },
+  {
+    &quot;step&quot;: 6,
+    &quot;elapsed_ms&quot;: 11.721,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 7,
+    &quot;elapsed_ms&quot;: 11.725,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 8,
+    &quot;elapsed_ms&quot;: 12.125,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 9,
+    &quot;elapsed_ms&quot;: 12.129,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 10,
+    &quot;elapsed_ms&quot;: 12.897,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;doctor_id&quot;: 1
+      },
+      {
+        &quot;doctor_id&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 11,
+    &quot;elapsed_ms&quot;: 12.996,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 12,
+    &quot;elapsed_ms&quot;: 15.375,
+    &quot;actor&quot;: &quot;observer&quot;,
+    &quot;action&quot;: &quot;barrier: observed lock wait&quot;,
+    &quot;waiting&quot;: &quot;B&quot;,
+    &quot;blocking&quot;: &quot;A&quot;
+  },
+  {
+    &quot;step&quot;: 13,
+    &quot;elapsed_ms&quot;: 15.381,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: release A only after observed B→A wait&quot;
+  },
+  {
+    &quot;step&quot;: 14,
+    &quot;elapsed_ms&quot;: 15.386,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 15,
+    &quot;elapsed_ms&quot;: 15.947,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 16,
+    &quot;elapsed_ms&quot;: 15.95,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 17,
+    &quot;elapsed_ms&quot;: 17.832,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 18,
+    &quot;elapsed_ms&quot;: 17.877,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;doctor_id&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 19,
+    &quot;elapsed_ms&quot;: 17.88,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 20,
+    &quot;elapsed_ms&quot;: 18.419,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  }
+]</code></pre></details><details id="unguarded-rr"><summary>REPEATABLE READ / unguarded / 剩余 0</summary><h3>独立终值与模型判断</h3><pre><code>{
+  &quot;final_rows&quot;: [
+    {
+      &quot;doctor_id&quot;: 1,
+      &quot;on_call&quot;: 0
+    },
+    {
+      &quot;doctor_id&quot;: 2,
+      &quot;on_call&quot;: 0
+    }
+  ],
+  &quot;oracle&quot;: {
+    &quot;on_call_count&quot;: 0,
+    &quot;invariant_holds&quot;: false,
+    &quot;serially_reachable&quot;: false,
+    &quot;allowed_serial_states&quot;: [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  &quot;decisions&quot;: {
+    &quot;A&quot;: {
+      &quot;doctor_id&quot;: 1,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    },
+    &quot;B&quot;: {
+      &quot;doctor_id&quot;: 2,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    }
+  }
+}</code></pre><p>这里不声称观测到锁等待，屏障依据是双方已完成的读取。</p><h3>实际执行时间线，含 SQL 参数</h3><pre><code>[
+  {
+    &quot;step&quot;: 1,
+    &quot;elapsed_ms&quot;: 10.685,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;
+  },
+  {
+    &quot;step&quot;: 2,
+    &quot;elapsed_ms&quot;: 11.194,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 3,
+    &quot;elapsed_ms&quot;: 11.198,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 4,
+    &quot;elapsed_ms&quot;: 11.938,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 5,
+    &quot;elapsed_ms&quot;: 11.94,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;
+  },
+  {
+    &quot;step&quot;: 6,
+    &quot;elapsed_ms&quot;: 12.602,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 7,
+    &quot;elapsed_ms&quot;: 12.605,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 8,
+    &quot;elapsed_ms&quot;: 13.091,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 9,
+    &quot;elapsed_ms&quot;: 13.095,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 10,
+    &quot;elapsed_ms&quot;: 13.815,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 11,
+    &quot;elapsed_ms&quot;: 13.818,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 12,
+    &quot;elapsed_ms&quot;: 14.337,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 13,
+    &quot;elapsed_ms&quot;: 14.339,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: both initial counts completed before writes&quot;
+  },
+  {
+    &quot;step&quot;: 14,
+    &quot;elapsed_ms&quot;: 14.434,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      2
+    ]
+  },
+  {
+    &quot;step&quot;: 15,
+    &quot;elapsed_ms&quot;: 14.466,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 16,
+    &quot;elapsed_ms&quot;: 15.365,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 17,
+    &quot;elapsed_ms&quot;: 15.368,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 18,
+    &quot;elapsed_ms&quot;: 15.414,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      2
+    ]
+  },
+  {
+    &quot;step&quot;: 19,
+    &quot;elapsed_ms&quot;: 15.424,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 20,
+    &quot;elapsed_ms&quot;: 17.547,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 21,
+    &quot;elapsed_ms&quot;: 18.433,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  }
+]</code></pre></details><details id="late_guard-rr"><summary>REPEATABLE READ / late_guard / 剩余 0</summary><h3>独立终值与模型判断</h3><pre><code>{
+  &quot;final_rows&quot;: [
+    {
+      &quot;doctor_id&quot;: 1,
+      &quot;on_call&quot;: 0
+    },
+    {
+      &quot;doctor_id&quot;: 2,
+      &quot;on_call&quot;: 0
+    }
+  ],
+  &quot;oracle&quot;: {
+    &quot;on_call_count&quot;: 0,
+    &quot;invariant_holds&quot;: false,
+    &quot;serially_reachable&quot;: false,
+    &quot;allowed_serial_states&quot;: [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  &quot;decisions&quot;: {
+    &quot;A&quot;: {
+      &quot;doctor_id&quot;: 1,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    },
+    &quot;B&quot;: {
+      &quot;doctor_id&quot;: 2,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    }
+  }
+}</code></pre><div class="table-scroll"><table><thead><tr><th scope="col">actor</th><th scope="col">table</th><th scope="col">index</th><th scope="col">mode</th><th scope="col">status</th></tr></thead><tbody><tr><td>A</td><td>oncall_guard</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_guard</td><td>None</td><td>IX</td><td>GRANTED</td></tr><tr><td>B</td><td>oncall_guard</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>WAITING</td></tr><tr><td>B</td><td>oncall_guard</td><td>None</td><td>IX</td><td>GRANTED</td></tr></tbody></table></div><h3>实际执行时间线，含 SQL 参数</h3><pre><code>[
+  {
+    &quot;step&quot;: 1,
+    &quot;elapsed_ms&quot;: 6.902,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;
+  },
+  {
+    &quot;step&quot;: 2,
+    &quot;elapsed_ms&quot;: 7.487,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 3,
+    &quot;elapsed_ms&quot;: 7.49,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 4,
+    &quot;elapsed_ms&quot;: 8.008,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 5,
+    &quot;elapsed_ms&quot;: 8.01,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;
+  },
+  {
+    &quot;step&quot;: 6,
+    &quot;elapsed_ms&quot;: 8.545,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 7,
+    &quot;elapsed_ms&quot;: 8.547,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 8,
+    &quot;elapsed_ms&quot;: 9.054,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 9,
+    &quot;elapsed_ms&quot;: 9.058,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 10,
+    &quot;elapsed_ms&quot;: 9.794,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 11,
+    &quot;elapsed_ms&quot;: 9.796,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 12,
+    &quot;elapsed_ms&quot;: 10.817,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 13,
+    &quot;elapsed_ms&quot;: 10.82,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: both initial counts completed before writes&quot;
+  },
+  {
+    &quot;step&quot;: 14,
+    &quot;elapsed_ms&quot;: 10.822,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 15,
+    &quot;elapsed_ms&quot;: 11.438,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;shift_id&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 16,
+    &quot;elapsed_ms&quot;: 11.53,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 17,
+    &quot;elapsed_ms&quot;: 14.814,
+    &quot;actor&quot;: &quot;observer&quot;,
+    &quot;action&quot;: &quot;barrier: observed lock wait&quot;,
+    &quot;waiting&quot;: &quot;B&quot;,
+    &quot;blocking&quot;: &quot;A&quot;
+  },
+  {
+    &quot;step&quot;: 18,
+    &quot;elapsed_ms&quot;: 14.819,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: release A only after observed B→A wait&quot;
+  },
+  {
+    &quot;step&quot;: 19,
+    &quot;elapsed_ms&quot;: 14.821,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 20,
+    &quot;elapsed_ms&quot;: 16.029,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 21,
+    &quot;elapsed_ms&quot;: 16.034,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 22,
+    &quot;elapsed_ms&quot;: 17.838,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 23,
+    &quot;elapsed_ms&quot;: 17.842,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 24,
+    &quot;elapsed_ms&quot;: 19.769,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 25,
+    &quot;elapsed_ms&quot;: 19.83,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;shift_id&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 26,
+    &quot;elapsed_ms&quot;: 19.837,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 27,
+    &quot;elapsed_ms&quot;: 20.487,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 28,
+    &quot;elapsed_ms&quot;: 20.49,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      2
+    ]
+  },
+  {
+    &quot;step&quot;: 29,
+    &quot;elapsed_ms&quot;: 21.136,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      2
+    ]
+  },
+  {
+    &quot;step&quot;: 30,
+    &quot;elapsed_ms&quot;: 21.138,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 31,
+    &quot;elapsed_ms&quot;: 22.756,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  }
+]</code></pre></details><details id="guard_first-rr"><summary>REPEATABLE READ / guard_first / 剩余 1</summary><h3>独立终值与模型判断</h3><pre><code>{
+  &quot;final_rows&quot;: [
+    {
+      &quot;doctor_id&quot;: 1,
+      &quot;on_call&quot;: 0
+    },
+    {
+      &quot;doctor_id&quot;: 2,
+      &quot;on_call&quot;: 1
+    }
+  ],
+  &quot;oracle&quot;: {
+    &quot;on_call_count&quot;: 1,
+    &quot;invariant_holds&quot;: true,
+    &quot;serially_reachable&quot;: true,
+    &quot;allowed_serial_states&quot;: [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  &quot;decisions&quot;: {
+    &quot;A&quot;: {
+      &quot;doctor_id&quot;: 1,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    },
+    &quot;B&quot;: {
+      &quot;doctor_id&quot;: 2,
+      &quot;observed_count&quot;: 1,
+      &quot;approved&quot;: false,
+      &quot;outcome&quot;: &quot;committed&quot;
+    }
+  }
+}</code></pre><div class="table-scroll"><table><thead><tr><th scope="col">actor</th><th scope="col">table</th><th scope="col">index</th><th scope="col">mode</th><th scope="col">status</th></tr></thead><tbody><tr><td>A</td><td>oncall_guard</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_guard</td><td>None</td><td>IX</td><td>GRANTED</td></tr><tr><td>B</td><td>oncall_guard</td><td>PRIMARY</td><td>X,REC_NOT_GAP</td><td>WAITING</td></tr><tr><td>B</td><td>oncall_guard</td><td>None</td><td>IX</td><td>GRANTED</td></tr></tbody></table></div><h3>实际执行时间线，含 SQL 参数</h3><pre><code>[
+  {
+    &quot;step&quot;: 1,
+    &quot;elapsed_ms&quot;: 7.752,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;
+  },
+  {
+    &quot;step&quot;: 2,
+    &quot;elapsed_ms&quot;: 8.148,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 3,
+    &quot;elapsed_ms&quot;: 8.15,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 4,
+    &quot;elapsed_ms&quot;: 8.564,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 5,
+    &quot;elapsed_ms&quot;: 8.566,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;
+  },
+  {
+    &quot;step&quot;: 6,
+    &quot;elapsed_ms&quot;: 9.101,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 7,
+    &quot;elapsed_ms&quot;: 9.104,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 8,
+    &quot;elapsed_ms&quot;: 9.499,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 9,
+    &quot;elapsed_ms&quot;: 9.502,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 10,
+    &quot;elapsed_ms&quot;: 10.003,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;shift_id&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 11,
+    &quot;elapsed_ms&quot;: 10.101,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 12,
+    &quot;elapsed_ms&quot;: 11.833,
+    &quot;actor&quot;: &quot;observer&quot;,
+    &quot;action&quot;: &quot;barrier: observed lock wait&quot;,
+    &quot;waiting&quot;: &quot;B&quot;,
+    &quot;blocking&quot;: &quot;A&quot;
+  },
+  {
+    &quot;step&quot;: 13,
+    &quot;elapsed_ms&quot;: 11.836,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: release A only after observed B→A wait&quot;
+  },
+  {
+    &quot;step&quot;: 14,
+    &quot;elapsed_ms&quot;: 11.838,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 15,
+    &quot;elapsed_ms&quot;: 12.365,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 16,
+    &quot;elapsed_ms&quot;: 12.369,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 17,
+    &quot;elapsed_ms&quot;: 12.953,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 18,
+    &quot;elapsed_ms&quot;: 12.956,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 19,
+    &quot;elapsed_ms&quot;: 14.716,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 20,
+    &quot;elapsed_ms&quot;: 14.802,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;shift_id&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 21,
+    &quot;elapsed_ms&quot;: 14.81,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;
+  },
+  {
+    &quot;step&quot;: 22,
+    &quot;elapsed_ms&quot;: 15.634,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;n&quot;: 1
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 23,
+    &quot;elapsed_ms&quot;: 15.639,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 24,
+    &quot;elapsed_ms&quot;: 16.269,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  }
+]</code></pre></details><details id="locking_roster-rr"><summary>REPEATABLE READ / locking_roster / 剩余 1</summary><h3>独立终值与模型判断</h3><pre><code>{
+  &quot;final_rows&quot;: [
+    {
+      &quot;doctor_id&quot;: 1,
+      &quot;on_call&quot;: 0
+    },
+    {
+      &quot;doctor_id&quot;: 2,
+      &quot;on_call&quot;: 1
+    }
+  ],
+  &quot;oracle&quot;: {
+    &quot;on_call_count&quot;: 1,
+    &quot;invariant_holds&quot;: true,
+    &quot;serially_reachable&quot;: true,
+    &quot;allowed_serial_states&quot;: [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  &quot;decisions&quot;: {
+    &quot;A&quot;: {
+      &quot;doctor_id&quot;: 1,
+      &quot;observed_count&quot;: 2,
+      &quot;approved&quot;: true,
+      &quot;outcome&quot;: &quot;committed&quot;
+    },
+    &quot;B&quot;: {
+      &quot;doctor_id&quot;: 2,
+      &quot;observed_count&quot;: 1,
+      &quot;approved&quot;: false,
+      &quot;outcome&quot;: &quot;committed&quot;
+    }
+  }
+}</code></pre><div class="table-scroll"><table><thead><tr><th scope="col">actor</th><th scope="col">table</th><th scope="col">index</th><th scope="col">mode</th><th scope="col">status</th></tr></thead><tbody><tr><td>A</td><td>oncall_roster</td><td>PRIMARY</td><td>X</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_roster</td><td>PRIMARY</td><td>X</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_roster</td><td>PRIMARY</td><td>X</td><td>GRANTED</td></tr><tr><td>A</td><td>oncall_roster</td><td>None</td><td>IX</td><td>GRANTED</td></tr><tr><td>B</td><td>oncall_roster</td><td>PRIMARY</td><td>X</td><td>WAITING</td></tr><tr><td>B</td><td>oncall_roster</td><td>None</td><td>IX</td><td>GRANTED</td></tr></tbody></table></div><h3>实际执行时间线，含 SQL 参数</h3><pre><code>[
+  {
+    &quot;step&quot;: 1,
+    &quot;elapsed_ms&quot;: 6.286,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;
+  },
+  {
+    &quot;step&quot;: 2,
+    &quot;elapsed_ms&quot;: 6.803,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 3,
+    &quot;elapsed_ms&quot;: 6.807,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 4,
+    &quot;elapsed_ms&quot;: 7.317,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 5,
+    &quot;elapsed_ms&quot;: 7.323,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;
+  },
+  {
+    &quot;step&quot;: 6,
+    &quot;elapsed_ms&quot;: 7.828,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 7,
+    &quot;elapsed_ms&quot;: 7.831,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;
+  },
+  {
+    &quot;step&quot;: 8,
+    &quot;elapsed_ms&quot;: 8.385,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;START TRANSACTION&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 9,
+    &quot;elapsed_ms&quot;: 8.389,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 10,
+    &quot;elapsed_ms&quot;: 9.232,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;doctor_id&quot;: 1
+      },
+      {
+        &quot;doctor_id&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 11,
+    &quot;elapsed_ms&quot;: 9.334,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE&quot;
+  },
+  {
+    &quot;step&quot;: 12,
+    &quot;elapsed_ms&quot;: 11.487,
+    &quot;actor&quot;: &quot;observer&quot;,
+    &quot;action&quot;: &quot;barrier: observed lock wait&quot;,
+    &quot;waiting&quot;: &quot;B&quot;,
+    &quot;blocking&quot;: &quot;A&quot;
+  },
+  {
+    &quot;step&quot;: 13,
+    &quot;elapsed_ms&quot;: 11.491,
+    &quot;actor&quot;: &quot;coordinator&quot;,
+    &quot;action&quot;: &quot;barrier: release A only after observed B→A wait&quot;
+  },
+  {
+    &quot;step&quot;: 14,
+    &quot;elapsed_ms&quot;: 11.494,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 15,
+    &quot;elapsed_ms&quot;: 12.197,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1&quot;,
+    &quot;rows&quot;: [],
+    &quot;parameters&quot;: [
+      1
+    ]
+  },
+  {
+    &quot;step&quot;: 16,
+    &quot;elapsed_ms&quot;: 12.201,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 17,
+    &quot;elapsed_ms&quot;: 14.238,
+    &quot;actor&quot;: &quot;A&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  },
+  {
+    &quot;step&quot;: 18,
+    &quot;elapsed_ms&quot;: 14.292,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE&quot;,
+    &quot;rows&quot;: [
+      {
+        &quot;doctor_id&quot;: 2
+      }
+    ]
+  },
+  {
+    &quot;step&quot;: 19,
+    &quot;elapsed_ms&quot;: 14.296,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;submit&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;
+  },
+  {
+    &quot;step&quot;: 20,
+    &quot;elapsed_ms&quot;: 14.759,
+    &quot;actor&quot;: &quot;B&quot;,
+    &quot;action&quot;: &quot;returned&quot;,
+    &quot;sql&quot;: &quot;COMMIT&quot;,
+    &quot;rows&quot;: []
+  }
+]</code></pre></details><h2>理论与实现边界</h2><p>CMU/MIT 用于理解调度、2PL 与多版本。本实验验证显式 START TRANSACTION 内的具体 MySQL 8.4 语句，不代表全部 InnoDB 读取都遵循严格 2PL，也不代表所有 RR 历史都可串行化。不需要 API key、模型、向量插件或外部数据库。</p><p><a href="/mysql-lab/zh/learn/#u4">具体讲次与阅读映射 →</a> · <a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html">MySQL 8.4 consistent reads</a> · <a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html">MySQL 8.4 locking reads</a></p></article></main><footer><div class="wrap"><span>Lynn Lee · MySQL Lab 1.1 · 合成数据，真实执行记录。</span><span><a href="/zh/websites/">工具与实验室</a> · <a href="https://github.com/lynnlee1229/mysql-lab">GitHub / MIT</a> · <a href="/mysql-lab/sitemap.xml">Sitemap</a></span></div></footer></body></html>

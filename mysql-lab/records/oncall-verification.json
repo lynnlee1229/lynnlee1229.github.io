@@ -1,0 +1,66 @@
+{
+  "format": "mysql-lab-oncall-verification/v1",
+  "started_at": "2026-11-13T18:10:12.409971+00:00",
+  "verified_at": "2026-11-13T18:10:42.327725+00:00",
+  "result": "PASS",
+  "runtime": "real MySQL 8.4; existing dedicated volume, not a new clean-volume claim",
+  "first_repeat_semantics_equal": true,
+  "same_volume_retained": true,
+  "loopback_only_project_mapping_checked": true,
+  "runs": {
+    "clean": {
+      "sha256": "2e62d74a48aae1cef55a996214c53e12918f0befec859178aed7b0ff96d7516e",
+      "cases": 24
+    },
+    "repeat": {
+      "sha256": "2cfd96c2836c5c94ab931fc615f9a04292dbc780cac49bfd533d7acceafe34df",
+      "cases": 24
+    }
+  },
+  "equivalent_rewrite": {
+    "sql": "SELECT COALESCE(SUM(on_call),0) AS n FROM oncall_roster WHERE shift_id=1",
+    "matrix_semantics_equal": true,
+    "sha256": "4b69abd09211a519facab1cc6c3a3860afc97e2f4b8e1f68954a533d04233598"
+  },
+  "negative_control": {
+    "change": "guard FOR UPDATE removed",
+    "exit_code": 1,
+    "success_report_absent": true,
+    "reason": "Expected real lock wait was not observed before deadline",
+    "remaining_lab_locks": 0
+  },
+  "original_regression": {
+    "all_original_semantic_assertions_passed": true,
+    "dataset_and_result_hashes_equal_baseline": true,
+    "sha256": "6ea236950dfa505d11e5e4417786a7ccbc353fb4a6bc2345d051f614766031cc",
+    "cleanup": {
+      "remaining_lab_locks": 0,
+      "workers_joined": true,
+      "sessions_closed": true
+    }
+  },
+  "limits": "Fixed roster; all writers cooperate with a guard; guard-first RR has no earlier consistent read. Terminal-state oracle is not a general history checker. No performance comparison.",
+  "container_stopped_at_end": true,
+  "independent_ci": {
+    "result": "PASS",
+    "url": "https://github.com/lynnlee1229/mysql-lab/actions/runs/43480829459",
+    "tested_commit": "c039b9c4013dafe762973c52b7ab65e2631d5382",
+    "environment": "Docker / Linux x86_64",
+    "version": "8.4.13",
+    "artifact_revalidation": [
+      {
+        "run": "clean",
+        "oncall_sha256": "20f75ff7f46753abbefb1f87b0c95bb3f7162faf69b4b38f663ecd7b32910470",
+        "oncall_matrix_matches_local": true,
+        "original_semantics_and_hashes_match": true
+      },
+      {
+        "run": "repeat",
+        "oncall_sha256": "ba4760f629e524245aac8cd56ffc116888d2e15e7d3d7912a60e502ec9f77771",
+        "oncall_matrix_matches_local": true,
+        "original_semantics_and_hashes_match": true
+      }
+    ],
+    "scope": "Real clean-volume Linux execution and stop/start repeat; independently downloaded and revalidated. No timing equality claim."
+  }
+}

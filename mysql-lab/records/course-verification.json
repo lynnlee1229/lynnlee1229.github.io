@@ -1,0 +1,133 @@
+{
+  "format": "mysql-lab-resource-check/v1",
+  "verified_at": "2026-11-13T18:02:46.331356+00:00",
+  "scope": "Public unauthenticated GET; PDF signatures checked. No enrollment, recording-access or future-publication claim.",
+  "checks": [
+    {
+      "url": "https://15445.courses.cs.cmu.edu/fall2026/schedule.html",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 84312,
+      "sha256": "965c1c31b54679ada12ad83937208fbf4157e1b9b3e6f94ab8d5a2c72c8ad2a9"
+    },
+    {
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 34525,
+      "sha256": "222a3865ec1437cf6102e402c7e8bf2fd544f31b7199836db5063e1b9a21f8b0"
+    },
+    {
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/08-indexes1.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 438577,
+      "sha256": "26ff56904faa0cc25e72fbd2465dbc1e96b2bbd96d98f74b4e4f0270c92633a9"
+    },
+    {
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/15-optimization1.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 1331731,
+      "sha256": "377458eb2d3614ae315677865be9ca4a3d8c0588ef6f327f10a43eff102d2be3"
+    },
+    {
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/17-concurrencycontrol.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 455621,
+      "sha256": "27bdcbf6985672f3a513a4a9bcd8e0fabb85748887a8a5ebf0a82d7ef2155138"
+    },
+    {
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/18-twophaselocking.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 389362,
+      "sha256": "a6f0c598f27cdd1f53a92d25961925999f4c62052532e89a08b81dd5b7a67b6e"
+    },
+    {
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/20-multiversioning1.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 249668,
+      "sha256": "19ce8b7b5eec2299ecfd2677ba4f5712b3c39a450a691b23bc13daaed42b3948"
+    },
+    {
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/schedule.html",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 102368,
+      "sha256": "d129730c7d0670aac1d9ff101cd05057b5be88cd6804ac5fef25b20019b569c5"
+    },
+    {
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/syllabus.html",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 26061,
+      "sha256": "70c24919a4f62d6c843a431e0408214ca943c391cb076b3826fa20758741692c"
+    },
+    {
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/explain.html",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 154117,
+      "sha256": "56e9746097c8b8bc9efa296330350f3f5a847edce79f3336b1e815f719fea962"
+    },
+    {
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 97208,
+      "sha256": "95e4db58b631019a023cf327d300510eee504b7f230c1d936e37a8cb66d5a36c"
+    },
+    {
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 101081,
+      "sha256": "4999fba8cb03d59099b359c43d1e25d7cf9a9d4287f2b919cee38b312f602bfb"
+    },
+    {
+      "url": "https://dsg.csail.mit.edu/6.5830/",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 5435,
+      "sha256": "9ce60efbe95e17962d72f65a13ab13a468c7ad56bf1810b95ad730f5c17fedd6"
+    },
+    {
+      "url": "https://dsg.csail.mit.edu/6.5830/assign.php",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 8098,
+      "sha256": "8f761ea53b91555edba6812fcbd0c70b9355547f5f36fe635812e8b0d091c2ef"
+    },
+    {
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec11.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 1042183,
+      "sha256": "23e12c76c08211aecc305e9dca3f76b1efe992afe781a5c135564b401543c35e"
+    },
+    {
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec12.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 1059673,
+      "sha256": "2637ead6005951b06a1ac2d10d4b786a4679ba4c181b2688641db18de5a7eb2e"
+    },
+    {
+      "url": "https://dsg.csail.mit.edu/6.5830/sched.php",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 16317,
+      "sha256": "c4b8de7a274b38c6e057830c2a7f7425bb1664db3a9e95da83979dc4b7cb4084"
+    },
+    {
+      "url": "https://dsg.csail.mit.edu/6.5830/syllabus.php",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 14153,
+      "sha256": "120fe6fc743e434c05cad6950ea7b5247df758959273f796deb153d26895a5ff"
+    }
+  ]
+}

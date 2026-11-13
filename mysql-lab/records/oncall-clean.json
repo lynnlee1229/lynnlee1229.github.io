@@ -1,0 +1,7230 @@
+{
+  "format": "mysql-lab-oncall/v1",
+  "recorded_at": "2026-11-13T18:10:18.779410+00:00",
+  "environment": {
+    "version": "8.4.13",
+    "schema_name": "mysql_lab",
+    "performance_schema": 1,
+    "deadlock_detect": 1
+  },
+  "repeats": 3,
+  "sql": {
+    "count": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+    "guard": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+    "locking_roster": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+    "leave": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1"
+  },
+  "ddl": [
+    "CREATE TABLE IF NOT EXISTS oncall_guard (shift_id INT PRIMARY KEY) ENGINE=InnoDB",
+    "CREATE TABLE IF NOT EXISTS oncall_roster (shift_id INT NOT NULL, doctor_id INT NOT NULL, on_call TINYINT NOT NULL, PRIMARY KEY(shift_id,doctor_id), CHECK(on_call IN (0,1))) ENGINE=InnoDB"
+  ],
+  "sql_sha256": "1e4dd25163a8724fdfd24bf196949488b5935cd254757d0702b0fc9b4bbd8ba7",
+  "final_observer_sql": "SELECT doctor_id,on_call FROM oncall_roster WHERE shift_id=1 ORDER BY doctor_id",
+  "cases": [
+    {
+      "level": "READ COMMITTED",
+      "strategy": "unguarded",
+      "repetition": 1,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "completed-read barrier; distinct-row writes",
+        "snapshot": null
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 18.576,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 19.559,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 19.568,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 20.126,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 20.131,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 21.032,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 21.035,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 21.464,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 21.471,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 22.647,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 22.651,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 23.208,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 23.211,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 23.303,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 23.328,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 24.057,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 24.06,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 24.084,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 24.087,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 25.498,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 25.822,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "late_guard",
+      "repetition": 1,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 7.396,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 8.127,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 8.132,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 8.746,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 8.748,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 9.344,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 9.346,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 9.865,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 9.872,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 10.602,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 10.606,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 11.234,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 11.237,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 11.238,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 11.903,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 11.996,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 25.861,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 25.872,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 25.876,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 26.724,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 26.729,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 27.703,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 27.706,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 29.426,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 25,
+          "elapsed_ms": 29.495,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 26,
+          "elapsed_ms": 29.501,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 27,
+          "elapsed_ms": 30.322,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 28,
+          "elapsed_ms": 30.325,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 29,
+          "elapsed_ms": 31.188,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "guard_first",
+      "repetition": 1,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 9.927,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 11.009,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 11.013,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 11.621,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 11.63,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 12.229,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 12.232,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 12.835,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 12.84,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 13.554,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 13.663,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 15.733,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 15.737,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 15.74,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 16.691,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 16.696,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 17.423,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 17.428,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 18.986,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 19.068,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 19.091,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 19.963,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 19.967,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 20.487,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "locking_roster",
+      "repetition": 1,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 2",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1, 1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_roster",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1, 1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 10.083,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 10.702,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 10.71,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 11.24,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 11.244,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 11.721,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 11.725,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 12.125,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 12.129,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 12.897,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 1
+            },
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 12.996,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 15.375,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 15.381,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 15.386,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 15.947,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 15.95,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 17.832,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 17.877,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 17.88,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 18.419,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "unguarded",
+      "repetition": 1,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "completed-read barrier; distinct-row writes",
+        "snapshot": null
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 10.685,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 11.194,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 11.198,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 11.938,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 11.94,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 12.602,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 12.605,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 13.091,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 13.095,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 13.815,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 13.818,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 14.337,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 14.339,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 14.434,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 14.466,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 15.365,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 15.368,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 15.414,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 15.424,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 17.547,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 18.433,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "late_guard",
+      "repetition": 1,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.902,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 7.487,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 7.49,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 8.008,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 8.01,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 8.545,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 8.547,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 9.054,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 9.058,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 9.794,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 9.796,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 10.817,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 10.82,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 10.822,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 11.438,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 11.53,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 14.814,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 14.819,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 14.821,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 16.029,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 16.034,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 17.838,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 17.842,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 19.769,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 25,
+          "elapsed_ms": 19.83,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 26,
+          "elapsed_ms": 19.837,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 27,
+          "elapsed_ms": 20.487,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 28,
+          "elapsed_ms": 20.49,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 29,
+          "elapsed_ms": 21.136,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 30,
+          "elapsed_ms": 21.138,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 31,
+          "elapsed_ms": 22.756,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "guard_first",
+      "repetition": 1,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 7.752,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 8.148,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 8.15,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 8.564,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 8.566,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 9.101,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 9.104,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 9.499,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 9.502,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 10.003,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 10.101,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 11.833,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 11.836,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 11.838,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 12.365,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 12.369,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 12.953,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 12.956,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 14.716,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 14.802,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 14.81,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 15.634,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 15.639,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 16.269,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "locking_roster",
+      "repetition": 1,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "supremum pseudo-record",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 2",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1, 1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_roster",
+              "index_name": "PRIMARY",
+              "requested_mode": "X",
+              "held_mode": "X",
+              "lock_data": "1, 1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.286,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 6.803,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 6.807,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 7.317,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 7.323,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 7.828,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 7.831,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 8.385,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 8.389,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 9.232,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 1
+            },
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 9.334,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 11.487,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 11.491,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 11.494,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 12.197,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 12.201,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 14.238,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 14.292,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 14.296,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 14.759,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "unguarded",
+      "repetition": 2,
+      "doctor_ids": {
+        "A": 2,
+        "B": 1
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "completed-read barrier; distinct-row writes",
+        "snapshot": null
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 5.602,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 6.026,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 6.028,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 6.541,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 6.547,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 7.155,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 7.158,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 7.634,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 7.64,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 8.354,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 8.361,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 8.905,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 8.908,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 8.995,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 9.017,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 9.733,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 9.735,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 9.759,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 9.762,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 11.105,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 11.555,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "late_guard",
+      "repetition": 2,
+      "doctor_ids": {
+        "A": 2,
+        "B": 1
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 1,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 1
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.27,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 6.715,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 6.718,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 7.109,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 7.111,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 7.456,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 7.458,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 7.803,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 7.806,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 8.289,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 8.292,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 8.771,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 8.775,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 8.776,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 9.251,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 9.334,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 10.974,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 10.977,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 10.979,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 11.426,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 11.433,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 12.063,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 12.066,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 13.22,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 25,
+          "elapsed_ms": 13.269,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 26,
+          "elapsed_ms": 13.273,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 27,
+          "elapsed_ms": 13.804,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 28,
+          "elapsed_ms": 13.807,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 29,
+          "elapsed_ms": 14.233,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "guard_first",
+      "repetition": 2,
+      "doctor_ids": {
+        "A": 2,
+        "B": 1
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 1,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 1
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.416,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 6.929,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 6.932,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 7.363,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 7.365,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 7.829,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 7.831,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 8.293,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 8.296,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 8.777,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 8.854,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 10.6,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 10.602,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 10.604,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 11.242,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 11.246,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 11.825,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 11.827,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 13.26,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 13.317,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 13.321,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 13.912,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 13.915,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 14.438,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "locking_roster",
+      "repetition": 2,
+      "doctor_ids": {
+        "A": 2,
+        "B": 1
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 1,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 1
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 2",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1, 1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_roster",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1, 1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.295,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 6.733,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 6.735,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 7.212,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 7.215,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 7.652,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 7.654,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 8.109,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 8.112,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 8.676,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 1
+            },
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 8.752,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 10.364,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 10.366,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 10.369,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 10.895,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 10.898,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 12.182,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 12.23,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 1
+            }
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 12.234,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 12.739,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "unguarded",
+      "repetition": 2,
+      "doctor_ids": {
+        "A": 2,
+        "B": 1
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "B": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "A": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "completed-read barrier; distinct-row writes",
+        "snapshot": null
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 7.928,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 8.503,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 8.506,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 9.067,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 9.07,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 9.598,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 9.6,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 10.136,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 10.139,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 10.87,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 10.875,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 11.466,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 11.469,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 11.557,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 11.577,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 12.592,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 12.594,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 12.623,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 12.625,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 14.168,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 14.353,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "late_guard",
+      "repetition": 2,
+      "doctor_ids": {
+        "A": 2,
+        "B": 1
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 7.402,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 7.979,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 7.982,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 8.504,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 8.506,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 9.062,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 9.064,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 9.562,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 9.565,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 10.276,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 10.281,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 10.967,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 10.971,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 10.973,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 11.691,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 11.771,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 13.667,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 13.669,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 13.671,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 14.276,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 14.281,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 15.001,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 15.003,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 16.962,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 25,
+          "elapsed_ms": 16.973,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 26,
+          "elapsed_ms": 17.041,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 27,
+          "elapsed_ms": 17.742,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 28,
+          "elapsed_ms": 17.748,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 29,
+          "elapsed_ms": 18.774,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 30,
+          "elapsed_ms": 18.778,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 31,
+          "elapsed_ms": 20.509,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "guard_first",
+      "repetition": 2,
+      "doctor_ids": {
+        "A": 2,
+        "B": 1
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 1,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 1
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 5.777,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 6.471,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 6.473,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 7.031,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 7.033,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 7.606,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 7.607,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 8.135,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 8.139,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 8.732,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 8.819,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 10.745,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 10.751,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 10.753,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 11.393,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 11.396,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 12.151,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 12.153,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 13.548,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 13.624,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 13.63,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 14.358,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 14.362,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 14.999,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "locking_roster",
+      "repetition": 2,
+      "doctor_ids": {
+        "A": 2,
+        "B": 1
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 1,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 1
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "supremum pseudo-record",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 2",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1, 1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_roster",
+              "index_name": "PRIMARY",
+              "requested_mode": "X",
+              "held_mode": "X",
+              "lock_data": "1, 1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 7.153,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 7.705,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 7.707,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 8.224,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 8.226,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 8.849,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 8.851,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 9.379,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 9.383,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 10.058,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 1
+            },
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 10.143,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 12.185,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 12.191,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 12.194,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 12.996,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 12.999,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 15.343,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 15.386,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 1
+            }
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 15.392,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 16.032,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "unguarded",
+      "repetition": 3,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "completed-read barrier; distinct-row writes",
+        "snapshot": null
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.756,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 7.322,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 7.324,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 7.835,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 7.837,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 8.378,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 8.38,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 8.866,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 8.87,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 9.499,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 9.502,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 10.054,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 10.056,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 10.129,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 10.15,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 10.941,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 10.943,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 10.97,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 10.973,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 12.375,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 12.48,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "late_guard",
+      "repetition": 3,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 7.548,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 8.18,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 8.183,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 8.78,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 8.782,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 9.367,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 9.369,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 9.919,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 9.926,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 10.682,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 10.688,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 11.363,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 11.367,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 11.368,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 12.07,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 12.16,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 14.131,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 14.134,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 14.136,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 14.753,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 14.756,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 15.521,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 15.524,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 17.368,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 25,
+          "elapsed_ms": 17.419,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 26,
+          "elapsed_ms": 17.423,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 27,
+          "elapsed_ms": 18.16,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 28,
+          "elapsed_ms": 18.163,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 29,
+          "elapsed_ms": 18.62,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "guard_first",
+      "repetition": 3,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 7.8,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 8.392,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 8.399,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 8.888,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 8.89,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 9.512,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 9.514,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 10.069,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 10.073,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 10.676,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 10.757,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 12.632,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 12.634,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 12.636,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 13.257,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 13.263,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 13.926,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 13.928,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 15.808,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 15.81,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 15.938,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 16.506,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 16.51,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 16.958,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "READ COMMITTED",
+      "strategy": "locking_roster",
+      "repetition": 3,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 2",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1, 1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_roster",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1, 1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 13.688,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 14.223,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 14.226,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 14.679,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 14.681,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 15.198,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 15.202,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 15.771,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 15.776,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 16.403,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 1
+            },
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 16.493,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 18.665,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 18.669,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 18.673,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 19.386,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 19.389,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 20.974,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 21.052,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 21.06,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 21.515,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "unguarded",
+      "repetition": 3,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "completed-read barrier; distinct-row writes",
+        "snapshot": null
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 7.56,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 8.119,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 8.122,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 8.666,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 8.668,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 9.185,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 9.187,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 10.0,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 10.003,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 10.634,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 10.636,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 11.25,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 11.252,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 11.322,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 11.344,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 12.149,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 12.151,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 12.186,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 12.189,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 13.66,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 13.684,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "late_guard",
+      "repetition": 3,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {
+        "A": 2,
+        "B": 2
+      },
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 0
+        }
+      ],
+      "oracle": {
+        "on_call_count": 0,
+        "invariant_holds": false,
+        "serially_reachable": false,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 6.553,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 6.947,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 6.949,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 7.377,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 7.379,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 7.825,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 7.827,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 8.461,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 8.467,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 9.102,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 9.105,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 9.58,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 9.583,
+          "actor": "coordinator",
+          "action": "barrier: both initial counts completed before writes"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 9.584,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 10.001,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 10.126,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 11.726,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 11.729,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 11.73,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 12.238,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 12.242,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 12.82,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 12.822,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 13.914,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 25,
+          "elapsed_ms": 13.964,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 26,
+          "elapsed_ms": 13.968,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 27,
+          "elapsed_ms": 14.532,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 28,
+          "elapsed_ms": 14.54,
+          "actor": "B",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 29,
+          "elapsed_ms": 15.032,
+          "actor": "B",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            2
+          ]
+        },
+        {
+          "step": 30,
+          "elapsed_ms": 15.034,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 31,
+          "elapsed_ms": 16.12,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "guard_first",
+      "repetition": 3,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X,REC_NOT_GAP",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_guard",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_guard",
+              "index_name": "PRIMARY",
+              "requested_mode": "X,REC_NOT_GAP",
+              "held_mode": "X,REC_NOT_GAP",
+              "lock_data": "1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 8.954,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 9.631,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 9.635,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 10.251,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 10.256,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 10.843,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 10.845,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 11.401,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 11.405,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 12.06,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 12.149,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 14.335,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 14.339,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 14.341,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 15.098,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 2
+            }
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 15.102,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 15.953,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 15.96,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 17.91,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 18.147,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT shift_id FROM oncall_guard WHERE shift_id=1 FOR UPDATE",
+          "rows": [
+            {
+              "shift_id": 1
+            }
+          ]
+        },
+        {
+          "step": 21,
+          "elapsed_ms": 18.15,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1"
+        },
+        {
+          "step": 22,
+          "elapsed_ms": 18.973,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT COUNT(*) AS n FROM oncall_roster WHERE shift_id=1 AND on_call=1",
+          "rows": [
+            {
+              "n": 1
+            }
+          ]
+        },
+        {
+          "step": 23,
+          "elapsed_ms": 18.984,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 24,
+          "elapsed_ms": 19.651,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    },
+    {
+      "level": "REPEATABLE READ",
+      "strategy": "locking_roster",
+      "repetition": 3,
+      "doctor_ids": {
+        "A": 1,
+        "B": 2
+      },
+      "initial_counts": {},
+      "decisions": {
+        "A": {
+          "doctor_id": 1,
+          "observed_count": 2,
+          "approved": true,
+          "outcome": "committed"
+        },
+        "B": {
+          "doctor_id": 2,
+          "observed_count": 1,
+          "approved": false,
+          "outcome": "committed"
+        }
+      },
+      "final_rows": [
+        {
+          "doctor_id": 1,
+          "on_call": 0
+        },
+        {
+          "doctor_id": 2,
+          "on_call": 1
+        }
+      ],
+      "oracle": {
+        "on_call_count": 1,
+        "invariant_holds": true,
+        "serially_reachable": true,
+        "allowed_serial_states": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      },
+      "lock_evidence": {
+        "kind": "real wait before leader commit",
+        "snapshot": {
+          "source": [
+            "performance_schema.data_locks",
+            "performance_schema.data_lock_waits"
+          ],
+          "locks": [
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "supremum pseudo-record",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 1",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": "1, 2",
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "A"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": "PRIMARY",
+              "LOCK_TYPE": "RECORD",
+              "LOCK_MODE": "X",
+              "LOCK_STATUS": "WAITING",
+              "LOCK_DATA": "1, 1",
+              "actor": "B"
+            },
+            {
+              "OBJECT_NAME": "oncall_roster",
+              "INDEX_NAME": null,
+              "LOCK_TYPE": "TABLE",
+              "LOCK_MODE": "IX",
+              "LOCK_STATUS": "GRANTED",
+              "LOCK_DATA": null,
+              "actor": "B"
+            }
+          ],
+          "waits": [
+            {
+              "table_name": "oncall_roster",
+              "index_name": "PRIMARY",
+              "requested_mode": "X",
+              "held_mode": "X",
+              "lock_data": "1, 1",
+              "waiting_actor": "B",
+              "blocking_actor": "A"
+            }
+          ]
+        }
+      },
+      "timeline": [
+        {
+          "step": 1,
+          "elapsed_ms": 9.072,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 2,
+          "elapsed_ms": 9.732,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 3,
+          "elapsed_ms": 9.735,
+          "actor": "A",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 4,
+          "elapsed_ms": 10.243,
+          "actor": "A",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 5,
+          "elapsed_ms": 10.245,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ"
+        },
+        {
+          "step": 6,
+          "elapsed_ms": 10.964,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+          "rows": []
+        },
+        {
+          "step": 7,
+          "elapsed_ms": 10.966,
+          "actor": "B",
+          "action": "submit",
+          "sql": "START TRANSACTION"
+        },
+        {
+          "step": 8,
+          "elapsed_ms": 11.487,
+          "actor": "B",
+          "action": "returned",
+          "sql": "START TRANSACTION",
+          "rows": []
+        },
+        {
+          "step": 9,
+          "elapsed_ms": 11.49,
+          "actor": "A",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 10,
+          "elapsed_ms": 12.167,
+          "actor": "A",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 1
+            },
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 11,
+          "elapsed_ms": 12.249,
+          "actor": "B",
+          "action": "submit",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE"
+        },
+        {
+          "step": 12,
+          "elapsed_ms": 14.413,
+          "actor": "observer",
+          "action": "barrier: observed lock wait",
+          "waiting": "B",
+          "blocking": "A"
+        },
+        {
+          "step": 13,
+          "elapsed_ms": 14.418,
+          "actor": "coordinator",
+          "action": "barrier: release A only after observed B→A wait"
+        },
+        {
+          "step": 14,
+          "elapsed_ms": 14.421,
+          "actor": "A",
+          "action": "submit",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 15,
+          "elapsed_ms": 15.238,
+          "actor": "A",
+          "action": "returned",
+          "sql": "UPDATE oncall_roster SET on_call=0 WHERE shift_id=1 AND doctor_id=%s AND on_call=1",
+          "rows": [],
+          "parameters": [
+            1
+          ]
+        },
+        {
+          "step": 16,
+          "elapsed_ms": 15.242,
+          "actor": "A",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 17,
+          "elapsed_ms": 17.489,
+          "actor": "A",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        },
+        {
+          "step": 18,
+          "elapsed_ms": 17.549,
+          "actor": "B",
+          "action": "returned",
+          "sql": "SELECT doctor_id FROM oncall_roster WHERE shift_id=1 AND on_call=1 ORDER BY doctor_id FOR UPDATE",
+          "rows": [
+            {
+              "doctor_id": 2
+            }
+          ]
+        },
+        {
+          "step": 19,
+          "elapsed_ms": 17.552,
+          "actor": "B",
+          "action": "submit",
+          "sql": "COMMIT"
+        },
+        {
+          "step": 20,
+          "elapsed_ms": 18.182,
+          "actor": "B",
+          "action": "returned",
+          "sql": "COMMIT",
+          "rows": []
+        }
+      ]
+    }
+  ],
+  "cleanup": {
+    "remaining_lab_locks": 0,
+    "workers_joined": true,
+    "sessions_closed": true
+  }
+}

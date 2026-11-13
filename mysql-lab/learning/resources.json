@@ -1,0 +1,222 @@
+{
+  "format": "mysql-lab-curriculum/v1",
+  "verified_on": "2026-11-14",
+  "timezone": "Asia/Shanghai",
+  "scope": "Two selected university courses; linked material only. This Lab's SQL exercises are independently authored, not university assignment answers. General DBMS theory is not a claim that InnoDB implements BusTub, GoDB, strict 2PL for every read, or a textbook snapshot-isolation algorithm.",
+  "courses": [
+    {
+      "id": "cmu-s26",
+      "school": "Carnegie Mellon University",
+      "number": "15-445/645",
+      "name": "Intro to Database Systems",
+      "term": "Spring 2026",
+      "prerequisites": "Official syllabus: CMU 15-213/513; C++17 programming. Lab adaptation: SQL, Python, transactions and basic indexes; no BusTub implementation required.",
+      "public_access": "Schedule, selected linked lecture notes were readable without login. Textbook chapter references are reading pointers, not a claim that the complete textbook is freely licensed. No course content is redistributed here.",
+      "enrollment": "Public reading does not provide CMU registration, credit, staff support or Gradescope access. Institutional enrollment and its costs are separate; no fee or free-credit claim is made.",
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/",
+      "syllabus_url": "https://15445.courses.cs.cmu.edu/spring2026/syllabus.html",
+      "schedule_url": "https://15445.courses.cs.cmu.edu/spring2026/schedule.html",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "mit-s26",
+      "school": "Massachusetts Institute of Technology",
+      "number": "6.5830/6.5831 (formerly 6.814/6.830)",
+      "name": "Database Systems",
+      "term": "Spring 2026",
+      "prerequisites": "Spring 2026 syllabus expects 6.1210 (formerly 6.006) or equivalent algorithms, computer systems familiarity (e.g. 6.1800/formerly 6.033), and software debugging ability. Prior databases are not required; course labs use Go.",
+      "public_access": "Syllabus, schedule, assigned-reading pages and selected lecture PDFs were readable without login. Recordings and third-party readings may have separate access conditions and are not promised here.",
+      "enrollment": "MIT registration, graded submissions, staff support and credit are separate from public reading; enrollment may be limited. University lab/problem-set solutions must not be made public. This companion implements none of those assignments.",
+      "url": "https://dsg.csail.mit.edu/6.5830/",
+      "syllabus_url": "https://dsg.csail.mit.edu/6.5830/syllabus.php",
+      "schedule_url": "https://dsg.csail.mit.edu/6.5830/sched.php",
+      "assignments_url": "https://dsg.csail.mit.edu/6.5830/assign.php",
+      "verified_on": "2026-11-14"
+    }
+  ],
+  "edition_checks": [
+    {
+      "course": "CMU 15-445/645 Fall 2026",
+      "url": "https://15445.courses.cs.cmu.edu/fall2026/schedule.html",
+      "verified_on": "2026-11-14",
+      "observed": "Schedule last updated Nov 11. #18 Concurrency Control Theory (Nov 4), #19 Two-Phase Locking (Nov 9), #20 Timestamp Ordering (Nov 11) list published slides. #21 Multi-Version Concurrency Control (Nov 16) is scheduled in the future and listed without slides/notes at verification. Use the completed Spring 2026 notes for this Lab.",
+      "inference": "No claim about publication after the verification date or any future semester. Planned entries are not completed lectures."
+    }
+  ],
+  "resources": [
+    {
+      "id": "cmu-serial",
+      "course": "cmu-s26",
+      "title": "#17 Concurrency Control Theory",
+      "locator": "Mar 23; lecture notes sections 2, 5–6 (transactions, consistency, serial schedules)",
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/17-concurrencycontrol.pdf",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "cmu-lock",
+      "course": "cmu-s26",
+      "title": "#18 Two-Phase Locking",
+      "locator": "Mar 25; lecture notes sections 1–3 (locks, 2PL, deadlock handling)",
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/18-twophaselocking.pdf",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "cmu-mvcc",
+      "course": "cmu-s26",
+      "title": "#20 Multi-Version Concurrency Control I",
+      "locator": "Apr 1; lecture notes, multi-version storage and snapshots; schedule reading Chapter 18.7–18.8",
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/20-multiversioning1.pdf",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "cmu-index",
+      "course": "cmu-s26",
+      "title": "#08 Indexes & Filters I",
+      "locator": "Feb 9; lecture notes on B+ trees; schedule reading Chapter 14.1–14.4",
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/08-indexes1.pdf",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "cmu-plan",
+      "course": "cmu-s26",
+      "title": "#15 Query Planning & Optimization I",
+      "locator": "Mar 16; lecture notes sections 2–8 (equivalence, rewrites, cost, access paths)",
+      "url": "https://15445.courses.cs.cmu.edu/spring2026/notes/15-optimization1.pdf",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "mit-lock",
+      "course": "mit-s26",
+      "title": "Lec 11 Transactions and Locking",
+      "locator": "Mar 17; PDF pages 36–48: 2PL, waits-for graphs and strict/rigorous locking",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec11.pdf",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "mit-mvcc",
+      "course": "mit-s26",
+      "title": "Lec 12 Optimistic Concurrency Control, Snapshot Isolation",
+      "locator": "Mar 19; lecture slides; compare snapshot theory with InnoDB's plain and locking reads",
+      "url": "https://dsg.csail.mit.edu/6.5830/lectures/lec12.pdf",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "mysql-snapshot",
+      "course": "mysql-8.4",
+      "title": "MySQL 8.4: Consistent Nonlocking Reads",
+      "locator": "Reference Manual 17.7.2.3; RC statement snapshots and RR first consistent read",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "mysql-lock",
+      "course": "mysql-8.4",
+      "title": "MySQL 8.4: Locking Reads",
+      "locator": "Reference Manual 17.7.2.4; explicit transaction and SELECT FOR UPDATE",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    },
+    {
+      "id": "mysql-plan",
+      "course": "mysql-8.4",
+      "title": "MySQL 8.4: EXPLAIN",
+      "locator": "Reference Manual 15.8.2; EXPLAIN ANALYZE executes the statement",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/explain.html",
+      "status": "published",
+      "verified_on": "2026-11-14"
+    }
+  ],
+  "units": [
+    {
+      "id": "u1",
+      "title_en": "State the invariant before choosing isolation",
+      "title_zh": "先写不变量，再选隔离级别",
+      "resources": [
+        "cmu-serial",
+        "mit-lock"
+      ],
+      "prediction": "Enumerate both serial withdrawal orders. Can (0,0) occur if each request leaves at least one doctor?",
+      "exercise": "python -c 'from scripts.invariant_oracle import serial_outcomes; print(serial_outcomes())'\npython lab.py oncall --output .local/u1/oncall.json",
+      "evidence": "Compare independently enumerated terminal states (0,1)/(1,0) with observer-read final_rows and oracle in every measured case.",
+      "boundary": "The oracle models two fixed doctors and two requests, not arbitrary SQL serializability. This is an original Lab exercise, not a CMU/MIT assignment."
+    },
+    {
+      "id": "u2",
+      "title_en": "Separate a wait from a deadlock",
+      "title_zh": "区分锁等待和死锁",
+      "resources": [
+        "cmu-lock",
+        "mit-lock"
+      ],
+      "prediction": "Which second UPDATE creates the cycle? Must the same-order control also wait?",
+      "exercise": "python lab.py run --output .local/u2/run.json\npython scripts/validate.py .local/u2/run.json",
+      "evidence": "Real data_lock_waits edge, matching waiting/granted locks, 1213 victim and final values; ordered control commits twice.",
+      "boundary": "The detector resolves a complete cycle immediately. The before-cycle snapshot alone does not prove the entire cycle; use the deadlock excerpt too."
+    },
+    {
+      "id": "u3",
+      "title_en": "Predict snapshot and current reads",
+      "title_zh": "预测快照读与当前读",
+      "resources": [
+        "cmu-mvcc",
+        "mit-mvcc",
+        "mysql-snapshot"
+      ],
+      "prediction": "Under RR, does FOR UPDATE refresh the next plain SELECT? Predict all four reads before running.",
+      "exercise": "python lab.py run --output .local/u3/run.json\npython scripts/validate.py .local/u3/run.json",
+      "evidence": "RC 100/200/200/200 and RR 100/100/200/100; the following writer has a measured lock wait.",
+      "boundary": "General MVCC concepts explain multiple versions; InnoDB statement behavior must be checked separately. RR is not a synonym for serializable."
+    },
+    {
+      "id": "u4",
+      "title_en": "Repair write skew and test a flawed repair",
+      "title_zh": "修复写偏差，并检验错误修复",
+      "resources": [
+        "cmu-serial",
+        "mit-mvcc",
+        "mysql-snapshot",
+        "mysql-lock"
+      ],
+      "prediction": "If both sessions establish a snapshot before taking the same guard row with FOR UPDATE, will serialization of the guard fix RR? What changes under RC?",
+      "exercise": "python lab.py oncall --output .local/u4/oncall.json\ncp sql/oncall.json .local/u4/sql.json\npython lab.py oncall --sql-file .local/u4/sql.json --output .local/u4/edited.json",
+      "evidence": "Both commit in all cases. Compare unguarded, late_guard and guard_first with independent final state, read barriers and real B→A guard wait.",
+      "boundary": "Every writer must follow the guard protocol; guard-first RR requires no earlier consistent read. No claim about arbitrary pre-existing transactions, inserts, deletes or throughput."
+    },
+    {
+      "id": "u5",
+      "title_en": "Lock the data used for a decision",
+      "title_zh": "锁住决策所依赖的数据",
+      "resources": [
+        "cmu-lock",
+        "mysql-lock"
+      ],
+      "prediction": "Why can a locking roster read see one remaining doctor even after waiting? Is a row-local AND on_call=1 condition enough to protect a cross-row count?",
+      "exercise": "python lab.py oncall --output .local/u5/oncall.json\npython scripts/validate_oncall.py .local/u5/oncall.json",
+      "evidence": "The follower's completed locking read returns one row; only one withdrawal occurs. The unguarded conditional updates still remove both doctors.",
+      "boundary": "Fixed membership and a single shift only. Observed lock modes are recorded, not prescribed; this is not a phantom/range-insert proof. Guard rows serialize cooperating writers at the cost of contention."
+    },
+    {
+      "id": "u6",
+      "title_en": "Use an index without changing the answer",
+      "title_zh": "使用索引而不改变答案",
+      "resources": [
+        "cmu-index",
+        "cmu-plan",
+        "mysql-plan"
+      ],
+      "prediction": "Which predicates narrow an index scan? Why compare result hashes only for matching projections?",
+      "exercise": "python lab.py run --output .local/u6/run.json\npython scripts/validate.py .local/u6/run.json",
+      "evidence": "Complete returned rows, equal hashes within each pair, JSON plans and actual iterator rows. Seven fetch samples describe one warm-buffer run.",
+      "boundary": "A plan estimate is not an actual row count, and an index is not guaranteed faster. No randomized crossover, cold-cache or production-capacity conclusion."
+    }
+  ]
+}
