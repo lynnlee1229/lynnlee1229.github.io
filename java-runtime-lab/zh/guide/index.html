@@ -1,0 +1,32 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>运行指南 · Java 运行时实验室 · Lynn Lee</title><meta name="description" content="真实 JVM 实验：有界线程池、超时取消、重试放大与经过审计的 JFR 摘要。"><meta name="author" content="Lynn Lee"><link rel="canonical" href="https://lynnlee1229.github.io/java-runtime-lab/zh/guide/"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/java-runtime-lab/en/guide/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/java-runtime-lab/zh/guide/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/java-runtime-lab/en/guide/"><link rel="icon" href="https://lynnlee1229.github.io/assets/rick-favicon.ico"><link rel="stylesheet" href="../../assets/style.css"><meta property="og:title" content="运行指南 · Java 运行时实验室"><meta property="og:url" content="https://lynnlee1229.github.io/java-runtime-lab/zh/guide/"><meta property="og:image" content="https://lynnlee1229.github.io/assets/original-cover.png"></head><body><header><div class="top"><a class="brand" href="https://lynnlee1229.github.io/zh/"><img src="https://lynnlee1229.github.io/assets/rick-avatar.jpeg" width="32" height="32" alt="Rick">Lynn Lee <small>/ Runtime Lab</small></a><nav aria-label="主导航"><a href=".././">实测记录</a><a href="../guide/" aria-current="page">运行指南</a><a href="../methods/">方法范围</a><a data-language data-base="../../en/guide/" href="../../en/guide/" lang="en">English</a></nav></div></header><main><article class="reading"><h1>先执行，再沿着任务看边界</h1>
+<p>先回答一个问题：请求不再等待后，还有哪些工作占着线程？先读保存的记录，再在本地复现同一个实验，一次只改一个变量。</p>
+<h2>1. 从零得到一份已检查记录</h2>
+<p>支持 ARM64/x64 的 macOS 或 Linux，需要 Python 3.9+、curl、tar、unzip。Windows 可使用 WSL 的 Linux。Node 18+ 仅用于阅读站测试。实验不需要付费模型、远端下游、云数据库或服务账号。</p>
+<pre><code>git clone https://github.com/lynnlee1229/java-runtime-lab.git
+cd java-runtime-lab
+python3 scripts/setup_jdk.py
+python3 scripts/lab.py doctor
+python3 scripts/lab.py build
+python3 scripts/lab.py test --repeats 3</code></pre>
+<p>安装脚本把 Eclipse Temurin 25.0.5+8 LTS 下载到 Git 忽略的 local/，验证官方 SHA-256，不修改系统默认 Java。Maven 3.9.11 wrapper 校验仓库内固定的发行包摘要。首次构建需要联网下载构建插件，实验本身离线运行。</p>
+<p>每轮生成 local/run-N.json 和 local/run-N.jfr。另一个 JVM 再次读取真实 JFR，独立 Python 检查器核对事件生命周期与计数；三轮都应通过。每套实验有 25 秒子进程硬超时，线程池还有退出期限。失败执行不会被记成成功的保存结果。</p>
+<h2>2. 线程池饱和：跟踪任务 5</h2>
+<p>两个线程执行合成 sleep 60 毫秒的任务，队列容量三。共提交 18 个任务，每次 execute() 返回后等待 2 毫秒。启动屏障先确认前两个线程已进入，再提交后续任务。</p>
+<p>打开线程池场景，对比 Abort 与 CallerRuns，再按任务筛选事件。Abort 在饱和时抛异常，把对应任务记为拒绝。CallerRuns 由提交线程同步执行任务，后续到达时间因此延迟；这部分工作在两个线程池工作线程之外。</p>
+<p>核对提交数 = 完成数 + 拒绝数，开始数 = 完成数，每个任务都要有终态。overflow 指拒绝处理器被调用，CallerRuns 的 overflow 不代表丢弃。队列与活跃数来自事件采样；p50/p95 为完成任务的提交至完成延迟，采用最近秩分位数，不纳入拒绝任务。</p>
+<h2>3. 超时：等待方返回后继续看工作线程</h2>
+<p>任务先发出已启动信号，调用方再执行 Future.get(40 毫秒)。工作原始有限期限为 240 毫秒。对比三条实跑路径：只让等待方超时；cancel(true) 但任务刻意吞掉中断；cancel(true) 且任务响应中断退出。</p>
+<p>红线表示超时处理器记录的等待方返回时间，橙线位于 cancel(true) 调用之前，绿色条只在工作线程进入 finally 并记录退出时结束。同一路径共享单调时钟，不同路径各自从零计时。</p>
+<p>Future 已取消、已完成，不保证实际工作退出。筛选任务 0，查看 interrupt_observed 与 work_exited。忽略中断的对照任务仍在原始有限期限停止，便于重复执行。调度可能延迟等待方，因此 40 毫秒是请求的等待预算，不是保证精确的墙钟时间。</p>
+<h2>4. 重试：数下游尝试，不只数请求</h2>
+<pre><code>python3 scripts/lab.py run --seed 20261113 --requests 12 --failures 6
+python3 scripts/verify.py local/run-1.json</code></pre>
+<p>三种策略分别用同一种子重新生成相同失败序列。偶数请求按种子失败 0–2 次，奇数请求失败配置次数后恢复；每次本地尝试 sleep 2 毫秒。</p>
+<p>对比不重试、无次数上限地重试至成功、最多尝试三次并退避。退避为 5/10 毫秒加种子生成的 0–3 毫秒抖动。核对尝试数/原始请求数、成功、原始请求失败和实际退避时间。无次数上限策略另有每请求 2 秒安全看门狗，触发即实验失败；它不能证明永久故障下持续重试安全。</p>
+<h2>5. 检查 JFR、修改实现、停止</h2>
+<p>用下载 JDK 的 bin/jfr summary 读取 local/run-1.jfr，用 bin/jfr print --events lab.TaskEvent 检查本地任务事件，也可在兼容的 JFR 查看器中打开。原始记录可能含系统元数据，公开时只使用 JSON 已生成的计数摘要。</p>
+<p>实现位于 src/main/java/lab/RuntimeLab.java。一次修改一个有界负载或中断行为，重新构建并执行三轮，用断言区分语义变化与时序波动。不要为了预期结论手工修改保存记录。</p>
+<pre><code>python3 scripts/lab.py stop</code></pre>
+<p>正常实验在前台执行完毕、关闭线程池，不留下常驻服务。Ctrl-C 只停止自己的前台执行；stop 命令说明生命周期并保留证据。预览服务器是另一条独立前台命令，用 Ctrl-C 停止自己的预览。只有明确不再需要记录和下载 JDK 时，才自行删除 local/。</p>
+<h2>阅读与分享</h2>
+<p>阅读站加载三轮真实保存 JSON。可切换轮次、场景、策略，筛选任务事件，导出整轮或当前案例，复制带状态的深链。切换语言保留当前案例。导出在浏览器完成；网页不会启动 Java，也不会观察正在运行的机器。</p></article></main><footer>Lynn Lee · 合成负载，真实保存记录；浏览器不运行 JVM。<br><a href="https://github.com/lynnlee1229/java-runtime-lab">MIT 配套实验源码</a> · <a href="https://lynnlee1229.github.io/zh/websites/#learning-labs">全部学习实验室</a></footer></body></html>

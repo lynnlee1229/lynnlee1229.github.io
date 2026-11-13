@@ -1,0 +1,30 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>方法与范围 · Java 运行时实验室 · Lynn Lee</title><meta name="description" content="真实 JVM 实验：有界线程池、超时取消、重试放大与经过审计的 JFR 摘要。"><meta name="author" content="Lynn Lee"><link rel="canonical" href="https://lynnlee1229.github.io/java-runtime-lab/zh/methods/"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/java-runtime-lab/en/methods/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/java-runtime-lab/zh/methods/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/java-runtime-lab/en/methods/"><link rel="icon" href="https://lynnlee1229.github.io/assets/rick-favicon.ico"><link rel="stylesheet" href="../../assets/style.css"><meta property="og:title" content="方法与范围 · Java 运行时实验室"><meta property="og:url" content="https://lynnlee1229.github.io/java-runtime-lab/zh/methods/"><meta property="og:image" content="https://lynnlee1229.github.io/assets/original-cover.png"></head><body><header><div class="top"><a class="brand" href="https://lynnlee1229.github.io/zh/"><img src="https://lynnlee1229.github.io/assets/rick-avatar.jpeg" width="32" height="32" alt="Rick">Lynn Lee <small>/ Runtime Lab</small></a><nav aria-label="主导航"><a href=".././">实测记录</a><a href="../guide/">运行指南</a><a href="../methods/" aria-current="page">方法范围</a><a data-language data-base="../../en/methods/" href="../../en/methods/" lang="en">English</a></nav></div></header><main><article class="reading"><h1>实测能说明什么</h1>
+<p>这里记录真实本地 JVM 上的合成工作。网站回放保存证据，不代表正在运行的 JVM，也不是把预期结果做成动画。配套源码和原始录制流程用于本地调试。</p>
+<h2>版本、环境与重复方式</h2>
+<p>参考实现要求 Eclipse Temurin JDK 25.0.5+8 LTS，通过带校验值的 3.3.4 only-script wrapper 使用 Apache Maven 3.9.11，compiler 插件 3.14.1、jar 插件 3.4.2。运行代码只依赖 JDK。完整套件以种子 20261113，在独立 JVM 进程执行三轮。</p>
+<p>JSON 保留 UTC 记录时间、JDK/runtime 构建、厂商、操作系统及版本、架构和逻辑处理器数，不包含主机名、用户名、环境变量、命令行、绝对路径或个人身份。逻辑处理器数不代表独占 CPU。切换轮次展示单次观察，不构成统计置信区间。</p>
+<p>实验没有隔离预热、绑定 CPU、随机化策略顺序、校准 fork 或控制 GC；全部启用 JFR。sleep 精度和系统调度影响耗时。结果验证该负载下的生命周期与计数关系，不能据此推断生产吞吐或严谨的微基准排名；微基准应另外使用 JMH。</p>
+<h2>线程池口径与边界</h2>
+<p>线程池 core = max = 2，使用平台线程和容量 3 的 ArrayBlockingQueue；18 个编号任务，每个合成 sleep 60 毫秒。每次 execute() 返回后延迟 2 毫秒。CallerRuns 由提交线程执行饱和任务，因此 execute() 阻塞并改变实际到达节奏，也可能在两个池线程之外增加调用方工作。</p>
+<p>submitted 是 execute() 前提交的任务数；started、completed 都包括池线程及调用方执行。rejected 仅计入 Abort 方式真正拒绝的任务。overflow 为进入拒绝处理器次数，callerRuns 为调用方执行次数。静止后核对提交 = 完成 + 拒绝、开始 = 完成，每个任务只有一个终态；不采用静默丢弃策略。</p>
+<p>队列深度与活跃数为状态转换时的采样。completed 发出时执行器线程可能尚未结束包装逻辑，因此活跃采样未必已归零。曲线以阶梯连接事件采样，不推断采样间的状态。p50/p95 采用完成任务提交至完成耗时的最近秩分位数；只比较延迟会忽略拒绝数和不同到达负载。</p>
+<h2>超时与取消边界</h2>
+<p>每条路径只运行一个真实线程、任务 0。屏障确认任务进入后才调用 get(timeout)。等待方捕获 TimeoutException 后记录 waiter_returned；cancel_signal 紧邻 cancel(true) 之前；工作线程 finally 记录 work_exited。每条路径以 System.nanoTime 相对自身原点计时，毫秒输出保留至微秒位，仅为格式，不代表时钟准确度。</p>
+<p>工作期限为进入任务后 240 毫秒，等待预算为调用 get() 后 40 毫秒，不是提交后 40 毫秒。调度和记录开销会影响返回时刻。仅等待超时不会取消 Future；另外两条路径均调用 cancel(true)，一个刻意吞掉 InterruptedException 到有限期限，一个捕获中断后返回。不使用 Thread.stop。Future 状态和实际工作退出分别记录。</p>
+<p>所有等待都有界限，线程池正常退出最多等待 3 秒，再中断清理最多 1 秒，外层套件另有 25 秒硬超时。退出失败会让实验失败；daemon 后备避免坏实验无限占住自己的 JVM。</p>
+<h2>重试失败模型与计数</h2>
+<p>12 个原始请求串行执行。偶数 ID 按种子失败 0–2 次，奇数 ID 在保存记录中失败六次，下一次尝试成功。各策略独立以 java.util.Random、种子 20261113 重建相同序列。失败概率不随时序或队列压力变化，不能称为真实雪崩故障复现。</p>
+<p>每次尝试实际 sleep 2 毫秒。不重试策略只尝试一次；无次数上限策略一直尝试至成功，但外部每请求 2 秒安全看门狗触发即失败。有限失败确保参考实验可退出，没有测试永久故障。有限退避策略最多尝试三次，等待 5、10 毫秒，加由请求 ID、尝试编号和种子生成的 0–3 毫秒抖动。</p>
+<p>原始请求 = 成功 + 失败。attempts 包括初次调用和全部重试；放大倍数 = 尝试 / 原始请求。backoffActualMs 累加实际 sleep 时间，不是计划延迟或总请求耗时。持续重试成功需要更多尝试；有限策略耗尽预算后明确暴露失败。本实验不验证幂等、去重、并发、熔断或分布式截止期限。</p>
+<h2>JFR 导出与隐私</h2>
+<p>JVM 实际启动 jdk.jfr.Recording，启用自定义 lab.TaskEvent、零阈值 ThreadSleep/ThreadPark、20 毫秒周期 ExecutionSample，生成真实本地 .jfr，并通过 RecordingFile 读取。另一个独立 JVM 再次读取每份文件。短时间且主要 sleep 的负载可能没有采样事件；自定义事件和 sleep 事件必须存在。</p>
+<p>公开 JSON 仅保留文件字节数、已读取事件数、事件覆盖时段及四类白名单事件的计数，不导出线程对象/名称、调用栈、环境事件、classpath 或原始 JFR。事件覆盖时段不是校准过的程序总运行时间。静态站与公开 Git 历史都不包含原始 JFR 或下载的本地工具。</p>
+<h2>官方参考</h2>
+<ul>
+<li><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html">ThreadPoolExecutor：队列与拒绝策略</a></li>
+<li><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html">Future：超时和取消契约</a></li>
+<li><a href="https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingFile.html">RecordingFile：读取真实 JFR</a></li>
+<li><a href="https://github.com/adoptium/temurin25-binaries/releases/tag/jdk-25.0.5%2B8">固定 Temurin 25.0.5+8 发布</a></li>
+<li><a href="https://maven.apache.org/tools/wrapper/">Apache Maven Wrapper</a></li>
+<li><a href="https://github.com/openjdk/jmh">OpenJDK JMH</a></li>
+</ul></article></main><footer>Lynn Lee · 合成负载，真实保存记录；浏览器不运行 JVM。<br><a href="https://github.com/lynnlee1229/java-runtime-lab">MIT 配套实验源码</a> · <a href="https://lynnlee1229.github.io/zh/websites/#learning-labs">全部学习实验室</a></footer></body></html>
