@@ -1,0 +1,37 @@
+[
+  {
+    "experiment": "aggregation",
+    "file": "aggregation.json",
+    "sha256": "0d7291aceb525824ec2510c356ff61a8bfcb14805acb1e2001106d98dd9d5da9",
+    "measured_runs": 6,
+    "tasks": 136
+  },
+  {
+    "experiment": "join",
+    "file": "join.json",
+    "sha256": "493c3ca33b5cdca9cbcded3dd903360aad628aca0cf6590e76106500b4909645",
+    "measured_runs": 9,
+    "tasks": 240
+  },
+  {
+    "experiment": "parallel",
+    "file": "parallel.json",
+    "sha256": "f37b26dce09884b44fb03656d1df652def534199e153df662c23158b55ee6697",
+    "measured_runs": 9,
+    "tasks": 292
+  },
+  {
+    "experiment": "recovery",
+    "file": "recovery.json",
+    "sha256": "9b267f013a0126a8216f8dc5f94ea157763bea87645ac5c273356cca0fa66790",
+    "measured_runs": 15,
+    "tasks": 147
+  },
+  {
+    "experiment": "resources",
+    "file": "resources.json",
+    "sha256": "13704e2140db8d11fbc631368f6b73cb82416975f0c3ac5d104f8a03925960f9",
+    "measured_runs": 6,
+    "tasks": 136
+  }
+]

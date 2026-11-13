@@ -1,0 +1,3659 @@
+{
+  "schema_version": 1,
+  "experiment": "recovery",
+  "created_utc": "2026-11-13T13:46:16.021061+00:00",
+  "environment": {
+    "spark": "3.5.8",
+    "python": "3.11.2",
+    "java": "11.0.15",
+    "os": "Darwin",
+    "architecture": "arm64",
+    "master": "local[2,2]",
+    "driver_heap_bytes": 1073741824,
+    "sql_shuffle_partitions": 8,
+    "aqe": false,
+    "broadcast_threshold": -1,
+    "spill_element_threshold": null
+  },
+  "input": {
+    "rows": 240000,
+    "generator": "integer ranges; key/payload formulas in experiments/run.py",
+    "external_data": false
+  },
+  "runs": [
+    {
+      "group": "retry-0",
+      "variant": "retry",
+      "repeat": 0,
+      "warmup": false,
+      "wall_ms": 1288.337,
+      "result": [
+        [
+          0,
+          1,
+          449985000
+        ],
+        [
+          1,
+          0,
+          1349985000
+        ],
+        [
+          2,
+          0,
+          2249985000
+        ],
+        [
+          3,
+          0,
+          3149985000
+        ],
+        [
+          4,
+          0,
+          4049985000
+        ],
+        [
+          5,
+          0,
+          4949985000
+        ],
+        [
+          6,
+          0,
+          5849985000
+        ],
+        [
+          7,
+          0,
+          6749985000
+        ]
+      ],
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 9,
+        "failed_attempts": 1,
+        "stages": 1,
+        "max_task_ms": 497,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "materialize-0",
+      "variant": "materialize",
+      "repeat": 0,
+      "warmup": false,
+      "wall_ms": 413.158,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 221,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "reuse-cache-0",
+      "variant": "reuse-cache",
+      "repeat": 0,
+      "warmup": false,
+      "wall_ms": 144.521,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 29,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "after-unpersist-0",
+      "variant": "after-unpersist",
+      "repeat": 0,
+      "warmup": false,
+      "wall_ms": 155.157,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 41,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "checkpoint-0",
+      "variant": "checkpoint",
+      "repeat": 0,
+      "warmup": false,
+      "wall_ms": 383.482,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 16,
+        "failed_attempts": 0,
+        "stages": 2,
+        "max_task_ms": 54,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "retry-1",
+      "variant": "retry",
+      "repeat": 1,
+      "warmup": false,
+      "wall_ms": 144.239,
+      "result": [
+        [
+          0,
+          1,
+          449985000
+        ],
+        [
+          1,
+          0,
+          1349985000
+        ],
+        [
+          2,
+          0,
+          2249985000
+        ],
+        [
+          3,
+          0,
+          3149985000
+        ],
+        [
+          4,
+          0,
+          4049985000
+        ],
+        [
+          5,
+          0,
+          4949985000
+        ],
+        [
+          6,
+          0,
+          5849985000
+        ],
+        [
+          7,
+          0,
+          6749985000
+        ]
+      ],
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 9,
+        "failed_attempts": 1,
+        "stages": 1,
+        "max_task_ms": 27,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "materialize-1",
+      "variant": "materialize",
+      "repeat": 1,
+      "warmup": false,
+      "wall_ms": 242.457,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 67,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "reuse-cache-1",
+      "variant": "reuse-cache",
+      "repeat": 1,
+      "warmup": false,
+      "wall_ms": 121.926,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 28,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "after-unpersist-1",
+      "variant": "after-unpersist",
+      "repeat": 1,
+      "warmup": false,
+      "wall_ms": 118.431,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 27,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "checkpoint-1",
+      "variant": "checkpoint",
+      "repeat": 1,
+      "warmup": false,
+      "wall_ms": 333.211,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 16,
+        "failed_attempts": 0,
+        "stages": 2,
+        "max_task_ms": 40,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "retry-2",
+      "variant": "retry",
+      "repeat": 2,
+      "warmup": false,
+      "wall_ms": 135.433,
+      "result": [
+        [
+          0,
+          1,
+          449985000
+        ],
+        [
+          1,
+          0,
+          1349985000
+        ],
+        [
+          2,
+          0,
+          2249985000
+        ],
+        [
+          3,
+          0,
+          3149985000
+        ],
+        [
+          4,
+          0,
+          4049985000
+        ],
+        [
+          5,
+          0,
+          4949985000
+        ],
+        [
+          6,
+          0,
+          5849985000
+        ],
+        [
+          7,
+          0,
+          6749985000
+        ]
+      ],
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 9,
+        "failed_attempts": 1,
+        "stages": 1,
+        "max_task_ms": 26,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "materialize-2",
+      "variant": "materialize",
+      "repeat": 2,
+      "warmup": false,
+      "wall_ms": 224.351,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 58,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "reuse-cache-2",
+      "variant": "reuse-cache",
+      "repeat": 2,
+      "warmup": false,
+      "wall_ms": 112.721,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 27,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "after-unpersist-2",
+      "variant": "after-unpersist",
+      "repeat": 2,
+      "warmup": false,
+      "wall_ms": 115.259,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 8,
+        "failed_attempts": 0,
+        "stages": 1,
+        "max_task_ms": 27,
+        "peak_execution_bytes": 0
+      }
+    },
+    {
+      "group": "checkpoint-2",
+      "variant": "checkpoint",
+      "repeat": 2,
+      "warmup": false,
+      "wall_ms": 316.671,
+      "result": 57599760000,
+      "metrics": {
+        "shuffle_write_bytes": 0,
+        "shuffle_read_bytes": 0,
+        "remote_read_bytes": 0,
+        "memory_spill_bytes": 0,
+        "disk_spill_bytes": 0,
+        "shuffle_write_records": 0,
+        "tasks": 16,
+        "failed_attempts": 0,
+        "stages": 2,
+        "max_task_ms": 38,
+        "peak_execution_bytes": 0
+      }
+    }
+  ],
+  "plans": {
+    "before_checkpoint": "(8) PythonRDD[30] at RDD at PythonRDD.scala:53 []\n |  ParallelCollectionRDD[29] at readRDDFromFile at PythonRDD.scala:289 []",
+    "after_checkpoint": "(8) PythonRDD[30] at RDD at PythonRDD.scala:53 []\n |  ReliableCheckpointRDD[32] at sum at <local-path> []"
+  },
+  "observations": {
+    "traces": [
+      {
+        "repeat": 0,
+        "cache_evaluations": [
+          {
+            "phase": "materialize",
+            "successful_partition_evaluations": 8,
+            "sum": 57599760000
+          },
+          {
+            "phase": "reuse-cache",
+            "successful_partition_evaluations": 0,
+            "sum": 57599760000
+          },
+          {
+            "phase": "after-unpersist",
+            "successful_partition_evaluations": 8,
+            "sum": 57599760000
+          }
+        ],
+        "checkpoint_materialized": true,
+        "checkpoint_lineage_truncated": true
+      },
+      {
+        "repeat": 1,
+        "cache_evaluations": [
+          {
+            "phase": "materialize",
+            "successful_partition_evaluations": 8,
+            "sum": 57599760000
+          },
+          {
+            "phase": "reuse-cache",
+            "successful_partition_evaluations": 0,
+            "sum": 57599760000
+          },
+          {
+            "phase": "after-unpersist",
+            "successful_partition_evaluations": 8,
+            "sum": 57599760000
+          }
+        ],
+        "checkpoint_materialized": true,
+        "checkpoint_lineage_truncated": true
+      },
+      {
+        "repeat": 2,
+        "cache_evaluations": [
+          {
+            "phase": "materialize",
+            "successful_partition_evaluations": 8,
+            "sum": 57599760000
+          },
+          {
+            "phase": "reuse-cache",
+            "successful_partition_evaluations": 0,
+            "sum": 57599760000
+          },
+          {
+            "phase": "after-unpersist",
+            "successful_partition_evaluations": 8,
+            "sum": 57599760000
+          }
+        ],
+        "checkpoint_materialized": true,
+        "checkpoint_lineage_truncated": true
+      }
+    ],
+    "failure_scope": "one owned task raises an exception; no node/executor kill; local retry budget=2"
+  },
+  "tasks": [
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 480,
+      "executor_run_ms": 431,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": false,
+      "reason": "ExceptionFailure",
+      "duration_ms": 497,
+      "executor_run_ms": 457,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 36,
+      "executor_run_ms": 29,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 1,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 33,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-0"
+      ],
+      "stage": 0,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-0"
+      ],
+      "stage": 1,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 221,
+      "executor_run_ms": 217,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-0"
+      ],
+      "stage": 1,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 221,
+      "executor_run_ms": 217,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-0"
+      ],
+      "stage": 1,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 58,
+      "executor_run_ms": 51,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-0"
+      ],
+      "stage": 1,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 57,
+      "executor_run_ms": 51,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-0"
+      ],
+      "stage": 1,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 56,
+      "executor_run_ms": 50,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-0"
+      ],
+      "stage": 1,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 57,
+      "executor_run_ms": 50,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-0"
+      ],
+      "stage": 1,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 57,
+      "executor_run_ms": 53,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-0"
+      ],
+      "stage": 1,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 57,
+      "executor_run_ms": 52,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-0"
+      ],
+      "stage": 2,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 28,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-0"
+      ],
+      "stage": 2,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-0"
+      ],
+      "stage": 2,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-0"
+      ],
+      "stage": 2,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 28,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-0"
+      ],
+      "stage": 2,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-0"
+      ],
+      "stage": 2,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 28,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-0"
+      ],
+      "stage": 2,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 28,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-0"
+      ],
+      "stage": 2,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-0"
+      ],
+      "stage": 3,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-0"
+      ],
+      "stage": 3,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-0"
+      ],
+      "stage": 3,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-0"
+      ],
+      "stage": 3,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-0"
+      ],
+      "stage": 3,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 41,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 9,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-0"
+      ],
+      "stage": 3,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 41,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 9,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-0"
+      ],
+      "stage": 3,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 28,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-0"
+      ],
+      "stage": 3,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 4,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 39,
+      "executor_run_ms": 34,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 4,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 43,
+      "executor_run_ms": 39,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 4,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 32,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 4,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 32,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 4,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 31,
+      "executor_run_ms": 26,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 4,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 32,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 4,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 34,
+      "executor_run_ms": 31,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 4,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 31,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 5,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 54,
+      "executor_run_ms": 31,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 5,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 54,
+      "executor_run_ms": 31,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 5,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 31,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 5,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 32,
+      "executor_run_ms": 29,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 5,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 31,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 5,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 32,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 5,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 32,
+      "executor_run_ms": 29,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-0"
+      ],
+      "stage": 5,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 33,
+      "executor_run_ms": 30,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": false,
+      "reason": "ExceptionFailure",
+      "duration_ms": 27,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 1,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 24,
+      "executor_run_ms": 21,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-1"
+      ],
+      "stage": 6,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-1"
+      ],
+      "stage": 7,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 52,
+      "executor_run_ms": 48,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-1"
+      ],
+      "stage": 7,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 67,
+      "executor_run_ms": 51,
+      "jvm_gc_ms": 8,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-1"
+      ],
+      "stage": 7,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 65,
+      "executor_run_ms": 50,
+      "jvm_gc_ms": 8,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-1"
+      ],
+      "stage": 7,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 52,
+      "executor_run_ms": 49,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-1"
+      ],
+      "stage": 7,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 57,
+      "executor_run_ms": 49,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-1"
+      ],
+      "stage": 7,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 55,
+      "executor_run_ms": 52,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-1"
+      ],
+      "stage": 7,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 50,
+      "executor_run_ms": 47,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-1"
+      ],
+      "stage": 7,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 59,
+      "executor_run_ms": 51,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-1"
+      ],
+      "stage": 8,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-1"
+      ],
+      "stage": 8,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-1"
+      ],
+      "stage": 8,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 28,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-1"
+      ],
+      "stage": 8,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 28,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-1"
+      ],
+      "stage": 8,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-1"
+      ],
+      "stage": 8,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-1"
+      ],
+      "stage": 8,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-1"
+      ],
+      "stage": 8,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-1"
+      ],
+      "stage": 9,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-1"
+      ],
+      "stage": 9,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-1"
+      ],
+      "stage": 9,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-1"
+      ],
+      "stage": 9,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-1"
+      ],
+      "stage": 9,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-1"
+      ],
+      "stage": 9,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-1"
+      ],
+      "stage": 9,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-1"
+      ],
+      "stage": 9,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 10,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 10,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 34,
+      "executor_run_ms": 30,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 10,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 32,
+      "executor_run_ms": 29,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 10,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 34,
+      "executor_run_ms": 31,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 10,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 33,
+      "executor_run_ms": 30,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 10,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 10,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 31,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 10,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 40,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 6,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 11,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 26,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 11,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 11,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 26,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 11,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 11,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 11,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 31,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 11,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-1"
+      ],
+      "stage": 11,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 24,
+      "executor_run_ms": 21,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": false,
+      "reason": "ExceptionFailure",
+      "duration_ms": 26,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 24,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 23,
+      "executor_run_ms": 21,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 1,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 24,
+      "executor_run_ms": 21,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "retry-2"
+      ],
+      "stage": 12,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 23,
+      "executor_run_ms": 21,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-2"
+      ],
+      "stage": 13,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 49,
+      "executor_run_ms": 46,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-2"
+      ],
+      "stage": 13,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 53,
+      "executor_run_ms": 50,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-2"
+      ],
+      "stage": 13,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 49,
+      "executor_run_ms": 47,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-2"
+      ],
+      "stage": 13,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 48,
+      "executor_run_ms": 46,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-2"
+      ],
+      "stage": 13,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 49,
+      "executor_run_ms": 46,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-2"
+      ],
+      "stage": 13,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 56,
+      "executor_run_ms": 46,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-2"
+      ],
+      "stage": 13,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 58,
+      "executor_run_ms": 47,
+      "jvm_gc_ms": 6,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "materialize-2"
+      ],
+      "stage": 13,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 54,
+      "executor_run_ms": 52,
+      "jvm_gc_ms": 6,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-2"
+      ],
+      "stage": 14,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-2"
+      ],
+      "stage": 14,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-2"
+      ],
+      "stage": 14,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 24,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-2"
+      ],
+      "stage": 14,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-2"
+      ],
+      "stage": 14,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 24,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-2"
+      ],
+      "stage": 14,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-2"
+      ],
+      "stage": 14,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "reuse-cache-2"
+      ],
+      "stage": 14,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 24,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-2"
+      ],
+      "stage": 15,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-2"
+      ],
+      "stage": 15,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-2"
+      ],
+      "stage": 15,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-2"
+      ],
+      "stage": 15,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 24,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-2"
+      ],
+      "stage": 15,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 26,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-2"
+      ],
+      "stage": 15,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 27,
+      "executor_run_ms": 25,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-2"
+      ],
+      "stage": 15,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 22,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "after-unpersist-2"
+      ],
+      "stage": 15,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 25,
+      "executor_run_ms": 23,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 16,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 16,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 32,
+      "executor_run_ms": 29,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 16,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 36,
+      "executor_run_ms": 33,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 16,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 38,
+      "executor_run_ms": 35,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 16,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 31,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 16,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 16,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 30,
+      "executor_run_ms": 28,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 16,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 36,
+      "executor_run_ms": 33,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 17,
+      "stage_attempt": 0,
+      "partition": 0,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 35,
+      "executor_run_ms": 33,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 17,
+      "stage_attempt": 0,
+      "partition": 1,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 35,
+      "executor_run_ms": 33,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 17,
+      "stage_attempt": 0,
+      "partition": 2,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 35,
+      "executor_run_ms": 27,
+      "jvm_gc_ms": 5,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 17,
+      "stage_attempt": 0,
+      "partition": 3,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 35,
+      "executor_run_ms": 31,
+      "jvm_gc_ms": 5,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 17,
+      "stage_attempt": 0,
+      "partition": 4,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 34,
+      "executor_run_ms": 31,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 17,
+      "stage_attempt": 0,
+      "partition": 5,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 33,
+      "executor_run_ms": 30,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 17,
+      "stage_attempt": 0,
+      "partition": 6,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 26,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    },
+    {
+      "groups": [
+        "checkpoint-2"
+      ],
+      "stage": 17,
+      "stage_attempt": 0,
+      "partition": 7,
+      "attempt": 0,
+      "successful": true,
+      "reason": "Success",
+      "duration_ms": 29,
+      "executor_run_ms": 26,
+      "jvm_gc_ms": 0,
+      "shuffle_write_bytes": 0,
+      "shuffle_write_records": 0,
+      "shuffle_read_bytes": 0,
+      "remote_read_bytes": 0,
+      "memory_spill_bytes": 0,
+      "disk_spill_bytes": 0,
+      "peak_execution_bytes": 0
+    }
+  ],
+  "summary": {
+    "retry": {
+      "repeats": 3,
+      "median_wall_ms": 144.239,
+      "min_wall_ms": 135.433,
+      "max_wall_ms": 1288.337
+    },
+    "materialize": {
+      "repeats": 3,
+      "median_wall_ms": 242.457,
+      "min_wall_ms": 224.351,
+      "max_wall_ms": 413.158
+    },
+    "reuse-cache": {
+      "repeats": 3,
+      "median_wall_ms": 121.926,
+      "min_wall_ms": 112.721,
+      "max_wall_ms": 144.521
+    },
+    "after-unpersist": {
+      "repeats": 3,
+      "median_wall_ms": 118.431,
+      "min_wall_ms": 115.259,
+      "max_wall_ms": 155.157
+    },
+    "checkpoint": {
+      "repeats": 3,
+      "median_wall_ms": 333.211,
+      "min_wall_ms": 316.671,
+      "max_wall_ms": 383.482
+    }
+  }
+}

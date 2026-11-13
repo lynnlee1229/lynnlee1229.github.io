@@ -1,0 +1,28 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>先聚合，再移动 · Distributed Compute Lab</title><meta name="description" content="通过原创讲解、真实 Spark 实验与可复现证据学习分布式计算。"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/03-aggregation/"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/distributed-compute-lab/en/03-aggregation/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/03-aggregation/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/distributed-compute-lab/en/03-aggregation/"><link rel="stylesheet" href="/distributed-compute-lab/assets/site.css"><link rel="icon" href="/distributed-compute-lab/assets/favicon.svg"><script defer src="/distributed-compute-lab/assets/site.js"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-compute-lab/zh/"><span>▦</span> Distributed Compute Lab</a><nav aria-label="全局导航"><a class="home-link" href="/zh/websites/">Lynn Lee</a><a href="https://github.com/lynnlee1229/distributed-compute-lab">源码</a><a lang="en-US" href="/distributed-compute-lab/en/03-aggregation/">English</a></nav></div></header><div class="layout"><aside class="sidebar" aria-label="课程导航"><span class="eyebrow">学习顺序</span><a href="/distributed-compute-lab/zh/">课程概览</a><a href="/distributed-compute-lab/zh/01-parallel/">为什么并行？</a><a href="/distributed-compute-lab/zh/02-model/">数据并行模型</a><a href="/distributed-compute-lab/zh/03-aggregation/" aria-current="page">先聚合，再移动</a><a href="/distributed-compute-lab/zh/04-join/">Join 策略与倾斜</a><a href="/distributed-compute-lab/zh/05-recovery/">重试与重算</a><a href="/distributed-compute-lab/zh/06-resources/">资源诊断</a><a href="/distributed-compute-lab/zh/evidence/">实测证据</a><a href="/distributed-compute-lab/zh/reproduce/">本地复现</a><a href="/distributed-compute-lab/zh/code/">阅读代码</a></aside><main id="main"><article class="prose"><h1 id="03">03 · 先聚合，再移动</h1>
+<p>分布式求和不需要把每个原始值都送到目标位置，只需要传递足以恢复正确总和的信息。选择摘要本身就是算法设计。</p>
+<h2 id="section-2">学习目标与前置知识</h2>
+<p>需要第二章、结合律和整数求和知识。本章要能设计可合并摘要、解释局部合并，并区分逻辑记录数与序列化、压缩后的 Shuffle 指标。</p>
+<h2 id="section-4">摘要必须保留问题所需的信息</h2>
+<p>一个分区有 2、4，另一个有 9。局部和是 6、9，再合并得 15，因为整数加法满足结合律与交换律。局部平均值则不同：3 与 9 的平均为 6，全局平均却是 5。应传递 <code>(sum,count)</code>，分别合并，最后只除一次。</p>
+<p>摘要应有单位元、合并操作和明确的不变量。<code>(sum,count)</code> 的单位元为 <code>(0,0)</code>，合并是逐字段相加。精确中位数一般不能由局部中位数恢复。浮点加法也不严格满足结合律，重排可能带来微小差异。本实验使用整数避免这种歧义。</p>
+<div class="flow"><div class="node "><b>分区 0</b>2 + 4 → (6,2)</div><div class="node "><b>分区 1</b>9 → (9,1)</div><div class="node "><b>合并</b>(15,3) → mean 5</div></div><p class="flow-caption">原创概念图 · 不是运行轨迹。</p>
+<h2 id="section-8">相同求和的两种实现</h2>
+<p>实验在八个分区生成 240,000 个 <code>(i%1000,i%17)</code>，先缓存并物化共同输入，再开始比较。一种先保留分组值再求和，另一种使用局部合并。两者都收集 1,000 个键的结果，并与独立的逐键参考计算比较，不只检查可能偶然相同的总和。</p>
+<pre><code>grouped = pairs.groupByKey(8).mapValues(sum)
+combined = pairs.reduceByKey(lambda a, b: a + b, 8)
+assert sorted(grouped.collect()) == sorted(combined.collect())</code></pre>
+<p>官方 API 说明 reduceByKey 会局部合并；当需求只是聚合时，groupByKey 文档建议使用 reduce 或 aggregate。<a href="https://spark.apache.org/docs/3.5.8/api/python/reference/api/pyspark.RDD.reduceByKey.html">reduceByKey</a> · <a href="https://spark.apache.org/docs/3.5.8/api/python/reference/api/pyspark.RDD.groupByKey.html">groupByKey</a></p>
+<p>不要认为 groupByKey 必然让每条输入都成为一个物理 Shuffle Record。PySpark 可以批量序列化对象，并局部组织值列表。保存结果中，两者都记录了 320 个 Shuffle Record，但携带的信息不同。第一次计时运行中，分组值写出 85,751 字节，局部合并写出 46,645 字节。它们是带压缩的事件日志计数，不是抓包结果。本地模式的远程读取字节为零。</p>
+<h2 id="section-13">运行与解释</h2>
+<pre><code>python scripts/run_all.py --only aggregation</code></pre>
+<p>在证据页检查每次重复。计时区间重叠，因此“移动的数据更少”比笼统的“性能更快”更有直接支持。这里小整数重复多、容易压缩；更大的值、更多键，或每个输入分区里更少的重复键，都可能改变比率。局部状态同样消耗内存，合并并非没有成本。</p>
+<p>把生成器和参考计算中的键数改为 10,000，先预测摘要数量与字节变化，再运行。然后用 <code>(sum,count)</code> 实现均值，特意使用不同大小的分区来检出“平均值的平均值”错误。报告中保留数据生成方法与两种一致性检查。</p>
+<h2 id="section-17">自测</h2>
+<details class="quiz"><summary>任意函数都能安全移到 Shuffle 前吗？</summary>
+<p>不能。必须保留查询需要的信息，并满足合并语义。依赖顺序的拼接或任意局部中位数不能当作整数加法处理。</p>
+</details>
+<details class="quiz"><summary>压缩字节降低，是否证明跨机器网络吞吐提高？</summary>
+<p>本实验没有远程 Shuffle 读取，只说明固定编码与数据下的序列化输出减少。网络吞吐需要独立的多机实验。</p>
+</details>
+<h2 id="section-24">过关任务</h2>
+<p>分别为最小值、均值、去重计数设计摘要。区分精确集合与近似 Sketch 的内存和误差约定。带着“哪些信息必须移动”的问题进入 Join。</p></article><button class="read-toggle" id="mark-read" data-chapter="03-aggregation" aria-pressed="false">标记本章已读</button><p class="small">阅读标记只保存在当前浏览器（可用时）。</p><nav class="next" aria-label="章节导航"><a href="/distributed-compute-lab/zh/02-model/">← 上一页</a><a href="/distributed-compute-lab/zh/04-join/">下一页 →</a></nav></main></div><footer>Lynn Lee · 原创课程 · MIT 配套项目 · 实测日期 2026-11-13 · 无分析追踪<br>单机 Spark 本地模式。概念图和模型估算均独立标注。</footer></body></html>

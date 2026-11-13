@@ -1,0 +1,181 @@
+<!doctype html><html lang="en-US"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Read the code · Distributed Compute Lab</title><meta name="description" content="Learn distributed computation through original explanations, real Spark experiments and reproducible evidence."><link rel="canonical" href="https://lynnlee1229.github.io/distributed-compute-lab/en/code/"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/distributed-compute-lab/en/code/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/code/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/distributed-compute-lab/en/code/"><link rel="stylesheet" href="/distributed-compute-lab/assets/site.css"><link rel="icon" href="/distributed-compute-lab/assets/favicon.svg"><script defer src="/distributed-compute-lab/assets/site.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><div class="top"><a class="brand" href="/distributed-compute-lab/en/"><span>▦</span> Distributed Compute Lab</a><nav aria-label="Global"><a class="home-link" href="/websites/">Lynn Lee</a><a href="https://github.com/lynnlee1229/distributed-compute-lab">Source</a><a lang="zh-CN" href="/distributed-compute-lab/zh/code/">中文</a></nav></div></header><div class="layout"><aside class="sidebar" aria-label="Course navigation"><span class="eyebrow">Learning sequence</span><a href="/distributed-compute-lab/en/">Course overview</a><a href="/distributed-compute-lab/en/01-parallel/">Why parallelize?</a><a href="/distributed-compute-lab/en/02-model/">Data-parallel models</a><a href="/distributed-compute-lab/en/03-aggregation/">Aggregate before moving</a><a href="/distributed-compute-lab/en/04-join/">Join strategies and skew</a><a href="/distributed-compute-lab/en/05-recovery/">Retry and recompute</a><a href="/distributed-compute-lab/en/06-resources/">Resource diagnosis</a><a href="/distributed-compute-lab/en/evidence/">Recorded evidence</a><a href="/distributed-compute-lab/en/reproduce/">Reproduce locally</a><a href="/distributed-compute-lab/en/code/" aria-current="page">Read the code</a></aside><main id="main"><span class="eyebrow">Executable source</span><h1>Read the experiment code</h1><p>This is the exact experiment runner used for the saved baseline. The companion also includes the orchestration, sanitizer, tests and data formulas. Read the setup before running: it fixes the runtime and isolates inherited configuration.</p><div class="actions"><a class="button" href="https://github.com/lynnlee1229/distributed-compute-lab">Open public repository</a><a class="button secondary" href="/distributed-compute-lab/downloads/distributed-compute-lab.zip" download>Download full companion</a><a class="button secondary" href="/distributed-compute-lab/code/run.py" download>run.py</a></div><p class="code-meta">experiments/run.py · SHA-256 5f29cfd90866b3d9e3f93722f6f7397d47bc5eced1d5e2134c0b35025f2c21b9</p><pre><code>#!/usr/bin/env python3
+&quot;&quot;&quot;Bounded, real Spark experiments. No network service or external dataset needed.&quot;&quot;&quot;
+import argparse, json, os, platform, sys, time
+from pathlib import Path
+from datetime import datetime, timezone
+from pyspark.sql import SparkSession, functions as F
+from pyspark import TaskContext, StorageLevel
+
+parser = argparse.ArgumentParser()
+parser.add_argument(&#x27;--experiment&#x27;, choices=[&#x27;parallel&#x27;,&#x27;aggregation&#x27;,&#x27;join&#x27;,&#x27;recovery&#x27;,&#x27;resources&#x27;], required=True)
+parser.add_argument(&#x27;--rows&#x27;, type=int, default=240000)
+parser.add_argument(&#x27;--repeats&#x27;, type=int, default=3)
+parser.add_argument(&#x27;--out&#x27;, type=Path, default=Path(&#x27;build/run&#x27;))
+a = parser.parse_args()
+if not 10000 &lt;= a.rows &lt;= 1000000 or not 1 &lt;= a.repeats &lt;= 5:
+    parser.error(&#x27;rows must be 10000..1000000; repeats 1..5&#x27;)
+a.out.mkdir(parents=True, exist_ok=True)
+events = (a.out/&#x27;events&#x27;).resolve(); events.mkdir(exist_ok=True)
+builder = (SparkSession.builder.appName(&#x27;distributed-compute-&#x27;+a.experiment)
+    .master(&#x27;local[2,2]&#x27;).config(&#x27;spark.driver.bindAddress&#x27;,&#x27;127.0.0.1&#x27;)
+    .config(&#x27;spark.driver.host&#x27;,&#x27;127.0.0.1&#x27;)
+    .config(&#x27;spark.hadoop.fs.defaultFS&#x27;,&#x27;file:///&#x27;).config(&#x27;spark.ui.enabled&#x27;,&#x27;false&#x27;).config(&#x27;spark.default.parallelism&#x27;,&#x27;8&#x27;)
+    .config(&#x27;spark.sql.shuffle.partitions&#x27;,&#x27;8&#x27;).config(&#x27;spark.sql.adaptive.enabled&#x27;,&#x27;false&#x27;)
+    .config(&#x27;spark.sql.autoBroadcastJoinThreshold&#x27;,&#x27;-1&#x27;)
+    .config(&#x27;spark.eventLog.enabled&#x27;,&#x27;true&#x27;).config(&#x27;spark.eventLog.compress&#x27;,&#x27;false&#x27;)
+    .config(&#x27;spark.eventLog.dir&#x27;,events.as_uri())
+    .config(&#x27;spark.local.dir&#x27;,str((a.out/&#x27;scratch&#x27;).resolve())))
+if a.experiment == &#x27;resources&#x27;:
+    # Pedagogical forcing of spill, NOT a production tuning recommendation.
+    builder = builder.config(&#x27;spark.shuffle.spill.numElementsForceSpillThreshold&#x27;,&#x27;8192&#x27;)
+spark = builder.getOrCreate(); sc = spark.sparkContext; sc.setLogLevel(&#x27;ERROR&#x27;)
+report = {&#x27;schema_version&#x27;:1,&#x27;experiment&#x27;:a.experiment,&#x27;created_utc&#x27;:datetime.now(timezone.utc).isoformat(),
+    &#x27;environment&#x27;:{&#x27;spark&#x27;:spark.version,&#x27;python&#x27;:platform.python_version(),
+      &#x27;java&#x27;:sc._jvm.java.lang.System.getProperty(&#x27;java.version&#x27;),
+      &#x27;os&#x27;:platform.system(),&#x27;architecture&#x27;:platform.machine(),
+      &#x27;master&#x27;:sc.master,&#x27;driver_heap_bytes&#x27;:sc._jvm.java.lang.Runtime.getRuntime().maxMemory(),
+      &#x27;sql_shuffle_partitions&#x27;:8,&#x27;aqe&#x27;:False,&#x27;broadcast_threshold&#x27;:-1,
+      &#x27;spill_element_threshold&#x27;:8192 if a.experiment==&#x27;resources&#x27; else None},
+    &#x27;input&#x27;:{&#x27;rows&#x27;:a.rows,&#x27;generator&#x27;:&#x27;integer ranges; key/payload formulas in experiments/run.py&#x27;,&#x27;external_data&#x27;:False},
+    &#x27;runs&#x27;:[],&#x27;plans&#x27;:{},&#x27;observations&#x27;:{}}
+
+def action(label, fn, repeat, variant, warmup=False):
+    group = f&#x27;{label}-{repeat}&#x27;; sc.setJobGroup(group,group)
+    start = time.perf_counter(); value = fn(); elapsed = (time.perf_counter()-start)*1000
+    row={&#x27;group&#x27;:group,&#x27;variant&#x27;:variant,&#x27;repeat&#x27;:repeat,&#x27;warmup&#x27;:warmup,&#x27;wall_ms&#x27;:round(elapsed,3),&#x27;result&#x27;:value}
+    report[&#x27;runs&#x27;].append(row); print(json.dumps({&#x27;completed&#x27;:group,&#x27;wall_ms&#x27;:row[&#x27;wall_ms&#x27;]}),flush=True)
+    sc.clearJobGroup() if hasattr(sc,&#x27;clearJobGroup&#x27;) else sc.setLocalProperty(&#x27;spark.jobGroup.id&#x27;,None)
+    return value
+
+def trial(variants):
+    # One warm-up per variant; alternate measured order to expose order effects.
+    for name,fn in variants: action(name,fn,-1,name,True)
+    for r in range(a.repeats):
+        for name,fn in (variants if r%2==0 else list(reversed(variants))): action(name,fn,r,name)
+
+def partition_join(rows):
+    count=total=0
+    for row in rows:
+        count+=1; total+=row.weight
+    return count,total
+
+def resource_partition(rows):
+    count=total=chars=0; previous=None; ordered=True
+    for row in rows:
+        count+=1; total+=row.id; chars+=len(row.payload)
+        if previous is not None and row.sort_key&lt;previous:ordered=False
+        previous=row.sort_key
+    yield count,total,chars,ordered
+
+if a.experiment==&#x27;parallel&#x27;:
+    def run(p):
+        return int(sc.parallelize(range(a.rows),p).map(lambda x:(x*31)%997).sum())
+    expected=sum((x*31)%997 for x in range(a.rows))
+    trial([(f&#x27;partitions-{p}&#x27;,lambda p=p:run(p)) for p in [1,8,64]])
+    assert all(r[&#x27;result&#x27;]==expected for r in report[&#x27;runs&#x27;])
+    report[&#x27;observations&#x27;]={&#x27;expected_sum&#x27;:expected,&#x27;available_task_slots&#x27;:2}
+
+elif a.experiment==&#x27;aggregation&#x27;:
+    data=sc.parallelize(range(a.rows),8).map(lambda i:(i%1000,i%17))
+    # Persist common input and materialize outside the measured comparisons.
+    data.persist(StorageLevel.MEMORY_ONLY); data.count()
+    def combine():return sorted(data.reduceByKey(lambda x,y:x+y,8).collect())
+    def group():return sorted(data.groupByKey(8).mapValues(sum).collect())
+    report[&#x27;plans&#x27;][&#x27;reduceByKey&#x27;]=data.reduceByKey(lambda x,y:x+y,8).toDebugString().decode()
+    report[&#x27;plans&#x27;][&#x27;groupByKey&#x27;]=data.groupByKey(8).toDebugString().decode()
+    trial([(&#x27;group-values&#x27;,group),(&#x27;combine-locally&#x27;,combine)])
+    expected=[(k,sum(i%17 for i in range(k,a.rows,1000))) for k in range(1000)]
+    assert all(r[&#x27;result&#x27;]==expected for r in report[&#x27;runs&#x27;])
+    # Keep the full logical output once; comparisons carry checksums and count.
+    report[&#x27;output&#x27;]=expected
+    for r in report[&#x27;runs&#x27;]:r[&#x27;result&#x27;]={&#x27;keys&#x27;:len(r[&#x27;result&#x27;]),&#x27;sum&#x27;:sum(v for k,v in r[&#x27;result&#x27;])}
+    data.unpersist()
+
+elif a.experiment==&#x27;join&#x27;:
+    fact=spark.range(a.rows,numPartitions=8).select(F.col(&#x27;id&#x27;).alias(&#x27;i&#x27;),
+        F.when(F.col(&#x27;id&#x27;)%10&lt;8,F.lit(0)).otherwise((F.col(&#x27;id&#x27;)%999)+1).alias(&#x27;k&#x27;))
+    dim=spark.range(1000,numPartitions=2).select(F.col(&#x27;id&#x27;).alias(&#x27;k&#x27;),(F.col(&#x27;id&#x27;)%7+1).alias(&#x27;weight&#x27;))
+    expected={&#x27;rows&#x27;:a.rows,&#x27;weighted_sum&#x27;:sum((0 if i%10&lt;8 else i%999+1)%7+1 for i in range(a.rows))}
+    def build(kind):
+        if kind==&#x27;broadcast&#x27;:return fact.join(F.broadcast(dim),&#x27;k&#x27;)
+        if kind==&#x27;salted&#x27;:
+            left=fact.withColumn(&#x27;salt&#x27;,(F.col(&#x27;i&#x27;)%8).cast(&#x27;int&#x27;))
+            right=dim.crossJoin(spark.range(8).select(F.col(&#x27;id&#x27;).cast(&#x27;int&#x27;).alias(&#x27;salt&#x27;)))
+            return left.hint(&#x27;merge&#x27;).join(right.hint(&#x27;merge&#x27;),[&#x27;k&#x27;,&#x27;salt&#x27;])
+        return fact.hint(&#x27;merge&#x27;).join(dim.hint(&#x27;merge&#x27;),&#x27;k&#x27;)
+    def run(kind):
+        q=build(kind); report[&#x27;plans&#x27;][kind]=q._jdf.queryExecution().executedPlan().toString()
+        # Capture distribution of the JOIN output before a final checksum aggregation.
+        bins=q.rdd.mapPartitionsWithIndex(lambda p,rows:iter([(p,)+partition_join(rows)])).collect()
+        return {&#x27;rows&#x27;:sum(x[1] for x in bins),&#x27;weighted_sum&#x27;:sum(x[2] for x in bins),
+                &#x27;partition_rows&#x27;:[x[1] for x in sorted(bins)]}
+    trial([(name,lambda name=name:run(name)) for name in [&#x27;shuffle&#x27;,&#x27;broadcast&#x27;,&#x27;salted&#x27;]])
+    assert all({k:r[&#x27;result&#x27;][k] for k in expected}==expected for r in report[&#x27;runs&#x27;])
+    report[&#x27;observations&#x27;]={&#x27;expected&#x27;:expected,&#x27;hot_key_fraction&#x27;:0.8,&#x27;dimension_rows&#x27;:1000,
+        &#x27;salt_buckets&#x27;:8,&#x27;salted_dimension_rows&#x27;:8000,
+        &#x27;skew_note&#x27;:&#x27;partition row counts measure imbalance; no network latency or production speedup claim&#x27;}
+
+elif a.experiment==&#x27;recovery&#x27;:
+    def flaky(partition, rows):
+        context=TaskContext.get()
+        if partition==0 and context.attemptNumber()==0:
+            raise RuntimeError(&#x27;LAB_INJECTED_FIRST_ATTEMPT_FAILURE&#x27;)
+        yield (partition,context.attemptNumber(),sum(rows))
+    traces=[]
+    for repeat in range(a.repeats):
+        got=action(&#x27;retry&#x27;,lambda:sc.parallelize(range(a.rows),8).mapPartitionsWithIndex(flaky).collect(),repeat,&#x27;retry&#x27;)
+        assert sum(x[2] for x in got)==a.rows*(a.rows-1)//2
+        assert any(x[0]==0 and x[1]==1 for x in got)
+        counter=sc.accumulator(0)
+        def counted(rows):
+            counter.add(1)
+            for x in rows:yield x*2
+        mapped=sc.parallelize(range(a.rows),8).mapPartitions(counted).persist(StorageLevel.MEMORY_ONLY)
+        checkpoints=[]
+        for label,drop in [(&#x27;materialize&#x27;,False),(&#x27;reuse-cache&#x27;,False),(&#x27;after-unpersist&#x27;,True)]:
+            if drop:mapped.unpersist(blocking=True)
+            before=counter.value
+            value=action(label,lambda:int(mapped.sum()),repeat,label)
+            checkpoints.append({&#x27;phase&#x27;:label,&#x27;successful_partition_evaluations&#x27;:counter.value-before,&#x27;sum&#x27;:value})
+        assert [x[&#x27;successful_partition_evaluations&#x27;] for x in checkpoints]==[8,0,8]
+        sc.setCheckpointDir((a.out/&#x27;checkpoints&#x27;).resolve().as_uri())
+        cp=sc.parallelize(range(a.rows),8).map(lambda x:x*2)
+        before_lineage=cp.toDebugString().decode();cp.checkpoint()
+        action(&#x27;checkpoint&#x27;,lambda:int(cp.sum()),repeat,&#x27;checkpoint&#x27;)
+        assert cp.isCheckpointed()
+        after_lineage=cp.toDebugString().decode()
+        assert &#x27;ReliableCheckpointRDD&#x27; in after_lineage
+        traces.append({&#x27;repeat&#x27;:repeat,&#x27;cache_evaluations&#x27;:checkpoints,&#x27;checkpoint_materialized&#x27;:True,
+                       &#x27;checkpoint_lineage_truncated&#x27;:True})
+    report[&#x27;observations&#x27;]={&#x27;traces&#x27;:traces,
+        &#x27;failure_scope&#x27;:&#x27;one owned task raises an exception; no node/executor kill; local retry budget=2&#x27;}
+    report[&#x27;plans&#x27;]={&#x27;before_checkpoint&#x27;:before_lineage,&#x27;after_checkpoint&#x27;:after_lineage}
+
+elif a.experiment==&#x27;resources&#x27;:
+    source=spark.range(a.rows,numPartitions=8).select(&#x27;id&#x27;,
+        ((F.col(&#x27;id&#x27;)*104729)%1000003).alias(&#x27;sort_key&#x27;),
+        F.concat_ws(&#x27;&#x27;,*[F.sha2(F.col(&#x27;id&#x27;).cast(&#x27;string&#x27;),256)]*2).alias(&#x27;payload&#x27;))
+    def run(p):
+        q=source.repartition(p).sortWithinPartitions(&#x27;sort_key&#x27;)
+        report[&#x27;plans&#x27;][f&#x27;partitions-{p}&#x27;]=q._jdf.queryExecution().executedPlan().toString()
+        bins=q.rdd.mapPartitions(resource_partition).collect()
+        assert all(x[3] for x in bins)
+        return {&#x27;rows&#x27;:sum(x[0] for x in bins),&#x27;id_sum&#x27;:sum(x[1] for x in bins),
+                &#x27;payload_chars&#x27;:sum(x[2] for x in bins),&#x27;locally_sorted&#x27;:True}
+    trial([(f&#x27;partitions-{p}&#x27;,lambda p=p:run(p)) for p in [2,16]])
+    assert all(r[&#x27;result&#x27;][&#x27;rows&#x27;]==a.rows and r[&#x27;result&#x27;][&#x27;id_sum&#x27;]==a.rows*(a.rows-1)//2
+        and r[&#x27;result&#x27;][&#x27;payload_chars&#x27;]==a.rows*128 for r in report[&#x27;runs&#x27;])
+    report[&#x27;observations&#x27;]={&#x27;spill_is_forced&#x27;:True,&#x27;force_spill_element_threshold&#x27;:8192,
+        &#x27;payload_chars_per_row&#x27;:128,&#x27;sort_scope&#x27;:&#x27;within each partition; no global order guarantee&#x27;,
+        &#x27;warning&#x27;:&#x27;Internal diagnostic knob, not an out-of-memory experiment or recommended production setting.&#x27;}
+
+spark.stop()
+# Plans can contain private local paths. Publish only cleaned text.
+import re
+for k,v in report[&#x27;plans&#x27;].items():
+    v=re.sub(r&#x27;file:/[^\s\],)]+&#x27;,&#x27;&lt;local-file&gt;&#x27;,v)
+    v=re.sub(r&#x27;/(?:Users|home|private|tmp)/[^\s\],)]+&#x27;,&#x27;&lt;local-path&gt;&#x27;,v)
+    report[&#x27;plans&#x27;][k]=v
+(a.out/&#x27;report.json&#x27;).write_text(json.dumps(report,ensure_ascii=False,indent=2)+&#x27;\n&#x27;)
+print(&#x27;REPORT_OK&#x27;,a.experiment,flush=True)
+</code></pre></main></div><footer>Lynn Lee · Original course · MIT companion · Recorded on 13 Nov 2026 · No analytics<br>Single-host Spark local mode. Concept diagrams and model estimates are labeled separately.</footer></body></html>

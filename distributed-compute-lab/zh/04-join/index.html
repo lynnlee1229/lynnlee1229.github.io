@@ -1,0 +1,31 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Join 策略与倾斜 · Distributed Compute Lab</title><meta name="description" content="通过原创讲解、真实 Spark 实验与可复现证据学习分布式计算。"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/04-join/"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/distributed-compute-lab/en/04-join/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/04-join/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/distributed-compute-lab/en/04-join/"><link rel="stylesheet" href="/distributed-compute-lab/assets/site.css"><link rel="icon" href="/distributed-compute-lab/assets/favicon.svg"><script defer src="/distributed-compute-lab/assets/site.js"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-compute-lab/zh/"><span>▦</span> Distributed Compute Lab</a><nav aria-label="全局导航"><a class="home-link" href="/zh/websites/">Lynn Lee</a><a href="https://github.com/lynnlee1229/distributed-compute-lab">源码</a><a lang="en-US" href="/distributed-compute-lab/en/04-join/">English</a></nav></div></header><div class="layout"><aside class="sidebar" aria-label="课程导航"><span class="eyebrow">学习顺序</span><a href="/distributed-compute-lab/zh/">课程概览</a><a href="/distributed-compute-lab/zh/01-parallel/">为什么并行？</a><a href="/distributed-compute-lab/zh/02-model/">数据并行模型</a><a href="/distributed-compute-lab/zh/03-aggregation/">先聚合，再移动</a><a href="/distributed-compute-lab/zh/04-join/" aria-current="page">Join 策略与倾斜</a><a href="/distributed-compute-lab/zh/05-recovery/">重试与重算</a><a href="/distributed-compute-lab/zh/06-resources/">资源诊断</a><a href="/distributed-compute-lab/zh/evidence/">实测证据</a><a href="/distributed-compute-lab/zh/reproduce/">本地复现</a><a href="/distributed-compute-lab/zh/code/">阅读代码</a></aside><main id="main"><article class="prose"><h1 id="04-join">04 · Join 策略与数据倾斜</h1>
+<p>Join 让匹配的记录相遇。如何移动数据，取决于两侧规模、键分布、输出基数和内存容量。只知道算法名字，无法诊断问题。</p>
+<h2 id="section-2">学习目标与前置知识</h2>
+<p>需要理解按键分区、Shuffle 与局部聚合，并知道内连接中每个匹配对贡献一条输出。本章比较广播与排序合并计划，检查热点分区，并评价加盐的代价。</p>
+<h2 id="section-4">决定让哪一侧移动</h2>
+<p>广播哈希 Join 从足够小的一侧建立查找结构，让处理大表的位置都能使用它。它用复制和构建内存换取大表免于按键重分布。磁盘上的压缩文件大小不等于内存哈希表大小，小表必须满足实际资源和连接类型的约束。</p>
+<p>Shuffle Sort-Merge Join 将相同键重分布到兼容分区，并按需排序，能够处理更大的关系，但要支付移动与排序成本。哈希能分散不同键，却不能仅靠增加分区把一个巨大的相同键组拆开。Spark 的策略提示与 AQE 行为参见官方文档。<a href="https://spark.apache.org/docs/3.5.8/sql-performance-tuning.html">Spark SQL 性能指南</a></p>
+<div class="flow"><div class="node "><b>广播</b>small → each task / 小表 → 各任务</div><div class="node shuffle"><b>Shuffle Join</b>same key → same owner / 同键同归属</div><div class="node "><b>加盐</b>(key,salt) + replicated small side / 小表复制</div></div><p class="flow-caption">原创概念图 · 不是运行轨迹。</p>
+<h2 id="section-8">受控对照</h2>
+<p>事实表有 240,000 行，其中 80% 使用键 0。维表有 1,000 行，每个键恰好一行。输出应为 240,000 行，权重总和 384,001。实验强制排序合并、显式广播维表，并尝试加盐排序合并。关闭 AQE 与自动广播，便于解释基线计划。</p>
+<pre><code>shuffle = fact.hint(&#x27;merge&#x27;).join(dim.hint(&#x27;merge&#x27;), &#x27;k&#x27;)
+broadcast = fact.join(F.broadcast(dim), &#x27;k&#x27;)
+# 每条事实分配一个盐值，维表复制到八个盐桶。
+left = fact.withColumn(&#x27;salt&#x27;, (F.col(&#x27;i&#x27;) % 8).cast(&#x27;int&#x27;))
+right = dim.crossJoin(spark.range(8).select(F.col(&#x27;id&#x27;).cast(&#x27;int&#x27;).alias(&#x27;salt&#x27;)))
+salted = left.hint(&#x27;merge&#x27;).join(right.hint(&#x27;merge&#x27;), [&#x27;k&#x27;, &#x27;salt&#x27;])</code></pre>
+<p>每条事实只匹配一次，是因为它的盐值恰好对应一份维表记录。随意复制两边会放大匹配数。本教学实现给所有键加盐，因此付出的复制成本高于只处理已知热点的策略。</p>
+<h2 id="section-12">先读证据，再选择</h2>
+<pre><code>python scripts/run_all.py --only join</code></pre>
+<p>在物理计划中找 <code>SortMergeJoin</code>、<code>BroadcastHashJoin</code> 和 <code>Exchange</code>。实验直接按分区消费 Join 输出，避免后续聚合掩盖倾斜。未加盐时最大输出分区有 197,242 行；广播保留八个各 30,000 行的事实分区；加盐后最大分区降到 78,149 行，但哈希碰撞仍造成不均衡。本次加盐移动更多字节，中位耗时也没有改善。分布更均衡，不自动等于更快。</p>
+<p>维表键唯一，因此行数与权重和是有用的检查，但校验和不是任意 Join 重写的普遍证明。自己的小样本应比较完整排序结果，覆盖重复键和空值。外连接还需要重新检查未匹配记录，不能直接照搬加盐。</p>
+<h2 id="section-16">动手与自测</h2>
+<p>固定总行数与维表，只改变热点比例；分别预测任务不均衡、输出数量和广播可行性。可选扩展中打开 AQE，保存初始与最终执行计划，检查阈值是否真正触发改写。本版讲解 AQE，但没有把该扩展描述成已实测结果。</p>
+<details class="quiz"><summary>增加分区会自动拆开一个热点键吗？</summary>
+<p>哈希分区仍把相同键放在一起。增加桶数可能分散其他键，热点组却保持完整。</p>
+</details>
+<details class="quiz"><summary>为什么不广播所有维表？</summary>
+<p>复制、哈希表内存、传输成本、连接类型支持和超时都会限制它。Hint 不是无限内存，也不保证所有查询都能采用。</p>
+</details>
+<h2 id="section-24">过关任务</h2>
+<p>写出一份策略选择，包含关系基数、键唯一性、热点频率、内存预算与实际计划节点，并给出一个会推翻选择的条件。下一章考虑任务需要重跑的情况。</p></article><button class="read-toggle" id="mark-read" data-chapter="04-join" aria-pressed="false">标记本章已读</button><p class="small">阅读标记只保存在当前浏览器（可用时）。</p><nav class="next" aria-label="章节导航"><a href="/distributed-compute-lab/zh/03-aggregation/">← 上一页</a><a href="/distributed-compute-lab/zh/05-recovery/">下一页 →</a></nav></main></div><footer>Lynn Lee · 原创课程 · MIT 配套项目 · 实测日期 2026-11-13 · 无分析追踪<br>单机 Spark 本地模式。概念图和模型估算均独立标注。</footer></body></html>

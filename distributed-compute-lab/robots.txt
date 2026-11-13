@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lynnlee1229.github.io/distributed-compute-lab/sitemap.xml

@@ -1,0 +1,29 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>为什么并行？ · Distributed Compute Lab</title><meta name="description" content="通过原创讲解、真实 Spark 实验与可复现证据学习分布式计算。"><link rel="canonical" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/01-parallel/"><link rel="alternate" hreflang="en-US" href="https://lynnlee1229.github.io/distributed-compute-lab/en/01-parallel/"><link rel="alternate" hreflang="zh-CN" href="https://lynnlee1229.github.io/distributed-compute-lab/zh/01-parallel/"><link rel="alternate" hreflang="x-default" href="https://lynnlee1229.github.io/distributed-compute-lab/en/01-parallel/"><link rel="stylesheet" href="/distributed-compute-lab/assets/site.css"><link rel="icon" href="/distributed-compute-lab/assets/favicon.svg"><script defer src="/distributed-compute-lab/assets/site.js"></script></head><body><a class="skip" href="#main">跳到正文</a><header><div class="top"><a class="brand" href="/distributed-compute-lab/zh/"><span>▦</span> Distributed Compute Lab</a><nav aria-label="全局导航"><a class="home-link" href="/zh/websites/">Lynn Lee</a><a href="https://github.com/lynnlee1229/distributed-compute-lab">源码</a><a lang="en-US" href="/distributed-compute-lab/en/01-parallel/">English</a></nav></div></header><div class="layout"><aside class="sidebar" aria-label="课程导航"><span class="eyebrow">学习顺序</span><a href="/distributed-compute-lab/zh/">课程概览</a><a href="/distributed-compute-lab/zh/01-parallel/" aria-current="page">为什么并行？</a><a href="/distributed-compute-lab/zh/02-model/">数据并行模型</a><a href="/distributed-compute-lab/zh/03-aggregation/">先聚合，再移动</a><a href="/distributed-compute-lab/zh/04-join/">Join 策略与倾斜</a><a href="/distributed-compute-lab/zh/05-recovery/">重试与重算</a><a href="/distributed-compute-lab/zh/06-resources/">资源诊断</a><a href="/distributed-compute-lab/zh/evidence/">实测证据</a><a href="/distributed-compute-lab/zh/reproduce/">本地复现</a><a href="/distributed-compute-lab/zh/code/">阅读代码</a></aside><main id="main"><article class="prose"><h1 id="01">01 · 为什么并行？</h1>
+<p>只有有效计算足以覆盖协调成本，并行执行才可能带来收益。这一章先建立成本模型，再用笔记本能够承受的真实任务检验模型。</p>
+<h2 id="section-2">学习目标与前置知识</h2>
+<p>学完后，你应能区分总工作量、关键路径、任务数和执行槽位，解释增加分区为何可能更慢，并在比较速度前定义正确性。只需要循环、函数、整数运算与计时知识；不要求 Spark 经验。不熟悉 Python 环境或 JDK 时，先阅读复现页。</p>
+<h2 id="section-4">工作量不等于耗时</h2>
+<p>设总有效工作量为 W，同时执行任务的槽位数为 P，即使分配完全均匀，纯计算耗时也不能低于 W/P。依赖关系还形成关键路径 D，因此 T ≥ max(W/P, D)。调度、序列化、数据传输、倾斜和重试会增加耗时；这个式子是下界，不是性能预测器。</p>
+<p>例如八个互不依赖、各耗时 100 ms 的任务，总工作量为 800 ms。两个槽位至少需要四轮，即 400 ms。八个任务不代表八颗 CPU。若前面还有 200 ms 的串行准备，端到端延迟也必须包括它。吞吐量是单位时间完成的工作，延迟是单次工作的等待时长。增大批次可能提高吞吐，同时增加延迟。</p>
+<p>固定规模问题中，若不可并行的比例是 s，理想 Amdahl 加速比上限是 1/(s+(1-s)/P)。它假设总工作不变，也忽略协调开销。下面的计算器额外加入每任务开销，帮助检查假设；它没有执行 Spark。</p>
+<section class="calculator" id="cost-model" aria-label="示意成本模型"><span class="eyebrow">模型 · 非实测</span><p>800 ms 有效工作 + 200 ms 串行准备；每任务 5 ms 开销。</p><label for="slots">执行槽位 <b id="slots-value">2</b></label><input type="range" id="slots" min="1" max="16" value="2"><label for="parts">等长任务数 <b id="parts-value">8</b></label><input type="range" id="parts" min="1" max="128" value="8"><output id="model-output" aria-live="polite"></output><p class="small" id="model-detail"></p><noscript>八任务、两槽位：200 + 4 × (100 + 5) = 620 ms。</noscript></section>
+<h2 id="spark">对应到 Spark</h2>
+<p>分区是数据的一份。Stage 为需要计算的分区调度 Task。本实验的 local master 只有两条执行线程；分区增加会带来更多调度轮次。Python Worker、JVM 和操作系统共享一台物理主机。官方指南介绍 Driver 和分布式集合抽象，本实验运行其本地实现。<a href="https://spark.apache.org/docs/3.5.8/rdd-programming-guide.html">Spark RDD 指南</a></p>
+<p>实验在 240,000 个整数上计算 <code>(i*31)%997</code> 的总和，比较 1、8、64 个分区。每种方案都必须等于独立 Python 计算的和；数据量与算术保持不变。工作本身刻意很轻，因此调度和 Python 边界成本可能占主导。它不能证明单分区普遍更好。</p>
+<pre><code>rdd = sc.parallelize(range(rows), partitions)
+actual = rdd.map(lambda i: (i * 31) % 997).sum()
+expected = sum((i * 31) % 997 for i in range(rows))
+assert actual == expected</code></pre>
+<h2 id="section-13">运行、观察与修改</h2>
+<pre><code>python scripts/run_all.py --only parallel</code></pre>
+<p>进入“实测证据”，选择 parallel。把预热与三次计时分开，比较最小值、最大值、中位数及任务数。若 64 分区更慢，先考虑每个任务是否有足够的有效工作。墙钟变短不能独立证明 CPU 利用率更高；本版没有采样 CPU 利用率。</p>
+<p>在新的工作副本中改成更重的纯函数，并保持各方案的数学结果一致。记录公式、规模、重复次数与环境；运行前预测开销何时不再占主导。不要把工作负载已经改变的结果描述成只改变了并行度的对照实验。</p>
+<h2 id="section-17">自测</h2>
+<details class="quiz"><summary>十六个分区、两个槽位，十六个任务能同时运行吗？</summary>
+<p>不能。在没有重试、资源变化的前提下，同时最多运行两个任务，至少需要八轮。</p>
+</details>
+<details class="quiz"><summary>这台机器上快了两倍，是否意味着两台机器吞吐也翻倍？</summary>
+<p>不意味着。跨机器会引入网络、存储位置、故障与不同的资源竞争。扩展性实验必须控制负载、改变机器数，并说明总工作量是否固定。</p>
+</details>
+<h2 id="section-24">过关任务</h2>
+<p>写出一个实验假设，包含一个自变量、一个正确性不变量、一个计时边界，以及两种“变慢”的可能解释。带着分区数与槽位数的区别进入下一章。</p></article><button class="read-toggle" id="mark-read" data-chapter="01-parallel" aria-pressed="false">标记本章已读</button><p class="small">阅读标记只保存在当前浏览器（可用时）。</p><nav class="next" aria-label="章节导航"><a href="/distributed-compute-lab/zh/">← 上一页</a><a href="/distributed-compute-lab/zh/02-model/">下一页 →</a></nav></main></div><footer>Lynn Lee · 原创课程 · MIT 配套项目 · 实测日期 2026-11-13 · 无分析追踪<br>单机 Spark 本地模式。概念图和模型估算均独立标注。</footer></body></html>
